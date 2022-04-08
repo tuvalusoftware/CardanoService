@@ -73,7 +73,7 @@ router.post('/add', nftController.add);
  *           schema:
  *             type: string
  *             example: "addr_test1qzt9txrm7u6ewn78vypm64x9am6tw509r2lrtz2jz025ku2ftmhkntlq4m6xwl7hkc6nkx2vssqv7nknr9mne5vh6awq3nvmaa"
- *           description: USER_WALLET
+ *           description: USER_ADDRESS
  *       summary: Transfer an NFT.
  *       operationId: transferNFT
  *       description: |

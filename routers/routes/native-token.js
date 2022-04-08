@@ -16,9 +16,9 @@ const nativeTokenController = require('../controllers/native-token');
  * /api/native-tokens/airdrop/{asset_id}:
  *     post:
  *       security:
- *       - cookieAuth: []
+ *        - cookieAuth: []
  *       tags:
- *       - native-tokens
+ *        - native-tokens
  *       parameters:
  *         - in: path
  *           name: asset_id
@@ -26,7 +26,7 @@ const nativeTokenController = require('../controllers/native-token');
  *           schema:
  *             type: string
  *             example: "7c45454f3f0ce338647db87e25fee741d544761224c6bd7145a89919.NTFERDON3"
- *           description: ASSET_ID is a string, have must be form **<POLICY_ID>.<ASSET_NAME>**
+ *           description: ASSET_ID is a string, have must be form <POLICY_ID>.<ASSET_NAME>
  *       summary: Airdrop Native Tokens.
  *       operationId: airDrop
  *       description: |
@@ -55,7 +55,7 @@ const nativeTokenController = require('../controllers/native-token');
  *         description: |
  *           `receivers` is a list of strings, which is list of destination addresses.
  *
- *           `quantities` is a list of integers. Namely, this is a number of tokens will be receiving per destination address (user wallet).
+ *           `quantities` is a list of integers. Namely, this is a number of tokens will be receiving per destination address (user address).
  */
 router.post('/airdrop/:asset_id', nativeTokenController.airdropById);
 

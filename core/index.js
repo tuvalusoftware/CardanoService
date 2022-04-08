@@ -3,7 +3,7 @@
  * Copyright (c) 2022 - Ferdon Vietnam Limited
  *
  * @author Nguyen Minh Tam / ngmitam@ferdon.io
- * @author Tran Quoc Khang / ngmitam@ferdon.io
+ * @author Tran Quoc Khang / tkhang@ferdon.io
  */
 
 const fs = require('fs').promises;
@@ -34,24 +34,37 @@ const cardano = new CardanoCli({
     era: config.era,
 });
 
-const createTransaction = (tx) => {
+const createTransaction = (tx, onlyAda = false) => {
     // Create raw transaction
     let raw = cardano.transactionBuildRaw(tx);
+
     // Calculate fee
-    let fee = cardano.transactionCalculateMinFee({
-        ...tx,
-        txBody: raw,
-    });
+    let fee = 0;
+    if (!onlyAda) {
+        fee = cardano.transactionCalculateMinFee({
+            ...tx,
+            txBody: raw,
+        });
+    } else {
+        fee = cardano.transactionCalculateMinFee({
+            ...tx,
+            txBody: raw,
+            witnessCount: 1,
+        });
+    }
+
     // Pay the fee by subtracting it from the sender utxo
     tx.txOut[0].value.lovelace -= fee;
     if (tx.txOut[0].value.lovelace < 0) {
         return -1;
     }
+
     // Create final transaction
     return cardano.transactionBuildRaw({ ...tx, fee });
 };
 
 const signTransaction = (wallet, tx) => {
+    // Sign tx
     return cardano.transactionSign({
         signingKeys: [wallet.payment.skey, wallet.payment.skey],
         txBody: tx,
@@ -100,25 +113,135 @@ const metadataFormCardanoFormatToJSON = (metadata) => {
     return metadata;
 };
 
+// ** Utxo **
+
+const getUtxo = async (address) => {
+    const utxo = await cardano.queryUtxo(address);
+    return utxo;
+};
+
+const getBalance = (address) => {
+    const utxos = cardano.queryUtxo(address);
+    const value = {};
+    utxos.forEach((utxo) => {
+        Object.keys(utxo.value).forEach((asset) => {
+            if (!value[asset]) value[asset] = 0;
+            value[asset] += utxo.value[asset];
+        });
+    });
+
+    return { utxo: utxos, value };
+};
+
+// ** End utxo **
+
 const waitForSyncOnChain = async (wallet, ASSET_ID, currentTokenAmount) => {
     let newTokenAmount;
     do {
         await sleep(2000);
         newTokenAmount = wallet.balance().value[ASSET_ID] || 0;
     } while (newTokenAmount == currentTokenAmount);
-
     return;
 };
 
-// ** Utxo **
-
-const getUtxo = async (address) => {
-    const utxo = cardano.queryUtxo(address);
-    console.log(utxo);
-    return utxo;
+const waitForSyncOnChainWithAddress = async (address, currentLovelace, currentTokenAmount = -1, ASSET_ID = '') => {
+    if (currentTokenAmount == -1) {
+        let newLovelace;
+        do {
+            await sleep(2000);
+            newLovelace = getBalance(address).value.lovelace || 0;
+        } while (newLovelace == currentLovelace);
+    } else {
+        let newTokenAmount;
+        do {
+            await sleep(2000);
+            newTokenAmount = getBalance(address).value[ASSET_ID] || 0;
+        } while (newTokenAmount == currentTokenAmount);
+    }
+    return;
 };
 
-const submitSignedTransaction = async (signedTransaction) => {
+const getTransferAdaRawTransaction = async (address, receivers, amounts) => {
+    if (receivers.length != amounts.length) {
+        throw new Error('receivers and amounts are not match');
+    }
+
+    // Define variables
+    const totalTransfer = receivers.length;
+    const NUMBER_OF_TRANSFER_PER_GROUP = 100;
+    const numberOfGroupTransfer = Math.ceil(totalTransfer / NUMBER_OF_TRANSFER_PER_GROUP);
+
+    let rawTxs = [];
+
+    for (let groupId = 0; groupId < numberOfGroupTransfer; ++i) {
+        // Get wallet
+        const wallet = getBalance(address);
+
+        const numberOfTransfer = Math.min(
+            totalTransfer - groupId * NUMBER_OF_TRANSFER_PER_GROUP,
+            NUMBER_OF_TRANSFER_PER_GROUP
+        );
+
+        // Wait for sync
+        if (groupId != 0) {
+            let currentLovelace = wallet.value.lovelace || 0;
+            await waitForSyncOnChainWithAddress(address, currentLovelace);
+        }
+
+        // Query an utxo
+        wallet = getBalance(wallet);
+        let utxo = wallet.utxo;
+        utxo.forEach((tx) => {
+            delete tx.value.undefined;
+        });
+
+        // Define tx
+        let tx = {
+            txIn: utxo,
+            txOut: [
+                {
+                    address: address,
+                    value: {
+                        ...wallet.value,
+                        undefined: undefined,
+                    },
+                },
+            ],
+        };
+
+        let numberOfLovelaces = 0;
+
+        for (let i = 0; i < numberOfTransfer; ++i) {
+            const amount = amounts[groupId * NUMBER_OF_TRANSFER_PER_GROUP + id];
+            amount = cardano.toLovelace(amount);
+            numberOfLovelaces += amount;
+            txInfo.txOut[id + 1] = {
+                address: receivers[groupId * NUMBER_OF_TRANSFER_PER_GROUP + id],
+                value: {
+                    lovelace: amount,
+                },
+            };
+        }
+
+        tx.txOut[0].value.lovelace -= numberOfLovelaces;
+
+        tx = JSON.parse(JSON.stringify(tx));
+
+        // Build transaction
+        const raw = createTransaction(tx, true);
+        if (raw == -1) {
+            throw new Error('The rest of lovelaces less than the number of lovelaces to send to user wallet.');
+        }
+
+        // Read raw tx
+        const rawBody = await readFileFromPath(raw);
+        rawTxs.push(rawBody);
+    }
+
+    return rawTxs;
+};
+
+const submitSignedTransaction = async (address, signedTransaction) => {
     // Submit transaction
     const txId = cardano.transactionSubmit(signedTransaction);
     return txId;
@@ -126,26 +249,29 @@ const submitSignedTransaction = async (signedTransaction) => {
 
 // ** Metadata **
 
-const getCreateMetadataRawTransaction = async (rawMetadata) => {
+const getCreateMetadataRawTransaction = async (address, rawMetadata) => {
     // Get wallet
-    const wallet = cardano.wallet(WALLET_NAME);
+    const wallet = getBalance(address);
+
     // Define metadata
     const metadata = {
         0: rawMetadata,
     };
+
     // Query utxo
-    const utxo = wallet.balance().utxo;
+    const utxo = wallet.utxo;
     utxo.forEach((tx) => {
         delete tx.value.undefined;
     });
+
     // Define transaction
     let tx = {
         txIn: utxo,
         txOut: [
             {
-                address: wallet.paymentAddr,
+                address: address,
                 value: {
-                    ...wallet.balance().value,
+                    ...wallet.value,
                     undefined: undefined,
                 },
             },
@@ -154,21 +280,30 @@ const getCreateMetadataRawTransaction = async (rawMetadata) => {
         witnessCount: 2,
     };
     tx = JSON.parse(JSON.stringify(tx));
+
     // Build transaction
     const raw = createTransaction(tx);
+
+    // Read raw tx
     const rawBody = await readFileFromPath(raw);
     return rawBody;
 };
 
 const addMetadata = async (rawMetadata) => {
+    // Get wallet
     const wallet = cardano.wallet(WALLET_NAME);
+
+    // Define metadata
     const metadata = {
         0: rawMetadata,
     };
+
+    // Query an utxo
     const utxo = wallet.balance().utxo;
     utxo.forEach((tx) => {
         delete tx.value.undefined;
     });
+
     // Define transaction
     let tx = {
         txIn: utxo,
@@ -185,11 +320,14 @@ const addMetadata = async (rawMetadata) => {
         witnessCount: 2,
     };
     tx = JSON.parse(JSON.stringify(tx));
+
     // Build transaction
     const raw = createTransaction(tx);
     if (raw == -1) throw new Error('The rest of lovelaces less than the number of lovelaces to send to user wallet.');
+
     // Sign transaction
     const signed = signTransaction(wallet, raw);
+
     // Submit transaction
     const txId = cardano.transactionSubmit(signed);
     return txId;
@@ -214,7 +352,10 @@ const fetchMetadata = async () => {
 // ** NFT **
 
 const addNFT = async (asset_name, rawMetadata) => {
+    // Get wallet
     const wallet = cardano.wallet(WALLET_NAME);
+
+    // Define mint script
     const mintScript = {
         type: 'all',
         scripts: [
@@ -228,12 +369,16 @@ const addNFT = async (asset_name, rawMetadata) => {
             },
         ],
     };
+
     // Create POLICY_Id
     const POLICY_Id = cardano.transactionPolicyid(mintScript);
+
     // Define ASSET_NAME
     const ASSET_NAME = Buffer.from(asset_name).toString('hex');
+
     // Create ASSET_ID
     const ASSET_ID = POLICY_Id + '.' + ASSET_NAME;
+
     // An NFT Metadata
     const metadata = {
         721: {
@@ -242,10 +387,13 @@ const addNFT = async (asset_name, rawMetadata) => {
             },
         },
     };
+
+    // Query an utxo
     const utxo = wallet.balance().utxo;
     utxo.forEach((tx) => {
         delete tx.value.undefined;
     });
+
     // Define transaction
     let tx = {
         txIn: utxo,
@@ -264,11 +412,14 @@ const addNFT = async (asset_name, rawMetadata) => {
         witnessCount: 2,
     };
     tx = JSON.parse(JSON.stringify(tx));
+
     // Build transaction
     const raw = createTransaction(tx);
     if (raw == -1) throw new Error('The rest of lovelaces less than the number of lovelaces to send to user wallet.');
+
     // Sign transaction
     const signed = signTransaction(wallet, raw, mintScript);
+
     // Submit transaction
     const txId = cardano.transactionSubmit(signed);
     return txId;
@@ -308,17 +459,21 @@ const fetchNFTById = async (policyId, asset_name) => {
 
 // Can only transfer NFT which is owned by wallet
 const transferNFTById = async (policyId, asset_name, receiver) => {
+    // Get wallet
     const wallet = cardano.wallet(WALLET_NAME);
 
     // Create ASSET_NAME
     const ASSET_NAME = Buffer.from(asset_name).toString('hex');
+
     // Create ASSET_ID
     const ASSET_ID = policyId + '.' + ASSET_NAME;
 
+    // Query utxo
     const utxo = wallet.balance().utxo;
     utxo.forEach((tx) => {
         delete tx.value.undefined;
     });
+
     // Define transaction
     let tx = {
         txIn: utxo,
@@ -345,11 +500,14 @@ const transferNFTById = async (policyId, asset_name, receiver) => {
     tx.txOut[0].value.lovelace -= FEE_FOR_ASSET;
     tx = JSON.parse(JSON.stringify(tx));
     console.log(JSON.stringify(tx));
+
     // Build transaction
     const raw = createTransaction(tx);
     if (raw == -1) throw new Error('The rest of lovelaces less than the number of lovelaces to send to user wallet.');
+
     // Sign transaction
     const signed = signTransaction(wallet, raw);
+
     // Submit transaction
     const txId = cardano.transactionSubmit(signed);
     return txId;
@@ -362,13 +520,16 @@ const airdropById = async (policyId, asset_name, receivers, quantities) => {
     if (receivers.length != quantities.length) {
         throw new Error('receivers and quantities are not match');
     }
+    // Get wallet
     const wallet = cardano.wallet(WALLET_NAME);
 
     // Create ASSET_NAME
     const ASSET_NAME = Buffer.from(asset_name).toString('hex');
+
     // Create ASSET_ID
     const ASSET_ID = policyId + '.' + ASSET_NAME;
 
+    // Define variables
     const totalTransfer = receivers.length;
     const NUMBER_OF_TRANSFER_PER_GROUP = 100;
     const numberOfGroupTransfer = Math.ceil(totalTransfer / NUMBER_OF_TRANSFER_PER_GROUP);
@@ -381,22 +542,26 @@ const airdropById = async (policyId, asset_name, receivers, quantities) => {
             NUMBER_OF_TRANSFER_PER_GROUP
         );
 
+        // Wait for sync
         if (groupId != 0) {
-            let currentTokenAmount = sender.balance().value[ASSET_ID] || 0;
+            let currentTokenAmount = wallet.balance().value[ASSET_ID] || 0;
             await waitForSyncOnChain(wallet, ASSET_ID, currentTokenAmount);
         }
+
+        // Query utxo
         let utxo = wallet.balance().utxo;
         utxo.forEach((tx) => {
             delete tx.value.undefined;
         });
 
+        // Define tx
         let tx = {
             txIn: utxo,
             txOut: [
                 {
                     address: wallet.paymentAddr,
                     value: {
-                        ...sender.balance().value,
+                        ...wallet.balance().value,
                         undefined: undefined,
                     },
                 },
@@ -428,10 +593,13 @@ const airdropById = async (policyId, asset_name, receivers, quantities) => {
 
         // Build transaction
         const raw = createTransaction(tx);
-        if (raw == -1)
+        if (raw == -1) {
             throw new Error('The rest of lovelaces less than the number of lovelaces to send to user wallet.');
+        }
+
         // Sign transaction
         const signed = signTransaction(wallet, raw);
+
         // Submit transaction
         const txId = cardano.transactionSubmit(signed);
         txHashes.push(txId);
@@ -440,16 +608,18 @@ const airdropById = async (policyId, asset_name, receivers, quantities) => {
     return txHashes;
 };
 
-const getTransferTokenRawTransaction = async (policyId, asset_name, receivers, quantities) => {
+const getTransferTokenRawTransaction = async (address, policy_id, asset_name, receivers, quantities) => {
     if (receivers.length != quantities.length) {
         throw new Error('receivers and quantities are not match');
     }
-    const wallet = cardano.wallet(WALLET_NAME);
+
     // Create ASSET_NAME
     const ASSET_NAME = Buffer.from(asset_name).toString('hex');
-    // Create ASSET_ID
-    const ASSET_ID = policyId + '.' + ASSET_NAME;
 
+    // Create ASSET_ID
+    const ASSET_ID = policy_id + '.' + ASSET_NAME;
+
+    // Define variables
     const totalTransfer = receivers.length;
     const NUMBER_OF_TRANSFER_PER_GROUP = 100;
     const numberOfGroupTransfer = Math.ceil(totalTransfer / NUMBER_OF_TRANSFER_PER_GROUP);
@@ -457,27 +627,35 @@ const getTransferTokenRawTransaction = async (policyId, asset_name, receivers, q
     let rawTxs = [];
 
     for (let groupId = 0; groupId < numberOfGroupTransfer; ++i) {
+        // Get wallet
+        const wallet = getBalance(address);
+
         const numberOfTransfer = Math.min(
             totalTransfer - groupId * NUMBER_OF_TRANSFER_PER_GROUP,
             NUMBER_OF_TRANSFER_PER_GROUP
         );
 
+        // Wait for sync
         if (groupId != 0) {
-            let currentTokenAmount = sender.balance().value[ASSET_ID] || 0;
-            await waitForSyncOnChain(wallet, ASSET_ID, currentTokenAmount);
+            let currentTokenAmount = wallet.value[ASSET_ID] || 0;
+            await waitForSyncOnChainWithAddress(address, -1, currentTokenAmount, ASSET_ID);
         }
-        let utxo = wallet.balance().utxo;
+
+        // Query an utxo
+        wallet = getBalance(address);
+        let utxo = wallet.utxo;
         utxo.forEach((tx) => {
             delete tx.value.undefined;
         });
 
+        // Define tx
         let tx = {
             txIn: utxo,
             txOut: [
                 {
-                    address: wallet.paymentAddr,
+                    address: address,
                     value: {
-                        ...sender.balance().value,
+                        ...wallet.value,
                         undefined: undefined,
                     },
                 },
@@ -509,8 +687,11 @@ const getTransferTokenRawTransaction = async (policyId, asset_name, receivers, q
 
         // Build transaction
         const raw = createTransaction(tx);
-        if (raw == -1)
+        if (raw == -1) {
             throw new Error('The rest of lovelaces less than the number of lovelaces to send to user wallet.');
+        }
+
+        // Read raw tx
         const rawBody = await readFileFromPath(raw);
         rawTxs.push(rawBody);
     }

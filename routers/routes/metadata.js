@@ -68,13 +68,13 @@ const metadataController = require('../controllers/metadata');
  *         metadata:
  *           type: object
  *           example: {
- *             name: "Ferdon NFT",
+ *             name: "Fuixlabs NFT",
  *             description: "This is my NFT",
  *             image: "ipfs://QmSFRoaft8NP5c5nJ3Di5BaWg2XNDFVMzqBYaJRFuEpmN1"
  *           }
  *         asset_name:
  *           type: string
- *           example: "FerdonNFT"
+ *           example: "FuixlabsNFT"
  *
  *     airDrop:
  *       type: object
@@ -99,6 +99,38 @@ const metadataController = require('../controllers/metadata');
  *             2
  *           ]
  *
+ *     getRawTransaction:
+ *       type: object
+ *       required:
+ *         - to
+ *         - amounts
+ *       properties:
+ *         to:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: [
+ *             "addr_test1qzt9txrm7u6ewn78vypm64x9am6tw509r2lrtz2jz025ku2ftmhkntlq4m6xwl7hkc6nkx2vssqv7nknr9mne5vh6awq3nvmaa",
+ *             "addr_test1qz2lp0c76dzu9xzfccjswsa50fvkc3uke4g0edzxp0xfkjcpvn7l9mxf7y706xawgux0umw8x5x56397u2m3a7xjawsqzu4vuv"
+ *           ]
+ *         amounts:
+ *           type: array
+ *           items:
+ *             type: integer
+ *           example: [
+ *             1,
+ *             2
+ *           ]
+ *
+ *     signedTransaction:
+ *       type: object
+ *       required:
+ *         - signedTransaction
+ *       properties:
+ *         signedTransaction:
+ *           type: string
+ *           example: "zzz"
+ *
  *     userLogin:
  *       type: object
  *       required:
@@ -115,9 +147,9 @@ const metadataController = require('../controllers/metadata');
  * /api/metadata/add:
  *   post:
  *    security:
- *     - cookieAuth: []
+ *      - cookieAuth: []
  *    tags:
- *     - metadata
+ *      - metadata
  *    summary: Create Metadata.
  *    operationId: addMetadata
  *    description: |
@@ -154,9 +186,9 @@ router.post('/add', metadataController.add);
  * /api/metadata/update:
  *   post:
  *    security:
- *     - cookieAuth: []
+ *      - cookieAuth: []
  *    tags:
- *     - metadata
+ *      - metadata
  *    summary: Update Metadata.
  *    operationId: updateMetadata
  *    description: |
@@ -235,7 +267,7 @@ router.post('/update', metadataController.update);
  *           schema:
  *             $ref: '#/components/schemas/fetchMetadata'
  *         description: |
- *           `addresses` is a list of user wallets.
+ *           `addresses` is a list of user address.
  */
 router.post('/fetch', metadataController.fetch);
 

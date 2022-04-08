@@ -26,7 +26,7 @@ const utxoController = require('../controllers/utxo');
  *           schema:
  *             type: string
  *             example: "addr_test1qp8lxp6pla5yvnn3rw9vkmkgshlcdyn02mxskxugcysve3xasg22hpmnqezzupsymch9zmv2656xtgpp9nqscr9c5vxqzzfn7n"
- *           description: USER_WALLET
+ *           description: USER_ADDRESS.
  *       summary: Query an utxo.
  *       operationId: getUtxo
  *       description: |
