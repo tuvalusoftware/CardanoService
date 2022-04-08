@@ -62,9 +62,9 @@ execSync(
 );
 
 execSync(
-    `cardano-cli stake-address build --${netWork} --stake-verification-key-file ${auxPath}/${walletName}.stake.pub --out-file ${auxPath}/${walletName}.stake.address`
+    `cardano-cli stake-address build --${netWork} --stake-verification-key-file ${auxPath}/${walletName}.stake.pub --out-file ${auxPath}/${walletName}.stake.addr`
 );
 
 execSync(
-    `cardano-cli address build --${netWork} --payment-verification-key $(cat ${auxPath}/${walletName}.payment.pub) --stake-verification-key $(cat ${auxPath}/${walletName}.stake.pub) --out-file ${auxPath}/${walletName}.payment.address`
+    `cardano-cli address build --${netWork} --payment-verification-key $(cat ${auxPath}/${walletName}.payment.pub) --stake-verification-key $(cat ${auxPath}/${walletName}.stake.pub) --out-file ${auxPath}/${walletName}.payment.addr`
 );

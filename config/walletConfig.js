@@ -18,5 +18,5 @@ module.exports = {
     shelleyGenesisPath: process.env.shelleyGenesisPath,
     cardanoCliDir: path.join(__dirname, '../', 'cardano-cli-js-dir'),
     era: 'alonzo',
-    NAME: 'ferdon-test',
+    NAME: 'fuixlabs',
 };
