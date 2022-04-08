@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2022 - Ferdon Vietnam Limited
  *
- * @author Tran Quoc Khang / ngmitam@ferdon.io
+ * @author Tran Quoc Khang / tkhang@ferdon.io
  */
 
 const express = require('express');
