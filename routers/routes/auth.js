@@ -20,7 +20,7 @@ const authController = require('../controllers/auth');
  *     summary: Login
  *     operationId: userLogin
  *     description: |
- *       This API to get an access token
+ *       **Tested** This API to get an access token
  *     responses:
  *       '200':
  *         description: |

@@ -44,7 +44,7 @@ const metadataController = require('../controllers/metadata');
  *           example: { name: "New your name", weight: "New your weight" }
  *         previous_tx_hash:
  *           type: string
- *           example: "5bd530e619d81f25fb9f2a4c7ec717c546aca23a871ab9e82adc11f30a542dcc"
+ *           example: "df80cd4ccb444830715d8d199b6298784d583ddc19ad0bf4892e29eeceab25c5"
  *
  *     fetchMetadata:
  *       type: object
@@ -56,7 +56,7 @@ const metadataController = require('../controllers/metadata');
  *           items:
  *             type: string
  *           example: [
- *             "addr_test1qqhmep6w4yecfvteu29ts8409l046rkeqxhttdfmq0vrq9kpptnd5df38fpks85s00aenq39s5u7f7lnpp6d6phu38dsqjxn0h"
+ *             "addr_test1qp8lxp6pla5yvnn3rw9vkmkgshlcdyn02mxskxugcysve3xasg22hpmnqezzupsymch9zmv2656xtgpp9nqscr9c5vxqzzfn7n"
  *           ]
  *
  *     addNFT:
@@ -69,8 +69,8 @@ const metadataController = require('../controllers/metadata');
  *           type: object
  *           example: {
  *             name: "Fuixlabs NFT",
- *             description: "This is my NFT",
- *             image: "ipfs://QmSFRoaft8NP5c5nJ3Di5BaWg2XNDFVMzqBYaJRFuEpmN1"
+ *             description: "Fuixlabs Logo",
+ *             image: "ipfs://QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2"
  *           }
  *         asset_name:
  *           type: string
@@ -110,16 +110,14 @@ const metadataController = require('../controllers/metadata');
  *           items:
  *             type: string
  *           example: [
- *             "addr_test1qzt9txrm7u6ewn78vypm64x9am6tw509r2lrtz2jz025ku2ftmhkntlq4m6xwl7hkc6nkx2vssqv7nknr9mne5vh6awq3nvmaa",
- *             "addr_test1qz2lp0c76dzu9xzfccjswsa50fvkc3uke4g0edzxp0xfkjcpvn7l9mxf7y706xawgux0umw8x5x56397u2m3a7xjawsqzu4vuv"
+ *             "addr_test1qzzw0l7qd0t0dtka6cyemd6u765svp5wen8edzzhvxs2r2xasg22hpmnqezzupsymch9zmv2656xtgpp9nqscr9c5vxq5c8xm0"
  *           ]
  *         amounts:
  *           type: array
  *           items:
  *             type: integer
  *           example: [
- *             1,
- *             2
+ *             1
  *           ]
  *
  *     signedTransaction:
@@ -153,7 +151,7 @@ const metadataController = require('../controllers/metadata');
  *    summary: Create Metadata.
  *    operationId: addMetadata
  *    description: |
- *       This API to create a metadata.
+ *       **Tested** This API to create a metadata.
  *    responses:
  *       '200':
  *           description: |
@@ -167,7 +165,7 @@ const metadataController = require('../controllers/metadata');
  *                 properties:
  *                   data:
  *                     type: object
- *                     example: { tx_hash: "" }
+ *                     example: { tx_hash: "df80cd4ccb444830715d8d199b6298784d583ddc19ad0bf4892e29eeceab25c5" }
  *       '401':
  *         $ref: '#/components/responses/UnauthorizedError'
  *    requestBody:
@@ -192,7 +190,7 @@ router.post('/add', metadataController.add);
  *    summary: Update Metadata.
  *    operationId: updateMetadata
  *    description: |
- *       This API to update a metadata.
+ *       **Tested** This API to update a metadata.
  *    responses:
  *       '200':
  *           description: |
@@ -206,7 +204,7 @@ router.post('/add', metadataController.add);
  *                 properties:
  *                   data:
  *                     type: object
- *                     example: { tx_hash: "" }
+ *                     example: { tx_hash: "303d18925b83ce02acd8023498566cd552f5804b754bb4c07e2828a04be3953b" }
  *       '401':
  *         $ref: '#/components/responses/UnauthorizedError'
  *    requestBody:
@@ -223,7 +221,7 @@ router.post('/add', metadataController.add);
  *                 example: { name: "New your name", weight: "New your weight" }
  *               previous_tx_hash:
  *                 type: string
- *                 example: ""
+ *                 example: "df80cd4ccb444830715d8d199b6298784d583ddc19ad0bf4892e29eeceab25c5"
  *       description: |
  *         `new_metadata` is JSON object. You can custom an attributes in metadata.
  *
@@ -242,7 +240,7 @@ router.post('/update', metadataController.update);
  *     summary: Fetch Metadata.
  *     operationId: fetchMetadata
  *     description: |
- *       Returns a list of metadatas from `list of addresses`.
+ *       **Tested** Returns a list of metadatas from `list of addresses`.
  *     responses:
  *       '200':
  *         description: |
@@ -258,7 +256,7 @@ router.post('/update', metadataController.update);
  *                     type: array
  *                     items:
  *                       type: object
- *                     example: []
+ *                     example: [ { "tx_hash": "303d18925b83ce02acd8023498566cd552f5804b754bb4c07e2828a04be3953b", "metadata": { "0": { "company": "Kukulu", "name": "Khang Tran Quoc" } } } ]
  *       '401':
  *         $ref: '#/components/responses/UnauthorizedError'
  *     requestBody:

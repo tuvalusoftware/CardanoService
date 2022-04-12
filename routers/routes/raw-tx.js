@@ -80,8 +80,8 @@ router.post('/get_transfer_ada_raw_transaction/:address', rawTxController.getAda
  *           required: true
  *           schema:
  *             type: string
- *             example: ""
- *           description: ASSET_ID is a string, have must be form <POLICY_ID>.<ASSET_NAME>
+ *             example: "f71f5c9fa76c96b38251b9d09d28167faa732e678f92252a0ee84254.FuixlabsNFT"
+ *           description: ASSET_ID
  *       summary: Get transfer token raw transaction.
  *       operationId: getTransferTokenRawTransaction
  *       description: |

@@ -189,7 +189,7 @@ const getTransferAdaRawTransaction = async (address, receivers, amounts) => {
         }
 
         // Query an utxo
-        wallet = getBalance(wallet);
+        wallet = getBalance(address);
         let utxo = wallet.utxo;
         utxo.forEach((tx) => {
             delete tx.value.undefined;
@@ -209,6 +209,8 @@ const getTransferAdaRawTransaction = async (address, receivers, amounts) => {
             ],
         };
 
+        console.log('hi');
+
         let numberOfLovelaces = 0;
 
         for (let i = 0; i < numberOfTransfer; ++i) {
@@ -227,8 +229,11 @@ const getTransferAdaRawTransaction = async (address, receivers, amounts) => {
 
         tx = JSON.parse(JSON.stringify(tx));
 
+        console.log('hello');
+
         // Build transaction
         const raw = createTransaction(tx, true);
+        console.log('raw', raw);
         if (raw == -1) {
             throw new Error('The rest of lovelaces less than the number of lovelaces to send to user wallet.');
         }

@@ -22,11 +22,11 @@ const nftController = require('../controllers/nft');
  *     summary: Mint an NFT.
  *     operationId: addNFT
  *     description: |
- *       This API to mint an NFT.
+ *       **Tested** This API to mint an NFT.
  *     responses:
  *       '200':
  *         description: |
- *           Returns a transaction hash and an asset id.
+ *           Returns a transaction hash.
  *         content:
  *             application/json:
  *               schema:
@@ -36,7 +36,7 @@ const nftController = require('../controllers/nft');
  *                 properties:
  *                   data:
  *                     type: object
- *                     example: { tx_hash: "", asset_id: "" }
+ *                     example: { tx_hash: "d29cf9398953c0308db5ec8e5725b1a09915d64dbc0c59cd3e26a9acf789807d" }
  *       '401':
  *         $ref: '#/components/responses/UnauthorizedError'
  *     requestBody:
@@ -65,8 +65,8 @@ router.post('/add', nftController.add);
  *           required: true
  *           schema:
  *             type: string
- *             example: "7c45454f3f0ce338647db87e25fee741d544761224c6bd7145a89919.NTFERDON3"
- *           description: ASSET_ID is a string, have must be form **<POLICY_ID>.<ASSET_NAME>**
+ *             example: "f71f5c9fa76c96b38251b9d09d28167faa732e678f92252a0ee84254.FuixlabsNFT"
+ *           description: ASSET_ID
  *         - in: path
  *           name: receiver
  *           required: true
@@ -111,12 +111,12 @@ router.get('/transfer/:asset_id/:receiver', nftController.transferById);
  *         required: true
  *         schema:
  *           type: string
- *           example: "7c45454f3f0ce338647db87e25fee741d544761224c6bd7145a89919.NTFERDON3"
- *         description: ASSET_ID is a string, have must be form <POLICY_ID>.<ASSET_NAME>
+ *           example: "f71f5c9fa76c96b38251b9d09d28167faa732e678f92252a0ee84254.FuixlabsNFT"
+ *         description: ASSET_ID
  *     summary: Fetch an NFT.
  *     operationId: fetchNFT
  *     description: |
- *       This API to fetch an NFT.
+ *       **Tested** This API to fetch an NFT.
  *     responses:
  *       '200':
  *         description: |
@@ -130,7 +130,8 @@ router.get('/transfer/:asset_id/:receiver', nftController.transferById);
  *                 properties:
  *                   data:
  *                     type: object
- *                     example: { metadata: { name: "Ferdon NFT", description: "This is my NFT", image: "ipfs://<IPFS_IMAGE>" } }
+ *                     example: |
+ *                        { "tx_hash": "d29cf9398953c0308db5ec8e5725b1a09915d64dbc0c59cd3e26a9acf789807d", "metadata": { "721": { "f71f5c9fa76c96b38251b9d09d28167faa732e678f92252a0ee84254": { "FuixlabsNFT": { "description": "Fuixlabs Logo", "image": "ipfs://QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2", "name": "Fuixlabs NFT" } } } } }
  *       '401':
  *         $ref: '#/components/responses/UnauthorizedError'
  */

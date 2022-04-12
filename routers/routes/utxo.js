@@ -30,7 +30,7 @@ const utxoController = require('../controllers/utxo');
  *       summary: Query an utxo.
  *       operationId: getUtxo
  *       description: |
- *         This API to query an utxo belongs to address.
+ *         **Tested** This API to query an utxo belongs to address.
  *       responses:
  *         '200':
  *           description: |
@@ -44,7 +44,7 @@ const utxoController = require('../controllers/utxo');
  *                 properties:
  *                   data:
  *                     type: object
- *                     example: { }
+ *                     example: { "utxo": [ { "txHash": "d29cf9398953c0308db5ec8e5725b1a09915d64dbc0c59cd3e26a9acf789807d", "txId": 0, "value": { "lovelace": 2999434329, "f71f5c9fa76c96b38251b9d09d28167faa732e678f92252a0ee84254.467569786c6162734e4654": 1, "undefined": null } } ] }
  *         '401':
  *           $ref: '#/components/responses/UnauthorizedError'
  */
