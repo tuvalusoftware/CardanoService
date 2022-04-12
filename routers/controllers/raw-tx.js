@@ -33,6 +33,7 @@ module.exports = {
         try {
             raw_txs = await core.getTransferAdaRawTransaction(address, to, amounts);
         } catch (err) {
+            console.log(err);
             return next(new Error('Failed'));
         }
         return res.json({ data: { raw_txs } });
@@ -48,6 +49,7 @@ module.exports = {
         try {
             raw_txs = await core.getTransferTokenRawTransaction(address, policy_id, asset_name, to, amounts);
         } catch (err) {
+            console.log(err);
             return next(new Error('Failed'));
         }
         return res.json({ data: { raw_txs } });

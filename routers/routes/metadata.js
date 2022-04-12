@@ -87,8 +87,8 @@ const metadataController = require('../controllers/metadata');
  *           items:
  *             type: string
  *           example: [
- *             "addr_test1qzt9txrm7u6ewn78vypm64x9am6tw509r2lrtz2jz025ku2ftmhkntlq4m6xwl7hkc6nkx2vssqv7nknr9mne5vh6awq3nvmaa",
- *             "addr_test1qz2lp0c76dzu9xzfccjswsa50fvkc3uke4g0edzxp0xfkjcpvn7l9mxf7y706xawgux0umw8x5x56397u2m3a7xjawsqzu4vuv"
+ *             "addr_test1qzgqqn2xksnztn7swah66fzygleeuzfea4ackw090qr0pswasg22hpmnqezzupsymch9zmv2656xtgpp9nqscr9c5vxq5s2gpc",
+ *             "addr_test1qz6lvs4jjx542wre08hq480qu6rnrlzu8v2jrt0rcwqa5rkasg22hpmnqezzupsymch9zmv2656xtgpp9nqscr9c5vxqz2cadp"
  *           ]
  *         quantities:
  *           type: array
@@ -126,8 +126,8 @@ const metadataController = require('../controllers/metadata');
  *         - signedTransaction
  *       properties:
  *         signedTransaction:
- *           type: string
- *           example: "zzz"
+ *           type: object
+ *           example: { "type": "Tx AlonzoEra", "description": "", "cborHex": "84a800818258208f3bb913a219ef2dc45a10f42655e87ceae1436d490f9f9169aff4a593e1d64f000d800181825839004ff30741ff68464e711b8acb6ec885ff86926f56cd0b1b88c120ccc4dd8214ab877306442e0604de2e516d8ad53465a0212cc10c0cb8a30c821ab246cd90a1581c9240af1f8d58795698b667e8f09e96e85508cd7339f8fbdfb62555a8a14a467569786c6162734e541a0001869a021a0002ca61031a034d2ff608000e80075820dabc19288ab3f2aa4d9ac48bc5928954e587a3bbff40a69ecbbe6e945bde39b7a10081825820d79fab855a8297f853aff8ece0b6ee6bbec995ca4f33e934512340df09b40c585840eeb4c49c5e1b058badcddb2fa09ed0e2e032c80c0844815870ce5c23ad420cecc66a69102c177df93dfc3226eb22b6098e6a4acbbb20762ccbb89d66aaf92300f5d90103a100a100a2686c6f636174696f6e6643616e74686f646e616d6568467569786c616273" }
  *
  *     userLogin:
  *       type: object

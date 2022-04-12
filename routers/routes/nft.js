@@ -72,12 +72,12 @@ router.post('/add', nftController.add);
  *           required: true
  *           schema:
  *             type: string
- *             example: "addr_test1qzt9txrm7u6ewn78vypm64x9am6tw509r2lrtz2jz025ku2ftmhkntlq4m6xwl7hkc6nkx2vssqv7nknr9mne5vh6awq3nvmaa"
+ *             example: "addr_test1qrn968w8gla0j66h7pfygrygvunvad8nt0nplgd4w6ud2ykasg22hpmnqezzupsymch9zmv2656xtgpp9nqscr9c5vxq3jdr0p"
  *           description: USER_ADDRESS
  *       summary: Transfer an NFT.
  *       operationId: transferNFT
  *       description: |
- *         This API to transfer an NFT.
+ *         **Tested** This API to transfer an NFT.
  *       responses:
  *         '200':
  *           description: |
@@ -91,7 +91,7 @@ router.post('/add', nftController.add);
  *                 properties:
  *                   data:
  *                     type: object
- *                     example: { tx_hash: "" }
+ *                     example: { tx_hash: "8f3bb913a219ef2dc45a10f42655e87ceae1436d490f9f9169aff4a593e1d64f" }
  *         '401':
  *           $ref: '#/components/responses/UnauthorizedError'
  */

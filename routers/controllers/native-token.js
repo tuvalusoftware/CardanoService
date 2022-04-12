@@ -16,6 +16,7 @@ module.exports = {
         try {
             tx_hashes = await core.airdropById(policyId, asset_name, receivers, quantities);
         } catch (err) {
+            console.log(err);
             return next(new Error('Failed'));
         }
         return res.json({ data: { tx_hashes } });

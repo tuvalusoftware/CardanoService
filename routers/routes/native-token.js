@@ -25,12 +25,12 @@ const nativeTokenController = require('../controllers/native-token');
  *           required: true
  *           schema:
  *             type: string
- *             example: "7c45454f3f0ce338647db87e25fee741d544761224c6bd7145a89919.NTFERDON3"
- *           description: ASSET_ID is a string, have must be form <POLICY_ID>.<ASSET_NAME>
+ *             example: "9240af1f8d58795698b667e8f09e96e85508cd7339f8fbdfb62555a8.FuixlabsNT"
+ *           description: ASSET_ID.
  *       summary: Airdrop Native Tokens.
  *       operationId: airDrop
  *       description: |
- *         This API to airdrop Native Tokens.
+ *         **Tested** This API to airdrop Native Tokens.
  *       responses:
  *         '200':
  *           description: |
@@ -44,7 +44,7 @@ const nativeTokenController = require('../controllers/native-token');
  *                 properties:
  *                   data:
  *                     type: object
- *                     example: { tx_hash: ["5bd530e619d81f25fb9f2a4c7ec717c546aca23a871ab9e82adc11f30a542dcc", "19ba88782121a967e8b801724195be16df4ccd450e8bddd2a94951e662c41cdf"] }
+ *                     example: { tx_hash: ["89bd67c4825fa98421ba400ebf77c623c76295282a34e37f179d9da898079b8c"] }
  *         '401':
  *           $ref: '#/components/responses/UnauthorizedError'
  *       requestBody:

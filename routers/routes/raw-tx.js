@@ -30,7 +30,7 @@ const rawTxController = require('../controllers/raw-tx');
  *       summary: Get transfer ada raw transaction.
  *       operationId: getTransferAdaRawTransaction
  *       description: |
- *         This API to get transfer ada raw transaction.
+ *         **Tested** This API to get transfer ada raw transaction.
  *       responses:
  *         '200':
  *           description: |
@@ -44,7 +44,7 @@ const rawTxController = require('../controllers/raw-tx');
  *                 properties:
  *                   data:
  *                     type: object
- *                     example: { }
+ *                     example: { "type": "Buffer", "data": [ 123, 10, 32, 32, 32, 32, 34, 116, 121, 112, 101, ] }
  *         '401':
  *           $ref: '#/components/responses/UnauthorizedError'
  *       requestBody:
@@ -80,12 +80,12 @@ router.post('/get_transfer_ada_raw_transaction/:address', rawTxController.getAda
  *           required: true
  *           schema:
  *             type: string
- *             example: "f71f5c9fa76c96b38251b9d09d28167faa732e678f92252a0ee84254.FuixlabsNFT"
+ *             example: "9240af1f8d58795698b667e8f09e96e85508cd7339f8fbdfb62555a8.FuixlabsNT"
  *           description: ASSET_ID
  *       summary: Get transfer token raw transaction.
  *       operationId: getTransferTokenRawTransaction
  *       description: |
- *         This API to get transfer token raw transaction.
+ *         **Tested** This API to get transfer token raw transaction.
  *       responses:
  *         '200':
  *           description: |
@@ -99,7 +99,7 @@ router.post('/get_transfer_ada_raw_transaction/:address', rawTxController.getAda
  *                 properties:
  *                   data:
  *                     type: object
- *                     example: { }
+ *                     example: { "type": "Buffer", "data": [ 123, 10, 32, 32, 32, 32, 34, 116, 121, 112, 101, ] }
  *         '401':
  *           $ref: '#/components/responses/UnauthorizedError'
  *       requestBody:
@@ -133,7 +133,7 @@ router.post('/get_transfer_token_raw_transaction/:address/:token_address', rawTx
  *       summary: Get transfer metadata raw transaction.
  *       operationId: getTransferMetadataRawTransaction
  *       description: |
- *         This API to get transfer metadata raw transaction.
+ *         **Tested** This API to get transfer metadata raw transaction.
  *       responses:
  *         '200':
  *           description: |
@@ -147,7 +147,7 @@ router.post('/get_transfer_token_raw_transaction/:address/:token_address', rawTx
  *                 properties:
  *                   data:
  *                     type: object
- *                     example: { }
+ *                     example: { "type": "Buffer", "data": [ 123, 10, 32, 32, 32, 32, 34, ] }
  *         '401':
  *           $ref: '#/components/responses/UnauthorizedError'
  *       requestBody:
@@ -179,7 +179,7 @@ router.post('/get_create_metadata_raw_transaction/:address', rawTxController.get
  *       summary: Submit a signed transaction.
  *       operationId: submitSignedTransaction
  *       description: |
- *         This API to submit a signed transaction.
+ *         **Tested** This API to submit a signed transaction.
  *       responses:
  *         '200':
  *           description: |
@@ -193,7 +193,7 @@ router.post('/get_create_metadata_raw_transaction/:address', rawTxController.get
  *                 properties:
  *                   data:
  *                     type: object
- *                     example: { }
+ *                     example: { "tx_id": "43ce8415845dd6cdfbb77f2c462b87c5219d7c2c26993480b728d84cb6518db0" }
  *         '401':
  *           $ref: '#/components/responses/UnauthorizedError'
  *       requestBody:
@@ -202,7 +202,7 @@ router.post('/get_create_metadata_raw_transaction/:address', rawTxController.get
  *             schema:
  *               $ref: '#/components/schemas/signedTransaction'
  *         description: |
- *           zzzz.
+ *           .
  */
 router.post('/submit_signed_transaction/:address', rawTxController.submitSignedTx);
 
