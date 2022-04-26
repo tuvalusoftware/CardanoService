@@ -1,6 +1,6 @@
 # Guide
 
-Step 0. Create .env file in root and copy-paste: 
+Step 0. Create `.env` file in root and copy-paste: 
 
 ```
 isTestnet=#
