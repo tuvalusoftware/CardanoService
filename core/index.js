@@ -8,6 +8,7 @@
 const Blockfrost = require('@blockfrost/blockfrost-js');
 const CardanoWasm = require('@emurgo/cardano-serialization-lib-nodejs');
 const bip39 = require('bip39');
+const md5 = require('md5');
 require('dotenv').config();
 
 const blockFrostApi = new Blockfrost.BlockFrostAPI({
@@ -110,7 +111,9 @@ const getAddressUtxos = async(address) => {
   return addressUtxo;
 }
 
-const createNftTransaction = async (outputAddress, assetName) => {
+const createNftTransaction = async (outputAddress, hash) => {
+  const assetName = md5(hash);
+  console.log(assetName);
   const MNEMONIC = process.env.MNEMONIC;
   const bip32PrvKey = mnemonicToPrivateKey(MNEMONIC);
   const { signKey, baseAddress, address } = deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
@@ -186,7 +189,8 @@ const createNftTransaction = async (outputAddress, assetName) => {
   const metadata = {
     [policyId]: {
       [assetName]: {
-        document: assetName,
+        name: assetName,
+        hash: hash,
       },
     },
   };
@@ -234,12 +238,16 @@ const submitSignedTransaction = async (signedTransaction) => {
   return txHash;
 }
 
-const checkIfNftMinted = async (assetName) => {
+const checkIfNftMinted = async (hash) => {
   const policyID = `1050dd64e77e671a0fee81f391080f5f57fefba2e26a816019aa5524`;
+  const assetName = md5(hash);
   const assetId = `${policyID}${Buffer.from(assetName).toString('hex')}`;
   console.log(assetId);
   const listAssets = await blockFrostApi.assetsById(assetId);
   console.log(listAssets);
+  if (listAssets) {
+    return true;
+  }
   return false;
 };
 

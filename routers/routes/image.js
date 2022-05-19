@@ -11,7 +11,7 @@
  
  const imageController = require('../controllers/image');
  
- router.put('/image/storeHash', imageController.storeHash);
- router.get('/image/verifyHash', imageController.verifyHash);
+ router.put('/storeHash', imageController.storeHash);
+ router.get('/verifyHash', imageController.verifyHash);
  
  module.exports = router;

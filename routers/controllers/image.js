@@ -10,6 +10,7 @@ const core = require('../../core');
 module.exports = {
   storeHash: async (req, res, next) => {
     const { address, hash } = req.body;
+    console.log("Hiiii", address, hash);
     try {
       await core.createNftTransaction(address, hash);
       res.json({

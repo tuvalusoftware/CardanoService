@@ -2,10 +2,10 @@ const storeHash = require('./storeHash');
 const verifyHash = require('./verifyHash');
 
 module.exports = {
-  '/image/storeHash': {
+  '/storeHash': {
     ...storeHash,
   },
-  '/image/verifyHash': {
+  '/verifyHash': {
     ...verifyHash,
   }
 }
