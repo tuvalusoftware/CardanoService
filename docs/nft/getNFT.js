@@ -1,7 +1,7 @@
 module.exports = {
   get: {
     tags: ["Asset"],
-    description: "Get NFT Metadata",
+    description: "Get NFT metadata",
     operationId: "getNFTMetadata",
     parameters: [
       {

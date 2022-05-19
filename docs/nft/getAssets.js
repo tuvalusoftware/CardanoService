@@ -1,7 +1,7 @@
 module.exports = {
   get: {
     tags: ["Asset"],
-    description: "Get Assets of Address",
+    description: "Get assets of address",
     operationId: "getAssets",
     parameters: [
       {

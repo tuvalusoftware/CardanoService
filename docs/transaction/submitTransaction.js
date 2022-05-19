@@ -1,5 +1,5 @@
 module.exports = {
-  get: {
+  post: {
     tags: ["Transaction"],
     description: "Submit signed transaction",
     operationId: "submitSignedTransaction",
@@ -10,7 +10,7 @@ module.exports = {
           schema: {
             type: "object",
             properties: {
-              signedtTransaction: {
+              signedTransaction: {
                 type: "array",
                 items: {
                   type: "array",

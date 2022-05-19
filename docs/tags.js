@@ -12,5 +12,8 @@ module.exports = {
     {
       name: "Utilities",
     },
+    {
+      name: "Image",
+    },
   ],
 };

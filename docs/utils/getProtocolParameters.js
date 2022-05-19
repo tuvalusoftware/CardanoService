@@ -1,7 +1,7 @@
 module.exports = {
   get: {
     tags: ["Utilities"],
-    description: "Get Protocol Parameter",
+    description: "Get protocol parameter",
     operationId: "getProtocolParameter",
     responses: {
       200: {

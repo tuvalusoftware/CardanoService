@@ -4,7 +4,17 @@ module.exports = {
       Address: {
         type: "string",
         description: "Address",
-        example: "addr_test1qpfufyatxx9e349at0ltac2h7vazctw0yafwsxx4trugvl25y50u28gj3jvqskzujhmxkrz3gmwalra0ardlz00x2a6qmwuqsm",
+        example: "addr_test1qq53em6pdpswwc7mmeq50848emp4u7gmhp2dft4ud0lhar54000k46cgk82rmlfjysyxyvh9qkj7vtuc69ulgdypcnssjk3hur",
+      },
+      Hash: {
+        type: "string",
+        description: "Hash",
+        example: "fffffff",
+      },
+      Did: {
+        type: "string",
+        description: "DID",
+        example: "did:method:companyName:documentName:hash",
       },
       Label: {
         type: "number",
