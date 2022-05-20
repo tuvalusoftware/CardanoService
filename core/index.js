@@ -53,6 +53,16 @@ const getAssetsFromAddress = async (address) => {
   return listAssets.amount;
 };
 
+const getAddressesFromAssetId = async (assetId) => {
+  let listAddresses = [];
+  try {
+    listAddresses = await blockFrostApi.assetsAddresses(assetId);
+  } catch (error) {
+    return listAddresses;
+  }
+  return listAddresses;
+};
+
 const getSpecificAssetByAssetId = async (asset) => {
   const assetInfo = await blockFrostApi.assetsById(asset);
   return assetInfo;
@@ -181,16 +191,22 @@ const createNftTransaction = async (outputAddress, hash) => {
   transactionBuilder.add_mint_asset_and_output_min_required_coin(
     mintScript,
     CardanoWasm.AssetName.new(Buffer.from(assetName)),
-    CardanoWasm.Int.new_i32(1),
+    CardanoWasm.Int.new_i32(-5),
     CardanoWasm.TransactionOutputBuilder.new().with_address(CardanoWasm.Address.from_bech32(outputAddress)).next(),
   );
   const policyId = Buffer.from(mintScript.hash().to_bytes()).toString('hex');
   console.log('policyID: ', policyId);
+  const assetId = `${policyID}${Buffer.from(assetName).toString('hex')}`;
+  const listAddresses = await this.getAddressesFromAssetId(assetId);
+  if (listAddresses.length > 0 && listAddresses.find(a => a.address === outputAddress)) {
+    throw Error('Minted');
+  }
   const metadata = {
     [policyId]: {
       [assetName]: {
         name: assetName,
         hash: hash,
+        address: outputAddress
       },
     },
   };
@@ -246,7 +262,15 @@ const checkIfNftMinted = async (hash) => {
   const listAssets = await blockFrostApi.assetsById(assetId);
   console.log(listAssets);
   if (listAssets) {
-    return true;
+    const ownerAddress = (listAssets.onchain_metadata.address || undefined);
+    if (!ownerAddress) {
+      throw Error('Owner address not found.');
+    }
+    const listAddresses = await this.getAddressesFromAssetId(assetId);
+    if (listAddresses.length > 0 && listAddresses.find(a => a.address === ownerAddress)) {
+      return true;
+    }
+    throw Error('Burned.');
   }
   return false;
 };
@@ -255,6 +279,7 @@ module.exports = {
   getLatestBlock,
   getLatestEpoch,
   getProtocolParameters,
+  getAddressesFromAssetId,
   getLatestEpochProtocolParameters,
   getMetadataByLabel,
   getAssetsFromAddress,
