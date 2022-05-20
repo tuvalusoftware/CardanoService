@@ -37,4 +37,9 @@ module.exports = {
       });
     }
   },
+  getPolicyId: async (req, res, next) => {
+    res.json({
+      result: core.getCurrentPolicyId(),
+    });
+  }
 };

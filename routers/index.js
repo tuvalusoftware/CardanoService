@@ -10,12 +10,12 @@ const nftRoutes = require('./routes/nft');
 const metadataRoutes = require('./routes/metadata');
 const utilsRoutes = require('./routes/utils');
 const transactionRoutes = require('./routes/transaction');
-const imageRoutes = require('./routes/image');
+const hashRoutes = require('./routes/hash');
 
 module.exports = (app) => {
   app.use(`${constants.baseApi}`, nftRoutes);
   app.use(`${constants.baseApi}`, metadataRoutes);
   app.use(`${constants.baseApi}`, utilsRoutes);
   app.use(`${constants.baseApi}`, transactionRoutes);
-  app.use(`${constants.baseApi}`, imageRoutes);
+  app.use(`${constants.baseApi}`, hashRoutes);
 };

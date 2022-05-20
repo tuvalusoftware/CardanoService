@@ -6,14 +6,14 @@ const metadata = require('./metadata');
 const nft = require('./nft');
 const utils = require('./utils');
 const transaction = require('./transaction');
-const image = require('./image');
+const hash = require('./hash');
 
 const paths = {
   ...nft,
   ...metadata,
   ...utils,
   ...transaction,
-  ...image
+  ...hash
 };
 
 module.exports = {

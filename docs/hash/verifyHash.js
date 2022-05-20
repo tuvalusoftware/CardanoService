@@ -1,6 +1,6 @@
 module.exports = {
   get: {
-    tags: ["Image"],
+    tags: ["Hash"],
     description: "Check the hash",
     operationId: "verifyHash",
     parameters: [

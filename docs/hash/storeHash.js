@@ -1,6 +1,6 @@
 module.exports = {
   put: {
-    tags: ["Image"],
+    tags: ["Hash"],
     description: "Store the hash as CNFT",
     operationId: "storeHash",
     parameters: [],

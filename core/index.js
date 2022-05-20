@@ -16,6 +16,11 @@ const blockFrostApi = new Blockfrost.BlockFrostAPI({
   isTestnet: process.env.isTestnet,
 });
 
+const getDatumValueFromDatumHash = async (datumHash) => {
+  const datumValue = await blockFrostApi.scriptsDatum(datumHash);
+  return datumValue;
+};
+
 const getLatestBlock = async () => {
   const latestBlock = await blockFrostApi.blocksLatest();
   return latestBlock;
@@ -191,7 +196,7 @@ const createNftTransaction = async (outputAddress, hash) => {
   transactionBuilder.add_mint_asset_and_output_min_required_coin(
     mintScript,
     CardanoWasm.AssetName.new(Buffer.from(assetName)),
-    CardanoWasm.Int.new_i32(-5),
+    CardanoWasm.Int.new_i32(1),
     CardanoWasm.TransactionOutputBuilder.new().with_address(CardanoWasm.Address.from_bech32(outputAddress)).next(),
   );
   const policyId = Buffer.from(mintScript.hash().to_bytes()).toString('hex');
@@ -255,7 +260,7 @@ const submitSignedTransaction = async (signedTransaction) => {
 }
 
 const checkIfNftMinted = async (hash) => {
-  const policyID = `1050dd64e77e671a0fee81f391080f5f57fefba2e26a816019aa5524`;
+  const policyID = this.getCurrentPolicyId();
   const assetName = md5(hash);
   const assetId = `${policyID}${Buffer.from(assetName).toString('hex')}`;
   console.log(assetId);
@@ -275,9 +280,20 @@ const checkIfNftMinted = async (hash) => {
   return false;
 };
 
+const getCurrentPolicyId = () => {
+  if (!process.env.policyId) {
+    throw Error('PolicyID not found.');
+  }
+  return process.env.policyId;
+}
+
 module.exports = {
+  getAddressUtxos,
+  mnemonicToPrivateKey,
+  deriveAddressPrvKey,
   getLatestBlock,
   getLatestEpoch,
+  getDatumValueFromDatumHash,
   getProtocolParameters,
   getAddressesFromAssetId,
   getLatestEpochProtocolParameters,
@@ -286,6 +302,7 @@ module.exports = {
   getSpecificAssetByAssetId,
   getSpecificAssetByPolicyId,
   checkIfNftMinted,
+  getCurrentPolicyId,
   createNftTransaction,
   submitSignedTransaction,
 };

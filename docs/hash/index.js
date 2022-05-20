@@ -1,5 +1,6 @@
 const storeHash = require('./storeHash');
 const verifyHash = require('./verifyHash');
+const getPolicyId = require('./getPolicyId');
 
 module.exports = {
   '/storeHash': {
@@ -7,5 +8,8 @@ module.exports = {
   },
   '/verifyHash': {
     ...verifyHash,
+  },
+  '/getPolicyId': {
+    ...getPolicyId,
   }
 }

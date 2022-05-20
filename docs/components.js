@@ -9,7 +9,7 @@ module.exports = {
       Hash: {
         type: "string",
         description: "Hash",
-        example: "fffffff",
+        example: "aa51202b3df8bb0a109f484b4982d70adc046d89eabddfc02df2c0a3aa3d8d7a",
       },
       Did: {
         type: "string",
@@ -110,14 +110,17 @@ module.exports = {
           onchain_metadata: {
             type: "object",
             description: "Onchain metadata",
-            example: {
-              "name": "Berry Aurelia",
-              "image": "ipfs://ipfs/QmdtJ6s9Fe9kUXzUkS8TMYSusVcYhqtuoD4vVsnd2V7hBg",
-              "id": 39,
-              "color": "#8D2759"
+            properties: {
+              name: {
+                type: "string",
+                example: "Berry Aurelia",
+              },
+              image: {
+                type: "string",
+                example: "ipfs://ipfs/QmdtJ6s9Fe9kUXzUkS8TMYSusVcYhqtuoD4vVsnd2V7hBg",
+              },
             },
           },
-          metadata: null
         },
       },
       ProtocolParameter: {
