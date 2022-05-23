@@ -9,10 +9,10 @@ MNEMONIC=#
 policyId=#
 ```
 
-Step 0.1. To get policyId, run:
+Step 0.1. To get policyId, run (in root dir):
 
 ```
-node scripts/generate_policyid.js
+npm run policy
 ```
 
 **You must fill MNEMONIC, blockFrostApiKey and isTestnet before run.**

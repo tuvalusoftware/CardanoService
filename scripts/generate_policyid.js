@@ -8,7 +8,8 @@ const Resolve = () => {
   }
   const MNEMONIC = process.env.MNEMONIC;
   const bip32PrvKey = core.mnemonicToPrivateKey(MNEMONIC);
-  const { _, baseAddress, __ } = core.deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
+  const { _, baseAddress, address } = core.deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
+  console.log(`Using address ${address}`);
   const scripts = CardanoWasm.NativeScripts.new();
   const policyKeyHash = CardanoWasm.BaseAddress.from_address(baseAddress).payment_cred().to_keyhash();
   const keyHashScript = CardanoWasm.NativeScript.new_script_pubkey(CardanoWasm.ScriptPubkey.new(policyKeyHash));
