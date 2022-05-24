@@ -81,35 +81,59 @@ const blockFrostApi = new Blockfrost.BlockFrostAPI({
 });
 
 const getDatumValueFromDatumHash = async (datumHash) => {
-  const datumValue = await blockFrostApi.scriptsDatum(datumHash);
-  return datumValue;
+  try {
+    const datumValue = await blockFrostApi.scriptsDatum(datumHash);
+    return datumValue;
+  } catch (error) {
+    throw new Error;
+  }
 };
 
 const getLatestBlock = async () => {
-  const latestBlock = await blockFrostApi.blocksLatest();
-  return latestBlock;
+  try {
+    const latestBlock = await blockFrostApi.blocksLatest();
+    return latestBlock;
+  } catch (error) {
+    throw new Error(error);
+  }
 };
 
 const getLatestEpoch = async () => {
-  const latestEpoch = await blockFrostApi.epochsLatest();
-  return latestEpoch;
+  try {
+    const latestEpoch = await blockFrostApi.epochsLatest();
+    return latestEpoch;
+  } catch (error) {
+    throw new Error(error);
+  }
 };
 
 const getProtocolParameters = async (epoch) => {
-  const protocolParameters = await blockFrostApi.epochsParameters(epoch);
-  return protocolParameters;
+  try {
+    const protocolParameters = await blockFrostApi.epochsParameters(epoch);
+    return protocolParameters;
+  } catch (error) {
+    throw new Error(error);
+  }
 };
 
 const getLatestEpochProtocolParameters = async () => {
-  const latestEpoch = await getLatestEpoch();
-  const latestBlock = await getLatestBlock();
-  const protocolParameters = await getProtocolParameters(latestEpoch.epoch);
-  return { ...protocolParameters, latestBlock };
+  try {
+    const latestEpoch = await getLatestEpoch();
+    const latestBlock = await getLatestBlock();
+    const protocolParameters = await getProtocolParameters(latestEpoch.epoch);
+    return { ...protocolParameters, latestBlock };
+  } catch (error) {
+    throw new Error(error);
+  }
 };
 
 const getMetadataByLabel = async (label) => {
-  const metadata = await blockFrostApi.metadataTxsLabel(label);
-  return metadata;
+  try {
+    const metadata = await blockFrostApi.metadataTxsLabel(label);
+    return metadata;
+  } catch (error) {
+    throw new Error(error);
+  }
 }
 
 const getAssetsFromAddress = async (address) => {
@@ -298,7 +322,6 @@ const createNftTransaction = async (outputAddress, hash) => {
   const witnesses = CardanoWasm.TransactionWitnessSet.new();
   const vkeyWitnesses = CardanoWasm.Vkeywitnesses.new();
   vkeyWitnesses.add(CardanoWasm.make_vkey_witness(transactionHash, signKey));
-  // vkeyWitnesses.add(CardanoWasm.make_vkey_witness(transactionHash, signKey));
   witnesses.set_vkeys(vkeyWitnesses);
   witnesses.set_native_scripts;
   const witnessScripts = CardanoWasm.NativeScripts.new();

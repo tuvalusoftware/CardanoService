@@ -4,11 +4,11 @@ require('dotenv').config();
 
 const Resolve = () => {
   if (!process.env.mNemonic || !process.env.isTestnet) {
-    throw Error('Error');
+    throw new Error('mNemonic or isTestnet (in .env file) not found');
   }
   const mNemonic = process.env.mNemonic;
   const bip32PrvKey = core.mnemonicToPrivateKey(mNemonic);
-  const { _, baseAddress, address } = core.deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
+  const { signKey, baseAddress, address } = core.deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
   console.log(`Using address ${address}`);
   const scripts = CardanoWasm.NativeScripts.new();
   const policyKeyHash = CardanoWasm.BaseAddress.from_address(baseAddress).payment_cred().to_keyhash();
@@ -22,4 +22,4 @@ const Resolve = () => {
   return policyId;
 };
 
-console.log(Resolve());
+console.log("Your policyId: ", Resolve());
