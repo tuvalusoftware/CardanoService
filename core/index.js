@@ -7,9 +7,73 @@
 
 const Blockfrost = require('@blockfrost/blockfrost-js');
 const CardanoWasm = require('@emurgo/cardano-serialization-lib-nodejs');
+const { COSESign1, Label } = require("@emurgo/cardano-message-signing-nodejs");
 const bip39 = require('bip39');
 const md5 = require('md5');
 require('dotenv').config();
+
+class SignedData {
+  constructor(signed) {
+    let message = COSESign1.from_bytes(Buffer.from(Buffer.from(signed, 'hex'), 'hex'));
+    let headerMap = message.headers().protected().deserialized_headers();
+    this.headers = {
+      algorithmId: headerMap.algorithm_id().as_int().as_i32(),
+      address: CardanoWasm.Address.from_bytes(headerMap.header(Label.new_text('address')).as_bytes()),
+      publicKey: CardanoWasm.PublicKey.from_bytes(headerMap.key_id())
+    };
+    this.payload = message.payload();
+    this.signature = CardanoWasm.Ed25519Signature.from_bytes(message.signature());
+    this.data = message.signed_data().to_bytes();
+  }
+
+  verify(address, payload) {
+    if (!this.verifyPayload(payload)) {
+      throw new Error('Payload does not match');
+    }
+    if (!this.verifyAddress(address)) {
+      throw new Error('Could not verify because of address mismatch');
+    }
+    return this.headers.publicKey.verify(this.data, this.signature);
+  }
+
+  verifyPayload(payload) {
+    const hexMessage = Buffer.from(this.payload, 'hex');
+    const stringMessage = hexMessage.toString();
+    return payload === stringMessage;
+  }
+
+  verifyAddress(address) {
+    const checkAddress = CardanoWasm.Address.from_bech32(address);
+    if (this.headers.address.to_bech32() !== checkAddress.to_bech32()) {
+      console.log('Address does not match');
+      return false;
+    }
+    try {
+      const baseAddress = CardanoWasm.BaseAddress.from_address(this.headers.address);
+      const paymentKeyHash = this.headers.publicKey.hash();
+      const stakeKeyHash = baseAddress.stake_cred().to_keyhash();
+      const reconstructedAddress = CardanoWasm.BaseAddress.new(
+        checkAddress.network_id(),
+        CardanoWasm.StakeCredential.from_keyhash(paymentKeyHash),
+        CardanoWasm.StakeCredential.from_keyhash(stakeKeyHash)
+      );
+      return checkAddress.to_bech32() === reconstructedAddress.to_address().to_bech32();
+    } catch (e) {
+      throw new Error(e);
+    }
+    try {
+      const stakeKeyHash = this.headers.address.hash();
+      const reconstructedAddress = CardanoWasm.RewardAddress.new(
+        checkAddress.network_id(),
+        CardanoWasm.StakeCredential.from_keyhash(stakeKeyHash)
+      );
+      return checkAddress.to_bech32() === reconstructedAddress.to_address().to_bech32();
+    } catch (e) {
+      throw new Error(e);
+    }
+    return false;
+  };
+};
 
 const blockFrostApi = new Blockfrost.BlockFrostAPI({
   projectId: process.env.blockFrostApiKey,
@@ -53,7 +117,7 @@ const getAssetsFromAddress = async (address) => {
   try {
     listAssets = await blockFrostApi.addresses(address);
   } catch (error) {
-    return listAssets;
+    throw new Error(error);
   }
   return listAssets.amount;
 };
@@ -63,18 +127,28 @@ const getAddressesFromAssetId = async (assetId) => {
   try {
     listAddresses = await blockFrostApi.assetsAddresses(assetId);
   } catch (error) {
-    return listAddresses;
+    throw new Error(error);
   }
   return listAddresses;
 };
 
 const getSpecificAssetByAssetId = async (asset) => {
-  const assetInfo = await blockFrostApi.assetsById(asset);
+  let assetInfo = {};
+  try {
+    assetInfo = await blockFrostApi.assetsById(asset);
+  } catch (error) {
+    throw new Error(error);
+  }
   return assetInfo;
 };
 
 const getSpecificAssetByPolicyId = async (policyId) => {
-  const assetInfo = await blockFrostApi.assetsPolicyById(policyId);
+  let assetInfo = {};
+  try {
+    assetInfo = await blockFrostApi.assetsPolicyById(policyId);
+  } catch (error) {
+    throw new Error(error);
+  }
   return assetInfo;
 };
 
@@ -128,7 +202,6 @@ const getAddressUtxos = async(address) => {
 
 const createNftTransaction = async (outputAddress, hash) => {
   const assetName = md5(hash);
-  console.log(assetName);
   const mNemonic = process.env.mNemonic;
   const bip32PrvKey = mnemonicToPrivateKey(mNemonic);
   const { signKey, baseAddress, address } = deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
@@ -142,7 +215,7 @@ const createNftTransaction = async (outputAddress, hash) => {
   const latestBlock = await getLatestBlock();
   const currentSlot = latestBlock.slot;
   if (!currentSlot) {
-    throw Error('Failed to fetch slot number');
+    throw new Error('Failed to fetch slot number');
   }
   const transactionBuilder = CardanoWasm.TransactionBuilder.new(
     CardanoWasm.TransactionBuilderConfigBuilder.new()
@@ -180,7 +253,7 @@ const createNftTransaction = async (outputAddress, hash) => {
     }
   }
   if (bestUtxo === null) {
-    throw Error('Utxo not found.');
+    throw new Error('Utxo not found');
   }
   console.log(bestUtxo);
   transactionBuilder.add_key_input(
@@ -200,11 +273,10 @@ const createNftTransaction = async (outputAddress, hash) => {
     CardanoWasm.TransactionOutputBuilder.new().with_address(CardanoWasm.Address.from_bech32(outputAddress)).next(),
   );
   const policyId = Buffer.from(mintScript.hash().to_bytes()).toString('hex');
-  console.log('policyID: ', policyId);
   const assetId = `${policyId}${Buffer.from(assetName).toString('hex')}`;
   const listAddresses = await getAddressesFromAssetId(assetId);
   if (listAddresses.length > 0 && listAddresses.find(a => a.address === outputAddress)) {
-    throw Error('Minted');
+    throw new Error('NFT Minted');
   }
   const metadata = {
     [policyId]: {
@@ -240,9 +312,7 @@ const createNftTransaction = async (outputAddress, hash) => {
   );
   try {
     const result = await submitSignedTransaction(transaction.to_bytes());
-    if (!result) {
-      console.log(`Transaction successfully submitted: ${result}`)
-    }
+    console.log(`Transaction successfully submitted: ${result}`)
   } catch (error) {
     // Submit could fail if the transactions is rejected by cardano node
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 400) {
@@ -255,7 +325,12 @@ const createNftTransaction = async (outputAddress, hash) => {
 }
 
 const submitSignedTransaction = async (signedTransaction) => {
-  const txHash = await blockFrostApi.txSubmit(signedTransaction);
+  let txHash = null;
+  try {
+    txHash = await blockFrostApi.txSubmit(signedTransaction);
+  } catch (error) {
+    throw new Error(error);
+  }
   return txHash;
 }
 
@@ -263,29 +338,39 @@ const checkIfNftMinted = async (hash) => {
   const policyID = this.getCurrentPolicyId();
   const assetName = md5(hash);
   const assetId = `${policyID}${Buffer.from(assetName).toString('hex')}`;
-  console.log(assetId);
   const listAssets = await blockFrostApi.assetsById(assetId);
-  console.log(listAssets);
   if (listAssets) {
     const ownerAddress = (listAssets.onchain_metadata.address || undefined);
     if (!ownerAddress) {
-      throw Error('Owner address not found.');
-    }
+      throw new Error('Owner address not found');
+    } 
     const listAddresses = await getAddressesFromAssetId(assetId);
     const md5OwnerAddress = md5(ownerAddress);
     if (listAddresses.length > 0 && listAddresses.find(a => a.address === md5OwnerAddress)) {
       return true;
     }
-    throw Error('Burned.');
+    throw new Error('NFT Burned');
   }
   return false;
 };
 
 const getCurrentPolicyId = () => {
   if (!process.env.policyId) {
-    throw Error('PolicyID not found.');
+    throw new Error('PolicyID not found');
   }
   return process.env.policyId;
+}
+
+const verifySignature = async (address, payload, signature) => {
+  const signedData = new SignedData(signature);
+  try { 
+    if (signedData.verify(address, payload)) {
+      return true;
+    }
+  } catch (error) {
+    throw new Error(error);
+  }
+  return false;
 }
 
 module.exports = {
@@ -306,4 +391,5 @@ module.exports = {
   getCurrentPolicyId,
   createNftTransaction,
   submitSignedTransaction,
+  verifySignature,
 };

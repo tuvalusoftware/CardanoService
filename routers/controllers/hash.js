@@ -10,30 +10,33 @@ const core = require('../../core');
 module.exports = {
   storeHash: async (req, res, next) => {
     const { address, hash } = req.body;
-    console.log("Hiiii", address, hash);
+    if (!address || !hash) {
+      throw new Error('Request body invalid');
+    }
     try {
       await core.createNftTransaction(address, hash);
       res.json({
         result: 'true',
       });
     } catch (error) {
-      console.log(error);
       res.json({
-        result: error,
+        result: error.message,
       });
     }
   },
   verifyHash: async (req, res, next) => {
     const { hash } = req.query;
+    if (!hash) {
+      throw new Error('Query parameters invalid');
+    }
     try {
       const result = await core.checkIfNftMinted(hash);
       res.json({
         result: `${result}`,
       });
     } catch (error) {
-      console.log(error);
       res.json({
-        result: error,
+        result: error.message,
       });
     }
   },
@@ -41,5 +44,21 @@ module.exports = {
     res.json({
       result: core.getCurrentPolicyId(),
     });
-  }
+  },
+  verifySignature: async (req, res, next) => {
+    const { address, payload, signature } = req.body;
+    if (!address || !payload || !signature) {
+      throw new Error('Request body invalid');
+    }
+    try {
+      const result = await core.verifySignature(address, payload, signature);
+      res.json({
+        result: `${result}`,
+      });
+    } catch (error) {
+      res.json({
+        result: error.message,
+      });
+    }
+  },
 };

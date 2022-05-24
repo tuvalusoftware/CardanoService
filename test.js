@@ -17,4 +17,11 @@ async function test3() {
   console.log(JSON.stringify(result, undefined, 4));
 }
 
-test3();
+// test3();
+
+async function test4() {
+  const result = await core.getAddressUtxos('addr_test1qr9meqtf8qu5v7a2aerf95zpjwuf8jmxpltg3yw6tlcqwhvr0g6943r8kf92qng9t6494rjt4udxppuzdkfuz8xjf4jskepta0');
+  console.log(JSON.stringify(result, undefined, 4));
+}
+
+test4();
