@@ -129,8 +129,8 @@ const getAddressUtxos = async(address) => {
 const createNftTransaction = async (outputAddress, hash) => {
   const assetName = md5(hash);
   console.log(assetName);
-  const MNEMONIC = process.env.MNEMONIC;
-  const bip32PrvKey = mnemonicToPrivateKey(MNEMONIC);
+  const mNemonic = process.env.mNemonic;
+  const bip32PrvKey = mnemonicToPrivateKey(mNemonic);
   const { signKey, baseAddress, address } = deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
   console.log(`Using address ${address}`);
   let utxo = await getAddressUtxos(address);
@@ -201,8 +201,8 @@ const createNftTransaction = async (outputAddress, hash) => {
   );
   const policyId = Buffer.from(mintScript.hash().to_bytes()).toString('hex');
   console.log('policyID: ', policyId);
-  const assetId = `${policyID}${Buffer.from(assetName).toString('hex')}`;
-  const listAddresses = await this.getAddressesFromAssetId(assetId);
+  const assetId = `${policyId}${Buffer.from(assetName).toString('hex')}`;
+  const listAddresses = await getAddressesFromAssetId(assetId);
   if (listAddresses.length > 0 && listAddresses.find(a => a.address === outputAddress)) {
     throw Error('Minted');
   }
@@ -211,7 +211,7 @@ const createNftTransaction = async (outputAddress, hash) => {
       [assetName]: {
         name: assetName,
         hash: hash,
-        address: outputAddress
+        address: md5(outputAddress),
       },
     },
   };
@@ -271,8 +271,9 @@ const checkIfNftMinted = async (hash) => {
     if (!ownerAddress) {
       throw Error('Owner address not found.');
     }
-    const listAddresses = await this.getAddressesFromAssetId(assetId);
-    if (listAddresses.length > 0 && listAddresses.find(a => a.address === ownerAddress)) {
+    const listAddresses = await getAddressesFromAssetId(assetId);
+    const md5OwnerAddress = md5(ownerAddress);
+    if (listAddresses.length > 0 && listAddresses.find(a => a.address === md5OwnerAddress)) {
       return true;
     }
     throw Error('Burned.');

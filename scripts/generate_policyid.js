@@ -3,11 +3,11 @@ const CardanoWasm = require('@emurgo/cardano-serialization-lib-nodejs');
 require('dotenv').config();
 
 const Resolve = () => {
-  if (!process.env.MNEMONIC || !process.env.isTestnet) {
+  if (!process.env.mNemonic || !process.env.isTestnet) {
     throw Error('Error');
   }
-  const MNEMONIC = process.env.MNEMONIC;
-  const bip32PrvKey = core.mnemonicToPrivateKey(MNEMONIC);
+  const mNemonic = process.env.mNemonic;
+  const bip32PrvKey = core.mnemonicToPrivateKey(mNemonic);
   const { _, baseAddress, address } = core.deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
   console.log(`Using address ${address}`);
   const scripts = CardanoWasm.NativeScripts.new();
