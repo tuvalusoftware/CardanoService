@@ -24,4 +24,8 @@ async function test4() {
   console.log(JSON.stringify(result, undefined, 4));
 }
 
-test4();
+// test4();
+
+const a = { randomNumber: 0.9494167384126306, timestamp: 1653451149348 };
+
+console.log(Buffer.from(JSON.stringify(a, undefined, 4)).toString('hex'));

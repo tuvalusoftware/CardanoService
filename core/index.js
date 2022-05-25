@@ -7,72 +7,78 @@
 
 const Blockfrost = require('@blockfrost/blockfrost-js');
 const CardanoWasm = require('@emurgo/cardano-serialization-lib-nodejs');
-const { COSESign1, Label } = require("@emurgo/cardano-message-signing-nodejs");
+const CardanoMS = require("@emurgo/cardano-message-signing-nodejs");
 const bip39 = require('bip39');
 const md5 = require('md5');
 require('dotenv').config();
 
-class SignedData {
-  constructor(signed) {
-    let message = COSESign1.from_bytes(Buffer.from(Buffer.from(signed, 'hex'), 'hex'));
-    let headerMap = message.headers().protected().deserialized_headers();
-    this.headers = {
-      algorithmId: headerMap.algorithm_id().as_int().as_i32(),
-      address: CardanoWasm.Address.from_bytes(headerMap.header(Label.new_text('address')).as_bytes()),
-      publicKey: CardanoWasm.PublicKey.from_bytes(headerMap.key_id())
-    };
-    this.payload = message.payload();
-    this.signature = CardanoWasm.Ed25519Signature.from_bytes(message.signature());
-    this.data = message.signed_data().to_bytes();
+/**
+ * Copied from https://github.com/Berry-Pool/nami-wallet/blob/main/MessageSigning.md
+ * @param {string} address - hex encoded
+ * @param {string} payload - hex encoded
+ * @param {string} coseSign1Hex - hex encoded
+ */
+ const verify = (address, payload, coseSign1Hex) => {
+  const coseSign1 = CardanoMS.COSESign1.from_bytes(Buffer.from(coseSign1Hex, 'hex'));
+  const payloadCose = coseSign1.payload();
+  if (verifyPayload(payload, payloadCose)) {
+    throw new Error('Payload does not match');
   }
-
-  verify(address, payload) {
-    if (!this.verifyPayload(payload)) {
-      throw new Error('Payload does not match');
-    }
-    if (!this.verifyAddress(address)) {
-      throw new Error('Could not verify because of address mismatch');
-    }
-    return this.headers.publicKey.verify(this.data, this.signature);
+  const protectedHeaders = coseSign1.headers().protected().deserialized_headers();
+  const addressCose = CardanoWasm.Address.from_bytes(protectedHeaders.header(CardanoMS.Label.new_text('address')).as_bytes());
+  const publicKeyCose = CardanoWasm.PublicKey.from_bytes(protectedHeaders.key_id());
+  if (!verifyAddress(address, addressCose, publicKeyCose)) {
+    throw new Error('Could not verify because of address mismatch');
   }
+  const signature = CardanoWasm.Ed25519Signature.from_bytes(coseSign1.signature());
+  const data = coseSign1.signed_data().to_bytes();
+  return publicKeyCose.verify(data, signature);
+};
 
-  verifyPayload(payload) {
-    const hexMessage = Buffer.from(this.payload, 'hex');
-    const stringMessage = hexMessage.toString();
-    return payload === stringMessage;
-  }
+// Modified by tkhang@ferdon.io
+const verifyPayload = (payload, payloadCose) => {
+  // return Buffer.from(payloadCose, 'hex').compare(Buffer.from(payload, 'hex'));
+  const hexMessage = Buffer.from(payloadCose, 'hex').toString();
+  return hexMessage == payload;
+};
 
-  verifyAddress(address) {
-    const checkAddress = CardanoWasm.Address.from_bech32(address);
-    if (this.headers.address.to_bech32() !== checkAddress.to_bech32()) {
-      console.log('Address does not match');
+const verifyAddress = (address, addressCose, publicKeyCose) => {
+  const checkAddress = CardanoWasm.Address.from_bytes(Buffer.from(address, 'hex'));
+  if (addressCose.to_bech32() !== checkAddress.to_bech32()) return false;
+  // Check if BaseAddress
+  try {
+    const baseAddress = CardanoWasm.BaseAddress.from_address(addressCose);
+    // Reconstruct address
+    const paymentKeyHash = publicKeyCose.hash();
+    const stakeKeyHash = baseAddress.stake_cred().to_keyhash();
+    const reconstructedAddress = CardanoWasm.BaseAddress.new(
+      checkAddress.network_id(),
+      CardanoWasm.StakeCredential.from_keyhash(paymentKeyHash),
+      CardanoWasm.StakeCredential.from_keyhash(stakeKeyHash)
+    );
+    if (checkAddress.to_bech32() !== reconstructedAddress.to_address().to_bech32()) {
       return false;
     }
-    try {
-      const baseAddress = CardanoWasm.BaseAddress.from_address(this.headers.address);
-      const paymentKeyHash = this.headers.publicKey.hash();
-      const stakeKeyHash = baseAddress.stake_cred().to_keyhash();
-      const reconstructedAddress = CardanoWasm.BaseAddress.new(
-        checkAddress.network_id(),
-        CardanoWasm.StakeCredential.from_keyhash(paymentKeyHash),
-        CardanoWasm.StakeCredential.from_keyhash(stakeKeyHash)
-      );
-      return checkAddress.to_bech32() === reconstructedAddress.to_address().to_bech32();
-    } catch (e) {
-      throw new Error(e);
+    return true;
+  } catch (error) {
+    throw new Error(error);
+  }
+  // Check if RewardAddress
+  try {
+    // Reconstruct address
+    const stakeKeyHash = publicKeyCose.hash();
+    const reconstructedAddress = CardanoWasm.RewardAddress.new(
+      checkAddress.network_id(),
+      CardanoWasm.StakeCredential.from_keyhash(stakeKeyHash)
+    );
+    if (checkAddress.to_bech32() !== reconstructedAddress.to_address().to_bech32()) {
+      return false;
     }
-    try {
-      const stakeKeyHash = this.headers.address.hash();
-      const reconstructedAddress = CardanoWasm.RewardAddress.new(
-        checkAddress.network_id(),
-        CardanoWasm.StakeCredential.from_keyhash(stakeKeyHash)
-      );
-      return checkAddress.to_bech32() === reconstructedAddress.to_address().to_bech32();
-    } catch (e) {
-      throw new Error(e);
-    }
-    return false;
-  };
+    return true;
+  } catch (error) {
+    throw new Error(error);
+  }
+  return false;
 };
 
 const blockFrostApi = new Blockfrost.BlockFrostAPI({
@@ -385,9 +391,8 @@ const getCurrentPolicyId = () => {
 }
 
 const verifySignature = async (address, payload, signature) => {
-  const signedData = new SignedData(signature);
   try { 
-    if (signedData.verify(address, payload)) {
+    if (verify(address, payload, signature)) {
       return true;
     }
   } catch (error) {
