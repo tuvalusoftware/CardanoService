@@ -358,7 +358,7 @@ const submitSignedTransaction = async (signedTransaction) => {
 }
 
 const checkIfNftMinted = async (hash) => {
-  const policyID = this.getCurrentPolicyId();
+  const policyID = getCurrentPolicyId();
   const assetName = md5(hash);
   const assetId = `${policyID}${Buffer.from(assetName).toString('hex')}`;
   const listAssets = await blockFrostApi.assetsById(assetId);
