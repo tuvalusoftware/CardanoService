@@ -6,11 +6,14 @@
  */
 
  const express = require('express');
+ const authControler = require('../controllers/auth');
 
  const router = express.Router();
  
  const hashController = require('../controllers/hash');
- 
+
+ router.use(authControler.ensureAuthenticated);
+
  router.put('/storeHash', hashController.storeHash);
  router.get('/verifyHash', hashController.verifyHash);
  router.get('/getPolicyId', hashController.getPolicyId);

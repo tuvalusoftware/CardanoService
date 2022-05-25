@@ -5,4 +5,7 @@
  * @author Tran Quoc Khang / tkhang@ferdon.io
  */
 
-module.exports = {};
+ module.exports = {
+  10000: 'None Exist User',
+  10001: 'Wrong Password',
+};

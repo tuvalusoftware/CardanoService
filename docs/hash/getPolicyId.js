@@ -1,5 +1,8 @@
 module.exports = {
   get: {
+    security: {
+      cookieAuth: [],
+    },
     tags: ["Hash"],
     description: "Get current policy id",
     operationId: "getPolicyId",
@@ -21,6 +24,9 @@ module.exports = {
             }
           }
         }
+      },
+      401: {
+        $ref: "#/components/responses/UnauthorizedError",
       }
     },
   },

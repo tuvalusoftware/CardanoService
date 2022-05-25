@@ -1,5 +1,8 @@
 module.exports = {
   post: {
+    security: {
+      cookieAuth: [],
+    },
     tags: ["Hash"],
     description: "Verify signature",
     operationId: "verifySignature",

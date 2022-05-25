@@ -1,5 +1,8 @@
 module.exports = {
   get: {
+    security: {
+      cookieAuth: [],
+    },
     tags: ["Hash"],
     description: "Check the hash",
     operationId: "verifyHash",
@@ -31,6 +34,9 @@ module.exports = {
             }
           }
         }
+      },
+      401: {
+        $ref: "#/components/responses/UnauthorizedError",
       }
     },
   },

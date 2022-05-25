@@ -11,6 +11,7 @@ const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 
 const routers = require('./routers');
 
@@ -20,6 +21,7 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, _next) => {

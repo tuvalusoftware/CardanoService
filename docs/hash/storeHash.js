@@ -1,5 +1,8 @@
 module.exports = {
   put: {
+    security: {
+      cookieAuth: [],
+    },
     tags: ["Hash"],
     description: "Store the hash as CNFT",
     operationId: "storeHash",
@@ -41,6 +44,9 @@ module.exports = {
             }
           }
         }
+      },
+      401: {
+        $ref: "#/components/responses/UnauthorizedError",
       }
     },
   },

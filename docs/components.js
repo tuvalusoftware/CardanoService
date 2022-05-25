@@ -1,5 +1,17 @@
 module.exports = {
   components: {
+    securitySchemes: {
+      cookieAuth: {
+        type: "apiKey",
+        in: "cookie",
+        name: "access_token",
+      }
+    },
+    responses: {
+      UnauthorizedError: {
+        description: "Access token is missing or invalid",
+      }
+    },
     schemas: {
       Address: {
         type: "string",

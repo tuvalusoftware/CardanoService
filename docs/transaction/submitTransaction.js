@@ -37,6 +37,9 @@ module.exports = {
             }
           }
         }
+      },
+      401: {
+        $ref: "#/components/responses/UnauthorizedError",
       }
     },
   },

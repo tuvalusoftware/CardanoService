@@ -34,6 +34,7 @@ module.exports = {
       res.json({
         result: `${result}`,
       });
+      next();
     } catch (error) {
       res.json({
         result: error.message,
