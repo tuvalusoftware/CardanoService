@@ -9,4 +9,6 @@
 
 const server = require('./server');
 
-server.start({});
+server.start({
+  port: 10000,
+});
