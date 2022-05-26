@@ -1,28 +1,21 @@
 /**
  *
- * Copyright (c) 2022 - Ferdon Vietnam Limited
+ * Copyright (c) 2022 - Fuixlabs
  *
- * @author Nguyen Minh Tam / ngmitam@ferdon.io
+ * @author Tran Quoc Khang / tkhang@ferdon.io
  */
 
 const constants = require('./constants');
-
-const authRoutes = require('./routes/auth');
-
-const utxoRoutes = require('./routes/utxo');
-const rawTxRoutes = require('./routes/raw-tx');
-const metadataRoutes = require('./routes/metadata');
 const nftRoutes = require('./routes/nft');
-const nativeTokenRoutes = require('./routes/native-token');
-
-const authControler = require('./controllers/auth');
+const metadataRoutes = require('./routes/metadata');
+const utilsRoutes = require('./routes/utils');
+const transactionRoutes = require('./routes/transaction');
+const hashRoutes = require('./routes/hash');
 
 module.exports = (app) => {
-    app.use(`${constants.baseApi}/auth`, authRoutes);
-    app.use(`${constants.baseApi}`, authControler.ensureAuthenticated);
-    app.use(`${constants.baseApi}/utxo`, utxoRoutes);
-    app.use(`${constants.baseApi}`, rawTxRoutes);
-    app.use(`${constants.baseApi}/metadata`, metadataRoutes);
-    app.use(`${constants.baseApi}/nft`, nftRoutes);
-    app.use(`${constants.baseApi}/native-tokens`, nativeTokenRoutes);
+  app.use(`${constants.baseApi}`, nftRoutes);
+  app.use(`${constants.baseApi}`, metadataRoutes);
+  app.use(`${constants.baseApi}`, utilsRoutes);
+  app.use(`${constants.baseApi}`, transactionRoutes);
+  app.use(`${constants.baseApi}`, hashRoutes);
 };

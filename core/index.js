@@ -1,661 +1,423 @@
 /**
  *
- * Copyright (c) 2022 - Ferdon Vietnam Limited
+ * Copyright (c) 2022 - Fuixlabs
  *
- * @author Nguyen Minh Tam / ngmitam@ferdon.io
  * @author Tran Quoc Khang / tkhang@ferdon.io
  */
 
-const fs = require('fs').promises;
-const config = require('../config/walletConfig');
-const { WalletServer } = require('cardano-wallet-js');
-const CardanoCli = require('cardanocli-js');
+const Blockfrost = require('@blockfrost/blockfrost-js');
+const CardanoWasm = require('@emurgo/cardano-serialization-lib-nodejs');
+const CardanoMS = require("@emurgo/cardano-message-signing-nodejs");
+const bip39 = require('bip39');
+const md5 = require('md5');
+require('dotenv').config();
 
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
+/**
+ * Copied from https://github.com/Berry-Pool/nami-wallet/blob/main/MessageSigning.md
+ * @param {string} address - hex encoded
+ * @param {string} payload - hex encoded
+ * @param {string} coseSign1Hex - hex encoded
+ */
+ const verify = (address, payload, coseSign1Hex) => {
+  const coseSign1 = CardanoMS.COSESign1.from_bytes(Buffer.from(coseSign1Hex, 'hex'));
+  const payloadCose = coseSign1.payload();
+  if (verifyPayload(payload, payloadCose)) {
+    throw new Error('Payload does not match');
+  }
+  const protectedHeaders = coseSign1.headers().protected().deserialized_headers();
+  const addressCose = CardanoWasm.Address.from_bytes(protectedHeaders.header(CardanoMS.Label.new_text('address')).as_bytes());
+  const publicKeyCose = CardanoWasm.PublicKey.from_bytes(protectedHeaders.key_id());
+  if (!verifyAddress(address, addressCose, publicKeyCose)) {
+    throw new Error('Could not verify because of address mismatch');
+  }
+  const signature = CardanoWasm.Ed25519Signature.from_bytes(coseSign1.signature());
+  const data = coseSign1.signed_data().to_bytes();
+  return publicKeyCose.verify(data, signature);
+};
 
-async function readFileFromPath(path) {
-    console.log('path', path);
-    const data = await fs.readFile(path, 'binary');
-    return Buffer.from(data);
-}
+// Modified by tkhang@ferdon.io
+const verifyPayload = (payload, payloadCose) => {
+  // return Buffer.from(payloadCose, 'hex').compare(Buffer.from(payload, 'hex'));
+  const hexMessage = Buffer.from(payloadCose, 'hex').toString();
+  return hexMessage == payload;
+};
 
-const walletServer = WalletServer.init(config.serverURI);
+const verifyAddress = (address, addressCose, publicKeyCose) => {
+  const checkAddress = CardanoWasm.Address.from_bytes(Buffer.from(address, 'hex'));
+  if (addressCose.to_bech32() !== checkAddress.to_bech32()) return false;
+  // Check if BaseAddress
+  try {
+    const baseAddress = CardanoWasm.BaseAddress.from_address(addressCose);
+    // Reconstruct address
+    const paymentKeyHash = publicKeyCose.hash();
+    const stakeKeyHash = baseAddress.stake_cred().to_keyhash();
+    const reconstructedAddress = CardanoWasm.BaseAddress.new(
+      checkAddress.network_id(),
+      CardanoWasm.StakeCredential.from_keyhash(paymentKeyHash),
+      CardanoWasm.StakeCredential.from_keyhash(stakeKeyHash)
+    );
+    if (checkAddress.to_bech32() !== reconstructedAddress.to_address().to_bech32()) {
+      return false;
+    }
+    return true;
+  } catch (error) {
+    throw new Error(error);
+  }
+  // Check if RewardAddress
+  try {
+    // Reconstruct address
+    const stakeKeyHash = publicKeyCose.hash();
+    const reconstructedAddress = CardanoWasm.RewardAddress.new(
+      checkAddress.network_id(),
+      CardanoWasm.StakeCredential.from_keyhash(stakeKeyHash)
+    );
+    if (checkAddress.to_bech32() !== reconstructedAddress.to_address().to_bech32()) {
+      return false;
+    }
+    return true;
+  } catch (error) {
+    throw new Error(error);
+  }
+  return false;
+};
 
-const walletId = config.walletId;
-const WALLET_NAME = config.NAME;
-const FEE_FOR_ASSET = config.FEE_FOR_ASSET;
-
-// cardano.wallet is the 1st wallet of ShelleyWallet
-const cardano = new CardanoCli({
-    network: config.network,
-    shelleyGenesisPath: config.shelleyGenesisPath,
-    dir: config.cardanoCliDir,
-    era: config.era,
+const blockFrostApi = new Blockfrost.BlockFrostAPI({
+  projectId: process.env.blockFrostApiKey,
+  isTestnet: process.env.isTestnet,
 });
 
-const createTransaction = (tx) => {
-    // Create raw transaction
-    let raw = cardano.transactionBuildRaw(tx);
-
-    // Calculate fee
-    let fee = cardano.transactionCalculateMinFee({
-        ...tx,
-        txBody: raw,
-    });
-
-    // Pay the fee by subtracting it from the sender utxo
-    tx.txOut[0].value.lovelace -= fee;
-    if (tx.txOut[0].value.lovelace < 0) {
-        return -1;
-    }
-
-    // Create final transaction
-    return cardano.transactionBuildRaw({ ...tx, fee });
+const getDatumValueFromDatumHash = async (datumHash) => {
+  try {
+    const datumValue = await blockFrostApi.scriptsDatum(datumHash);
+    return datumValue;
+  } catch (error) {
+    throw new Error;
+  }
 };
 
-const signTransaction = (wallet, tx) => {
-    // Sign tx
-    return cardano.transactionSign({
-        signingKeys: [wallet.payment.skey, wallet.payment.skey],
-        txBody: tx,
-    });
+const getLatestBlock = async () => {
+  try {
+    const latestBlock = await blockFrostApi.blocksLatest();
+    return latestBlock;
+  } catch (error) {
+    throw new Error(error);
+  }
 };
 
-const metadataFormCardanoFormatToJSON = (metadata) => {
-    if (metadata?.string) {
-        return metadata.string;
-    }
+const getLatestEpoch = async () => {
+  try {
+    const latestEpoch = await blockFrostApi.epochsLatest();
+    return latestEpoch;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
 
-    if (metadata?.int) {
-        return metadata.int;
-    }
+const getProtocolParameters = async (epoch) => {
+  try {
+    const protocolParameters = await blockFrostApi.epochsParameters(epoch);
+    return protocolParameters;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
 
-    if (metadata?.bytes) {
-        return metadata.bytes;
-    }
+const getLatestEpochProtocolParameters = async () => {
+  try {
+    const latestEpoch = await getLatestEpoch();
+    const latestBlock = await getLatestBlock();
+    const protocolParameters = await getProtocolParameters(latestEpoch.epoch);
+    return { ...protocolParameters, latestBlock };
+  } catch (error) {
+    throw new Error(error);
+  }
+};
 
-    if (metadata?.list) {
-        return metadata.list.map((data) => {
-            return metadataFormCardanoFormatToJSON(data);
-        });
-    }
-
-    if (metadata?.map) {
-        let result = {};
-        metadata.map.forEach((data) => {
-            const k = metadataFormCardanoFormatToJSON(data.k);
-            const v = metadataFormCardanoFormatToJSON(data.v);
-
-            result[k] = v;
-        });
-
-        return result;
-    }
-
-    if (metadata && Object.keys(metadata).length) {
-        let result = {};
-        Object.keys(metadata).forEach((prop) => {
-            result[prop] = metadataFormCardanoFormatToJSON(metadata[prop]);
-        });
-        return result;
-    }
-
+const getMetadataByLabel = async (label) => {
+  try {
+    const metadata = await blockFrostApi.metadataTxsLabel(label);
     return metadata;
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+const getAssetsFromAddress = async (address) => {
+  let listAssets = [];
+  try {
+    listAssets = await blockFrostApi.addresses(address);
+  } catch (error) {
+    throw new Error(error);
+  }
+  return listAssets.amount;
 };
 
-// ** Utxo **
-
-const getUtxo = async (paymentAddr) => {
-    const utxo = await cardano.queryUtxo(paymentAddr);
-    return utxo;
+const getAddressesFromAssetId = async (assetId) => {
+  let listAddresses = [];
+  try {
+    listAddresses = await blockFrostApi.assetsAddresses(assetId);
+  } catch (error) {
+    throw new Error(error);
+  }
+  return listAddresses;
 };
 
-const getBalance = (paymentAddr) => {
-    const utxos = cardano.queryUtxo(paymentAddr);
-    const value = {};
-    utxos.forEach((utxo) => {
-        Object.keys(utxo.value).forEach((asset) => {
-            if (!value[asset]) value[asset] = 0;
-            value[asset] += utxo.value[asset];
-        });
-    });
-    return { utxo: utxos, value };
+const getSpecificAssetByAssetId = async (asset) => {
+  let assetInfo = {};
+  try {
+    assetInfo = await blockFrostApi.assetsById(asset);
+  } catch (error) {
+    throw new Error(error);
+  }
+  return assetInfo;
 };
 
-// ** End utxo **
-
-const waitForSyncOnChain = async (wallet, ASSET_ID, currentTokenAmount) => {
-    let newTokenAmount;
-    do {
-        await sleep(2000);
-        newTokenAmount = wallet.balance().value[ASSET_ID] || 0;
-    } while (newTokenAmount == currentTokenAmount);
-    return;
+const getSpecificAssetByPolicyId = async (policyId) => {
+  let assetInfo = {};
+  try {
+    assetInfo = await blockFrostApi.assetsPolicyById(policyId);
+  } catch (error) {
+    throw new Error(error);
+  }
+  return assetInfo;
 };
 
-const submitSignedTransaction = async (address, signedTransaction) => {
-    // Submit transaction
-    const txId = cardano.transactionSubmit(signedTransaction);
-    return txId;
+const mnemonicToPrivateKey = (mnemonic) => {
+  const entropy = bip39.mnemonicToEntropy(mnemonic);
+  const rootKey = CardanoWasm.Bip32PrivateKey.from_bip39_entropy(
+    Buffer.from(entropy, 'hex'),
+    Buffer.from('')
+  );
+  return rootKey;
 };
 
-// ** Start Raw-transaction **
-
-const getCreateMetadataRawTransaction = async (paymentAddr, rawMetadata) => {
-    // Get wallet
-    const wallet = getBalance(paymentAddr);
-
-    // Define metadata
-    const metadata = {
-        0: rawMetadata,
-    };
-
-    // Query utxo
-    const utxo = wallet.utxo;
-    utxo.forEach((tx) => {
-        delete tx.value.undefined;
-    });
-
-    // Define transaction
-    let tx = {
-        txIn: utxo,
-        txOut: [
-            {
-                address: paymentAddr,
-                value: {
-                    ...wallet.value,
-                    undefined: undefined,
-                },
-            },
-        ],
-        metadata,
-        witnessCount: 2,
-    };
-    tx = JSON.parse(JSON.stringify(tx));
-
-    // Build transaction
-    const raw = createTransaction(tx);
-
-    // Read raw tx
-    const rawBody = await readFileFromPath(raw);
-    return rawBody;
+const deriveAddressPrvKey = (bipPrvKey, isTestnet) => {
+  const networkId = isTestnet ? CardanoWasm.NetworkInfo.testnet().network_id() : CardanoWasm.NetworkInfo.mainnet().network_id();
+  const harden = (number) => {
+    return 0x80000000 + number;
+  };
+  const accountKey = bipPrvKey
+    .derive(harden(1852))
+    .derive(harden(1815))
+    .derive(harden(0));
+  const utxoKey = accountKey
+    .derive(0)
+    .derive(0);
+  const stakeKey = accountKey
+    .derive(2)
+    .derive(0)
+    .to_public();
+  const baseAddress = CardanoWasm.BaseAddress.new(
+    networkId,
+    CardanoWasm.StakeCredential.from_keyhash(utxoKey.to_public().to_raw_key().hash()),
+    CardanoWasm.StakeCredential.from_keyhash(stakeKey.to_raw_key().hash()),
+  );
+  const address = baseAddress.to_address().to_bech32();
+  return { signKey: utxoKey.to_raw_key(), baseAddress: baseAddress.to_address(), address: address };
 };
 
-const getTransferAdaRawTransaction = async (paymentAddr, receivers, amounts) => {
-    if (receivers.length != amounts.length) {
-        throw new Error('receivers and amounts are not match');
+const getAddressUtxos = async(address) => {
+  let addressUtxo = [];
+  try {
+   addressUtxo = await blockFrostApi.addressesUtxosAll(address);
+  } catch (error) {
+    if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
+      addressUtxo = [];
+    } else {
+      throw error;
     }
+  }
+  return addressUtxo;
+}
 
-    // Define variables
-    const NUMBER_OF_TRANSFER_PER_GROUP = 100;
-    const totalTransfer = receivers.length;
-
-    if (totalTransfer > NUMBER_OF_TRANSFER_PER_GROUP) {
-        throw new Error(`max. length is ${NUMBER_OF_TRANSFER_PER_GROUP}`);
+const createNftTransaction = async (outputAddress, hash) => {
+  const assetName = md5(hash);
+  const mNemonic = process.env.mNemonic;
+  const bip32PrvKey = mnemonicToPrivateKey(mNemonic);
+  const { signKey, baseAddress, address } = deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
+  console.log(`Using address ${address}`);
+  let utxo = await getAddressUtxos(address);
+  if (utxo.length === 0) {
+    throw Error(`You should send ADA to ${address} to have enough funds to sent a transaction.`);
+  }
+  console.log(`Utxo on ${address}`);
+  console.log(JSON.stringify(utxo, undefined, 4));
+  const latestBlock = await getLatestBlock();
+  const currentSlot = latestBlock.slot;
+  if (!currentSlot) {
+    throw new Error('Failed to fetch slot number');
+  }
+  const transactionBuilder = CardanoWasm.TransactionBuilder.new(
+    CardanoWasm.TransactionBuilderConfigBuilder.new()
+      .fee_algo(
+        CardanoWasm.LinearFee.new(
+          CardanoWasm.BigNum.from_str('44'),
+          CardanoWasm.BigNum.from_str('155381')
+        )
+      )
+      .coins_per_utxo_word(CardanoWasm.BigNum.from_str('34482'))
+      .pool_deposit(CardanoWasm.BigNum.from_str('500000000'))
+      .key_deposit(CardanoWasm.BigNum.from_str('2000000'))
+      .max_value_size(5000)
+      .max_tx_size(16384)
+      .build()
+  );
+  const scripts = CardanoWasm.NativeScripts.new();
+  const policyKeyHash = CardanoWasm.BaseAddress.from_address(baseAddress).payment_cred().to_keyhash();
+  const keyHashScript = CardanoWasm.NativeScript.new_script_pubkey(CardanoWasm.ScriptPubkey.new(policyKeyHash));
+  scripts.add(keyHashScript);
+  const ttl = 3155695200;
+  const lockScript = CardanoWasm.NativeScript.new_timelock_expiry(CardanoWasm.TimelockExpiry.new(ttl));
+  scripts.add(lockScript);
+  const mintScript = CardanoWasm.NativeScript.new_script_all(CardanoWasm.ScriptAll.new(scripts));
+  const privKeyHash = CardanoWasm.BaseAddress.from_address(baseAddress).payment_cred().to_keyhash();
+  let bestUtxo = null;
+  for (let id = 0; id < utxo.length; ++id) {
+    const u = utxo[id];
+    if (bestUtxo === null) {
+      bestUtxo = u;
     }
-
-    // Get wallet
-    const wallet = getBalance(paymentAddr);
-    let utxo = wallet.utxo;
-    utxo.forEach((tx) => {
-        delete tx.value.undefined;
-    });
-
-    // Define tx
-    let tx = {
-        txIn: utxo,
-        txOut: [
-            {
-                address: paymentAddr,
-                value: {
-                    ...wallet.value,
-                    undefined: undefined,
-                },
-            },
-        ],
-        witnessCount: 2,
-    };
-
-    let numberOfAdas = 0;
-
-    for (let id = 0; id < totalTransfer; ++id) {
-        const amt = amounts[id];
-        numberOfAdas += amt;
-        tx.txOut[id + 1] = {
-            address: receivers[id],
-            value: {
-                lovelace: cardano.toLovelace(amt),
-            },
-        };
+    const amount = (u.amount.find(a => a.unit === 'lovelace')?.quantity || 0);
+    if (amount > (bestUtxo.amount.find(a => a.unit === 'lovelace')?.quantity || 0)) {
+      bestUtxo = u;
     }
-
-    tx.txOut[0].value.lovelace -= cardano.toLovelace(numberOfAdas);
-
-    tx = JSON.parse(JSON.stringify(tx));
-
-    // Build transaction
-    const raw = createTransaction(tx);
-    if (raw == -1) {
-        throw new Error('The rest of lovelaces less than the number of lovelaces to send to user wallet.');
+  }
+  if (bestUtxo === null) {
+    throw new Error('Utxo not found');
+  }
+  console.log(bestUtxo);
+  transactionBuilder.add_key_input(
+    privKeyHash,
+    CardanoWasm.TransactionInput.new(
+      CardanoWasm.TransactionHash.from_bytes(Buffer.from(bestUtxo.tx_hash, 'hex')),
+      bestUtxo.tx_index,
+    ),
+    CardanoWasm.Value.new(CardanoWasm.BigNum.from_str(
+      (bestUtxo.amount.find(a => a.unit === 'lovelace')?.quantity || 0).toString(),
+    )),
+  );
+  transactionBuilder.add_mint_asset_and_output_min_required_coin(
+    mintScript,
+    CardanoWasm.AssetName.new(Buffer.from(assetName)),
+    CardanoWasm.Int.new_i32(1),
+    CardanoWasm.TransactionOutputBuilder.new().with_address(CardanoWasm.Address.from_bech32(outputAddress)).next(),
+  );
+  const policyId = Buffer.from(mintScript.hash().to_bytes()).toString('hex');
+  const assetId = `${policyId}${Buffer.from(assetName).toString('hex')}`;
+  const listAddresses = await getAddressesFromAssetId(assetId);
+  if (listAddresses.length > 0 && listAddresses.find(a => a.address === outputAddress)) {
+    throw new Error('NFT Minted');
+  }
+  const metadata = {
+    [policyId]: {
+      [assetName]: {
+        name: assetName,
+        hash: hash,
+        address: md5(outputAddress),
+      },
+    },
+  };
+  transactionBuilder.set_ttl(ttl);
+  transactionBuilder.add_json_metadatum(
+    CardanoWasm.BigNum.from_str('721'),
+    JSON.stringify(metadata),
+  );
+  transactionBuilder.add_change_if_needed(baseAddress);
+  const transactionBody = transactionBuilder.build();
+  const transactionHash = CardanoWasm.hash_transaction(transactionBody);
+  const witnesses = CardanoWasm.TransactionWitnessSet.new();
+  const vkeyWitnesses = CardanoWasm.Vkeywitnesses.new();
+  vkeyWitnesses.add(CardanoWasm.make_vkey_witness(transactionHash, signKey));
+  witnesses.set_vkeys(vkeyWitnesses);
+  witnesses.set_native_scripts;
+  const witnessScripts = CardanoWasm.NativeScripts.new();
+  witnessScripts.add(mintScript);
+  witnesses.set_native_scripts(witnessScripts);
+  const unsignedTransaction = transactionBuilder.build_tx();
+  const transaction = CardanoWasm.Transaction.new(
+    unsignedTransaction.body(),
+    witnesses,
+    unsignedTransaction.auxiliary_data(),
+  );
+  try {
+    const result = await submitSignedTransaction(transaction.to_bytes());
+    console.log(`Transaction successfully submitted: ${result}`)
+  } catch (error) {
+    // Submit could fail if the transactions is rejected by cardano node
+    if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 400) {
+      console.log(`Transaction ${transactionHash} rejected`);
+      console.log(error.message);
+    } else {
+      throw error;
     }
+  }
+}
 
-    // Read raw tx
-    const rawBody = await readFileFromPath(raw);
-    return rawBody;
+const submitSignedTransaction = async (signedTransaction) => {
+  let txHash = null;
+  try {
+    txHash = await blockFrostApi.txSubmit(signedTransaction);
+  } catch (error) {
+    throw new Error(error);
+  }
+  return txHash;
+}
+
+const checkIfNftMinted = async (hash) => {
+  const policyID = getCurrentPolicyId();
+  const assetName = md5(hash);
+  const assetId = `${policyID}${Buffer.from(assetName).toString('hex')}`;
+  const listAssets = await blockFrostApi.assetsById(assetId);
+  if (listAssets) {
+    const ownerAddress = (listAssets.onchain_metadata.address || undefined);
+    if (!ownerAddress) {
+      throw new Error('Owner address not found');
+    } 
+    const listAddresses = await getAddressesFromAssetId(assetId);
+    const md5OwnerAddress = md5(ownerAddress);
+    if (listAddresses.length > 0 && listAddresses.find(a => a.address === md5OwnerAddress)) {
+      return true;
+    }
+    throw new Error('NFT Burned');
+  }
+  return false;
 };
 
-const getTransferTokenRawTransaction = async (paymentAddr, policy_id, asset_name, receivers, quantities) => {
-    if (receivers.length != quantities.length) {
-        throw new Error('receivers and quantities are not match');
+const getCurrentPolicyId = () => {
+  if (!process.env.policyId) {
+    throw new Error('PolicyID not found');
+  }
+  return process.env.policyId;
+}
+
+const verifySignature = async (address, payload, signature) => {
+  try { 
+    if (verify(address, payload, signature)) {
+      return true;
     }
-
-    // Create ASSET_NAME
-    const ASSET_NAME = Buffer.from(asset_name).toString('hex');
-
-    // Create ASSET_ID
-    const ASSET_ID = policy_id + '.' + ASSET_NAME;
-
-    // Define variables
-    const NUMBER_OF_TRANSFER_PER_GROUP = 100;
-    const totalTransfer = receivers.length;
-
-    if (totalTransfer > NUMBER_OF_TRANSFER_PER_GROUP) {
-        throw new Error(`max. length is ${NUMBER_OF_TRANSFER_PER_GROUP}`);
-    }
-
-    // Get wallet
-    const wallet = getBalance(paymentAddr);
-    let utxo = wallet.utxo;
-    utxo.forEach((tx) => {
-        delete tx.value.undefined;
-    });
-
-    // Define tx
-    let tx = {
-        txIn: utxo,
-        txOut: [
-            {
-                address: paymentAddr,
-                value: {
-                    ...wallet.value,
-                    undefined: undefined,
-                },
-            },
-        ],
-        witnessCount: 2,
-    };
-
-    tx.txOut[0].value.lovelace -= FEE_FOR_ASSET * totalTransfer;
-
-    let numberOfToken = 0;
-
-    for (let id = 0; id < totalTransfer; ++id) {
-        const quantity = quantities[id];
-        numberOfToken += quantity;
-        tx.txOut[id + 1] = {
-            address: receivers[id],
-            value: {
-                lovelace: FEE_FOR_ASSET,
-                [ASSET_ID]: quantity,
-            },
-        };
-    }
-
-    tx.txOut[0].value[ASSET_ID] -= numberOfToken;
-
-    if (tx.txOut[0].value[ASSET_ID] < 0) {
-        throw new Error('The rest of tokens less than the number of tokens to send to user wallet.');
-    }
-
-    tx = JSON.parse(JSON.stringify(tx));
-
-    // Build transaction
-    const raw = createTransaction(tx);
-    if (raw == -1) {
-        throw new Error('The rest of lovelaces less than the number of lovelaces to send to user wallet.');
-    }
-
-    // Read raw tx
-    const rawBody = await readFileFromPath(raw);
-    return rawBody;
-};
-
-// ** End Raw-transaction **
-
-// ** Metadata **
-
-const addMetadata = async (rawMetadata) => {
-    // Get wallet
-    const wallet = cardano.wallet(WALLET_NAME);
-
-    // Define metadata
-    const metadata = {
-        0: rawMetadata,
-    };
-
-    // Query an utxo
-    const utxo = wallet.balance().utxo;
-    utxo.forEach((tx) => {
-        delete tx.value.undefined;
-    });
-
-    // Define transaction
-    let tx = {
-        txIn: utxo,
-        txOut: [
-            {
-                address: wallet.paymentAddr,
-                value: {
-                    ...wallet.balance().value,
-                    undefined: undefined,
-                },
-            },
-        ],
-        metadata,
-        witnessCount: 2,
-    };
-    tx = JSON.parse(JSON.stringify(tx));
-
-    // Build transaction
-    const raw = createTransaction(tx);
-    if (raw == -1) throw new Error('The rest of lovelaces less than the number of lovelaces to send to user wallet.');
-
-    // Sign transaction
-    const signed = signTransaction(wallet, raw);
-
-    // Submit transaction
-    const txId = cardano.transactionSubmit(signed);
-    return txId;
-};
-
-// Can only fetch metadata which create by wallet
-const fetchMetadata = async () => {
-    let wallet = await walletServer.getShelleyWallet(walletId);
-    let transactions = await wallet.getTransactions();
-    return transactions
-        .filter((transaction) => {
-            return transaction?.metadata;
-        })
-        .map((transaction) => {
-            return {
-                tx_hash: transaction.id,
-                metadata: metadataFormCardanoFormatToJSON(transaction.metadata),
-            };
-        });
-};
-
-// ** NFT **
-
-const addNFT = async (asset_name, rawMetadata) => {
-    // Get wallet
-    const wallet = cardano.wallet(WALLET_NAME);
-
-    // Define mint script
-    const mintScript = {
-        type: 'all',
-        scripts: [
-            {
-                type: 'before',
-                slot: cardano.queryTip().slot + 10000,
-            },
-            {
-                type: 'sig',
-                keyHash: cardano.addressKeyHash(wallet.name),
-            },
-        ],
-    };
-
-    // Create POLICY_Id
-    const POLICY_Id = cardano.transactionPolicyid(mintScript);
-
-    // Define ASSET_NAME
-    const ASSET_NAME = Buffer.from(asset_name).toString('hex');
-
-    // Create ASSET_ID
-    const ASSET_ID = POLICY_Id + '.' + ASSET_NAME;
-
-    // An NFT Metadata
-    const metadata = {
-        721: {
-            [POLICY_Id]: {
-                [asset_name]: rawMetadata,
-            },
-        },
-    };
-
-    // Query an utxo
-    const utxo = wallet.balance().utxo;
-    utxo.forEach((tx) => {
-        delete tx.value.undefined;
-    });
-
-    // Define transaction
-    let tx = {
-        txIn: utxo,
-        txOut: [
-            {
-                address: wallet.paymentAddr,
-                value: {
-                    ...wallet.balance().value,
-                    [ASSET_ID]: (wallet.balance().value[ASSET_ID] || 0) + 1,
-                    undefined: undefined,
-                },
-            },
-        ],
-        mint: [{ action: 'mint', quantity: 1, asset: ASSET_ID, script: mintScript }],
-        metadata,
-        witnessCount: 2,
-    };
-    tx = JSON.parse(JSON.stringify(tx));
-
-    // Build transaction
-    const raw = createTransaction(tx);
-    if (raw == -1) throw new Error('The rest of lovelaces less than the number of lovelaces to send to user wallet.');
-
-    // Sign transaction
-    const signed = signTransaction(wallet, raw, mintScript);
-
-    // Submit transaction
-    const txId = cardano.transactionSubmit(signed);
-    return txId;
-};
-
-// Can only fetch metadata of NFT which mint by wallet
-const fetchNFTById = async (policyId, asset_name) => {
-    let wallet = await walletServer.getShelleyWallet(walletId);
-    let transactions = await wallet.getTransactions();
-
-    /**
-     *    metadata = {
-     *      721: {
-     *        [policyId]: {
-     *          [asset_name]: Metadata,
-     *        },
-     *      },
-     *    };
-     */
-
-    let result = transactions
-        .filter((transaction) => {
-            return (
-                transaction?.metadata?.['721']?.map?.[0]?.k?.string === policyId &&
-                transaction?.metadata?.['721']?.map?.[0]?.v?.map?.[0]?.k?.string === asset_name
-            );
-        })
-        .map((transaction) => {
-            return {
-                tx_hash: transaction.id,
-                metadata: metadataFormCardanoFormatToJSON(transaction.metadata),
-            };
-        });
-
-    return result.length ? result[0] : {};
-};
-
-// Can only transfer NFT which is owned by wallet
-const transferNFTById = async (policyId, asset_name, receiver) => {
-    // Get wallet
-    const wallet = cardano.wallet(WALLET_NAME);
-
-    // Create ASSET_NAME
-    const ASSET_NAME = Buffer.from(asset_name).toString('hex');
-
-    // Create ASSET_ID
-    const ASSET_ID = policyId + '.' + ASSET_NAME;
-
-    // Query utxo
-    const utxo = wallet.balance().utxo;
-    utxo.forEach((tx) => {
-        delete tx.value.undefined;
-    });
-
-    // Define transaction
-    let tx = {
-        txIn: utxo,
-        txOut: [
-            {
-                address: wallet.paymentAddr,
-
-                value: {
-                    ...wallet.balance().value,
-                    [ASSET_ID]: Math.max(0, (wallet.balance().value[ASSET_ID] || 0) - 1),
-                    undefined: undefined,
-                },
-            },
-            {
-                address: receiver,
-                value: {
-                    lovelace: FEE_FOR_ASSET,
-                    [ASSET_ID]: 1,
-                },
-            },
-        ],
-        witnessCount: 2,
-    };
-    tx.txOut[0].value.lovelace -= FEE_FOR_ASSET;
-    tx = JSON.parse(JSON.stringify(tx));
-    console.log(JSON.stringify(tx));
-
-    // Build transaction
-    const raw = createTransaction(tx);
-    if (raw == -1) throw new Error('The rest of lovelaces less than the number of lovelaces to send to user wallet.');
-
-    // Sign transaction
-    const signed = signTransaction(wallet, raw);
-
-    // Submit transaction
-    const txId = cardano.transactionSubmit(signed);
-    return txId;
-};
-
-// ** Native Tokens **
-
-// Can only airdrop token which is owned by wallet
-const airdropById = async (policyId, asset_name, receivers, quantities) => {
-    if (receivers.length != quantities.length) {
-        throw new Error('receivers and quantities are not match');
-    }
-
-    // Get wallet
-    const wallet = cardano.wallet(WALLET_NAME);
-
-    // Create ASSET_NAME
-    const ASSET_NAME = Buffer.from(asset_name).toString('hex');
-
-    // Create ASSET_ID
-    const ASSET_ID = policyId + '.' + ASSET_NAME;
-
-    // Define variables
-    const totalTransfer = receivers.length;
-    const NUMBER_OF_TRANSFER_PER_GROUP = 100;
-    const numberOfGroupTransfer = Math.ceil(totalTransfer / NUMBER_OF_TRANSFER_PER_GROUP);
-
-    let txHashes = [];
-
-    for (let groupId = 0; groupId < numberOfGroupTransfer; ++groupId) {
-        const numberOfTransfer = Math.min(
-            totalTransfer - groupId * NUMBER_OF_TRANSFER_PER_GROUP,
-            NUMBER_OF_TRANSFER_PER_GROUP
-        );
-
-        // Wait for sync
-        if (groupId != 0) {
-            let currentTokenAmount = wallet.balance().value[ASSET_ID] || 0;
-            await waitForSyncOnChain(wallet, ASSET_ID, currentTokenAmount);
-        }
-
-        // Query utxo
-        let utxo = wallet.balance().utxo;
-        utxo.forEach((tx) => {
-            delete tx.value.undefined;
-        });
-
-        // Define tx
-        let tx = {
-            txIn: utxo,
-            txOut: [
-                {
-                    address: wallet.paymentAddr,
-                    value: {
-                        ...wallet.balance().value,
-                        undefined: undefined,
-                    },
-                },
-            ],
-            witnessCount: 2,
-        };
-
-        tx.txOut[0].value.lovelace -= FEE_FOR_ASSET * numberOfTransfer;
-
-        let numberOfToken = 0;
-
-        for (let id = 0; id < numberOfTransfer; ++id) {
-            const quantity = quantities[groupId * NUMBER_OF_TRANSFER_PER_GROUP + id];
-            numberOfToken += quantity;
-            tx.txOut[id + 1] = {
-                address: receivers[groupId * NUMBER_OF_TRANSFER_PER_GROUP + id],
-                value: {
-                    lovelace: FEE_FOR_ASSET,
-                    [ASSET_ID]: quantity,
-                },
-            };
-        }
-
-        tx.txOut[0].value[ASSET_ID] -= numberOfToken;
-
-        tx.txOut[0].value[ASSET_ID] = Math.max(0, tx.txOut[0].value[ASSET_ID]);
-
-        tx = JSON.parse(JSON.stringify(tx));
-
-        // Build transaction
-        const raw = createTransaction(tx);
-        if (raw == -1) {
-            throw new Error('The rest of lovelaces less than the number of lovelaces to send to user wallet.');
-        }
-
-        // Sign transaction
-        const signed = signTransaction(wallet, raw);
-
-        // Submit transaction
-        const txId = cardano.transactionSubmit(signed);
-        txHashes.push(txId);
-    }
-
-    return txHashes;
-};
+  } catch (error) {
+    throw new Error(error);
+  }
+  return false;
+}
 
 module.exports = {
-    getUtxo,
-    submitSignedTransaction,
-    getTransferAdaRawTransaction,
-    getCreateMetadataRawTransaction,
-    getTransferTokenRawTransaction,
-    addMetadata,
-    fetchMetadata,
-    addNFT,
-    fetchNFTById,
-    transferNFTById,
-    airdropById,
+  getAddressUtxos,
+  mnemonicToPrivateKey,
+  deriveAddressPrvKey,
+  getLatestBlock,
+  getLatestEpoch,
+  getDatumValueFromDatumHash,
+  getProtocolParameters,
+  getAddressesFromAssetId,
+  getLatestEpochProtocolParameters,
+  getMetadataByLabel,
+  getAssetsFromAddress,
+  getSpecificAssetByAssetId,
+  getSpecificAssetByPolicyId,
+  checkIfNftMinted,
+  getCurrentPolicyId,
+  createNftTransaction,
+  submitSignedTransaction,
+  verifySignature,
 };

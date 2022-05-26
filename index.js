@@ -1,12 +1,14 @@
 /**
  *
- * Copyright (c) 2022 - Ferdon Vietnam Limited
+ * Copyright (c) 2022 - Fuixlabs
  *
- * @author Nguyen Minh Tam / ngmitam@ferdon.io
+ * @author Tran Quoc Khang / tkhang@ferdon.io
  */
 
 'use-strict';
 
 const server = require('./server');
 
-server.start({});
+server.start({
+  port: 10000,
+});

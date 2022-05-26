@@ -1,11 +1,11 @@
 /**
  *
- * Copyright (c) 2022 - Ferdon Vietnam Limited
+ * Copyright (c) 2022 - Fuixlabs
  *
- * @author Nguyen Minh Tam / ngmitam@ferdon.io
+ * @author Tran Quoc Khang / tkhang@ferdon.io
  */
 
-module.exports = {
-    10000: 'None Exist User',
-    10001: 'Wrong Password',
+ module.exports = {
+  10000: 'None Exist User',
+  10001: 'Wrong Password',
 };

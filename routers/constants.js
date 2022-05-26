@@ -1,13 +1,13 @@
 /**
  *
- * Copyright (c) 2022 - Ferdon Vietnam Limited
+ * Copyright (c) 2022 - Fuixlabs
  *
- * @author Nguyen Minh Tam / ngmitam@ferdon.io
+ * @author Tran Quoc Khang / tkhang@ferdon.io
  */
 
 const errorConstants = require('./errorConstants');
 
 module.exports = {
-    baseApi: '/api',
-    errorConstants,
+  baseApi: '/api',
+  errorConstants,
 };

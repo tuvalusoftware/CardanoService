@@ -9,8 +9,8 @@
 
  const router = express.Router();
  
- const metadataController = require('../controllers/metadata');
+ const utilsController = require('../controllers/utils');
  
- router.get('/getMetadata/:label', metadataController.getMetadata);
+ router.get('/getProtocolParameters', utilsController.getProtocolParameters);
  
- module.exports = router; 
+ module.exports = router;

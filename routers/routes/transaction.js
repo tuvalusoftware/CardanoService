@@ -9,8 +9,8 @@
 
  const router = express.Router();
  
- const metadataController = require('../controllers/metadata');
+ const transactionController = require('../controllers/transaction');
  
- router.get('/getMetadata/:label', metadataController.getMetadata);
+ router.post('/submitTransaction', transactionController.submitTransaction);
  
- module.exports = router; 
+ module.exports = router;
