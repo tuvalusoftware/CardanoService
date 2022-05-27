@@ -157,7 +157,11 @@ const getAddressesFromAssetId = async (assetId) => {
   try {
     listAddresses = await blockFrostApi.assetsAddresses(assetId);
   } catch (error) {
-    throw new Error(error);
+    if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
+      listAddresses = [];
+    } else {
+      throw error;
+    }
   }
   return listAddresses;
 };
@@ -235,13 +239,13 @@ const createNftTransaction = async (outputAddress, hash) => {
   const mNemonic = process.env.mNemonic;
   const bip32PrvKey = mnemonicToPrivateKey(mNemonic);
   const { signKey, baseAddress, address } = deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
-  console.log(`Using address ${address}`);
+  // console.log(`Using address ${address}`);
   let utxo = await getAddressUtxos(address);
   if (utxo.length === 0) {
     throw Error(`You should send ADA to ${address} to have enough funds to sent a transaction.`);
   }
-  console.log(`Utxo on ${address}`);
-  console.log(JSON.stringify(utxo, undefined, 4));
+  // console.log(`Utxo on ${address}`);
+  // console.log(JSON.stringify(utxo, undefined, 4));
   const latestBlock = await getLatestBlock();
   const currentSlot = latestBlock.slot;
   if (!currentSlot) {
@@ -285,7 +289,7 @@ const createNftTransaction = async (outputAddress, hash) => {
   if (bestUtxo === null) {
     throw new Error('Utxo not found');
   }
-  console.log(bestUtxo);
+  // console.log("Utxo", bestUtxo);
   transactionBuilder.add_key_input(
     privKeyHash,
     CardanoWasm.TransactionInput.new(
@@ -339,6 +343,7 @@ const createNftTransaction = async (outputAddress, hash) => {
     witnesses,
     unsignedTransaction.auxiliary_data(),
   );
+  console.log("Here");
   try {
     const result = await submitSignedTransaction(transaction.to_bytes());
     console.log(`Transaction successfully submitted: ${result}`)
@@ -346,7 +351,7 @@ const createNftTransaction = async (outputAddress, hash) => {
     // Submit could fail if the transactions is rejected by cardano node
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 400) {
       console.log(`Transaction ${transactionHash} rejected`);
-      console.log(error.message);
+      console.log("Hi", error.message);
     } else {
       throw error;
     }
@@ -358,6 +363,7 @@ const submitSignedTransaction = async (signedTransaction) => {
   try {
     txHash = await blockFrostApi.txSubmit(signedTransaction);
   } catch (error) {
+    console.log("Hello", error);
     throw new Error(error);
   }
   return txHash;

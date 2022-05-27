@@ -12,7 +12,7 @@
  
  const hashController = require('../controllers/hash');
 
- router.use(authControler.ensureAuthenticated);
+//  router.use(authControler.ensureAuthenticated);
 
  router.put('/storeHash', hashController.storeHash);
  router.get('/verifyHash', hashController.verifyHash);
