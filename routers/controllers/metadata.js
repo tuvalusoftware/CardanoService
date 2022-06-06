@@ -11,13 +11,15 @@ module.exports = {
   getMetadata: async (req, res, next) => {
     const { label } = req.params;
     if (!label) {
-      res.json({
-        error: 'URL invalid',
-      });
+      next(new Error('Label is required'));
     }
     try {
       const metadata = await core.getMetadataByLabel(label);
-      res.json(metadata);
+      res.status(200).json({
+        data: {
+          metadata: metadata,
+        }
+      });
     } catch (error) {
       next(error);
     }

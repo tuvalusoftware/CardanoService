@@ -11,61 +11,50 @@ module.exports = {
   storeHash: async (req, res, next) => {
     const { address, hash } = req.body;
     if (!address || !hash) {
-      res.status(400).json({
-        result: 'Request body invalid',
-      });
+      next(new Error('Address and hash are required'));
     }
     try {
       await core.createNftTransaction(address, hash);
       res.status(200).json({
-        result: 'true',
+        data: {
+          result: true,
+        },
       });
     } catch (error) {
-      res.status(400).json({
-        result: error.message,
-      });
+      next(error);
     }
   },
   verifyHash: async (req, res, next) => {
     const { hash } = req.query;
     if (!hash) {
-      res.status(400).json({
-        result: 'Query parameters invalid',
-      });
+      next(new Error('Hash is required'));
     }
     try {
       const result = await core.checkIfNftMinted(hash);
       res.status(200).json({
-        result: `${result}`,
+        data: {
+          result: `${result}`,
+        },
       });
       next();
     } catch (error) {
-      res.status(400).json({
-        result: error.message,
-      });
+      next(error);
     }
-  },
-  getPolicyId: async (req, res, next) => {
-    res.status(200).json({
-      result: core.getCurrentPolicyId(),
-    });
   },
   verifySignature: async (req, res, next) => {
     const { address, payload, signature } = req.body;
     if (!address || !payload || !signature) {
-      res.status(400).json({
-        result: 'Request body invalid',
-      });
+     next(new Error('Request body invalid'));
     }
     try {
       const result = await core.verifySignature(address, payload, signature);
       res.status(200).json({
-        result: `${result}`,
+        data: {
+          result: `${result}`,
+        }
       });
     } catch (error) {
-      res.status(400).json({
-        result: error.message,
-      });
+      next(error);
     }
   },
 };

@@ -239,13 +239,10 @@ const createNftTransaction = async (outputAddress, hash) => {
   const mNemonic = process.env.mNemonic;
   const bip32PrvKey = mnemonicToPrivateKey(mNemonic);
   const { signKey, baseAddress, address } = deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
-  // console.log(`Using address ${address}`);
   let utxo = await getAddressUtxos(address);
   if (utxo.length === 0) {
-    throw Error(`You should send ADA to ${address} to have enough funds to sent a transaction.`);
+    throw new Error(`You should send ADA to ${address} to have enough funds to sent a transaction.`);
   }
-  // console.log(`Utxo on ${address}`);
-  // console.log(JSON.stringify(utxo, undefined, 4));
   const latestBlock = await getLatestBlock();
   const currentSlot = latestBlock.slot;
   if (!currentSlot) {
@@ -289,7 +286,6 @@ const createNftTransaction = async (outputAddress, hash) => {
   if (bestUtxo === null) {
     throw new Error('Utxo not found');
   }
-  // console.log("Utxo", bestUtxo);
   transactionBuilder.add_key_input(
     privKeyHash,
     CardanoWasm.TransactionInput.new(
@@ -343,7 +339,6 @@ const createNftTransaction = async (outputAddress, hash) => {
     witnesses,
     unsignedTransaction.auxiliary_data(),
   );
-  console.log("Here");
   try {
     const result = await submitSignedTransaction(transaction.to_bytes());
     console.log(`Transaction successfully submitted: ${result}`)
@@ -363,14 +358,12 @@ const submitSignedTransaction = async (signedTransaction) => {
   try {
     txHash = await blockFrostApi.txSubmit(signedTransaction);
   } catch (error) {
-    console.log("Hello", error);
     throw new Error(error);
   }
   return txHash;
 }
 
-const checkIfNftMinted = async (hash) => {
-  const policyID = getCurrentPolicyId();
+const checkIfNftMinted = async (policyID, hash) => {
   const assetName = md5(hash);
   const assetId = `${policyID}${Buffer.from(assetName).toString('hex')}`;
   const listAssets = await blockFrostApi.assetsById(assetId);
@@ -388,13 +381,6 @@ const checkIfNftMinted = async (hash) => {
   }
   return false;
 };
-
-const getCurrentPolicyId = () => {
-  if (!process.env.policyId) {
-    throw new Error('PolicyID not found');
-  }
-  return process.env.policyId;
-}
 
 const verifySignature = async (address, payload, signature) => {
   try { 
@@ -422,7 +408,6 @@ module.exports = {
   getSpecificAssetByAssetId,
   getSpecificAssetByPolicyId,
   checkIfNftMinted,
-  getCurrentPolicyId,
   createNftTransaction,
   submitSignedTransaction,
   verifySignature,

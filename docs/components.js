@@ -58,6 +58,11 @@ module.exports = {
         description: "AssetId",
         example: "9cebd568ac4ad908cdd2d45a52327fc4711911054c9951b90a6033034265727279417572656c6961",
       },
+      PolicyId: {
+        type: "string",
+        description: "PolicyId",
+        example: "1050dd64e77e671a0fee81f391080f5f57fefba2e26a816019aa5524",
+      },
       TransactionHash: {
         type: "string",
         description: "TransactionHash",

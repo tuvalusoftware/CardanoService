@@ -11,13 +11,15 @@ module.exports = {
   submitTransaction: async (req, res, next) => {
     const { signedTransaction } = req.body;
     if (!signedTransaction) {
-      res.json({
-        error: 'Request body invalid',
-      });
+      next(new Error('Signed transaction is required'));
     }
     try {
       const txHash = await core.submitSignedTransaction(signedTransaction);
-      res.json(txHash);
+      res.status(200).json({
+        data: {
+          txHash: txHash,
+        }
+      });
     } catch (error) {
       next(error);
     }

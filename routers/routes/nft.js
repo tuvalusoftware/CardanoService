@@ -13,5 +13,6 @@ const nftController = require('../controllers/nft');
 
 router.get('/getAssets/:address', nftController.getAssets);
 router.get('/getNFT/:assetId', nftController.getNFT);
+router.get('/getNFTs/:policyId', nftController.getNFTs);
 
 module.exports = router;

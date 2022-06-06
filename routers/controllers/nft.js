@@ -11,13 +11,15 @@ module.exports = {
   getAssets: async (req, res, next) => {
     const { address } = req.params;
     if (!address) {
-      res.json({
-        error: 'URL invalid',
-      });
+      next(new Error('Address is required'));
     }
     try {
       const assets = await core.getAssetsFromAddress(address);
-      res.json(assets);
+      res.status(200).json({
+        data: {
+          assets: assets,
+        }
+      });
     } catch (error) {
       next(error);
     }
@@ -25,13 +27,31 @@ module.exports = {
   getNFT: async (req, res, next) => {
     const { assetId } = req.params;
     if (!assetId) {
-      res.json({
-        error: 'URL invalid',
-      });
+      next(new Error('Asset ID is required'));
     }
     try {
-      const nfts = await core.getSpecificAssetByAssetId(assetId);
-      res.json(nfts);
+      const nft = await core.getSpecificAssetByAssetId(assetId);
+      res.status(200).json({
+        data: {
+          nftMetadata: nft,
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  getNFTs: async (req, res, next) => {
+    const { policyId } = req.params;
+    if (!policyId) {
+      next(new Error('Policy ID is required'));
+    }
+    try {
+      const nfts = await core.getSpecificAssetByPolicyId(policyId);
+      res.status(200).json({
+        data: {
+          nfts: nfts,
+        }
+      });
     } catch (error) {
       next(error);
     }

@@ -1,5 +1,6 @@
 const getAssets = require('./getAssets');
 const getNFT = require('./getNFT');
+const getNFTs = require('./getNFTs');
 
 module.exports = {
   '/getAssets/{address}': {
@@ -7,5 +8,8 @@ module.exports = {
   },
   '/getNFT/{assetId}': {
     ...getNFT,
+  },
+  '/getNFTs/{policyId}': {
+    ...getNFTs,
   },
 }

@@ -16,7 +16,6 @@
 
  router.put('/storeHash', hashController.storeHash);
  router.get('/verifyHash', hashController.verifyHash);
- router.get('/getPolicyId', hashController.getPolicyId);
  router.post('/verifySignature', hashController.verifySignature);
  
  module.exports = router;
