@@ -9,15 +9,16 @@ const core = require('../../core');
 
 module.exports = {
   storeHash: async (req, res, next) => {
-    const { address, hash } = req.body;
-    if (!address || !hash) {
+    const { address, hashOfDocument } = req.body;
+    if (!address || !hashOfDocument) {
       next(new Error('Address and hash are required'));
     }
     try {
-      await core.createNftTransaction(address, hash);
+      const policyId = await core.createNftTransaction(address, hashOfDocument);
       res.status(200).json({
         data: {
           result: true,
+          policyId: policyId,
         },
       });
     } catch (error) {
@@ -25,15 +26,15 @@ module.exports = {
     }
   },
   verifyHash: async (req, res, next) => {
-    const { hash } = req.query;
-    if (!hash) {
-      next(new Error('Hash is required'));
+    const { policyID, hashOfDocument } = req.query;
+    if (!policyID || !hashOfDocument) {
+      next(new Error('Policy ID and hash of document are required'));
     }
     try {
-      const result = await core.checkIfNftMinted(hash);
+      const result = await core.checkIfNftMinted(policyID, hashOfDocument);
       res.status(200).json({
         data: {
-          result: `${result}`,
+          result: result,
         },
       });
       next();
@@ -50,7 +51,23 @@ module.exports = {
       const result = await core.verifySignature(address, payload, signature);
       res.status(200).json({
         data: {
-          result: `${result}`,
+          result: result,
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  verifySignatures: async (req, res, next) => {
+    const { signatures } = req.body;
+    if (!signatures) {
+      next(new Error('Request body invalid'));
+    }
+    try {
+      const results = await core.verifySignatures(signatures);
+      res.status(200).json({
+        data: {
+          results: results,
         }
       });
     } catch (error) {

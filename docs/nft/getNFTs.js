@@ -20,7 +20,20 @@ module.exports = {
         content: {
           "application/json": {
             schema: {
-              $ref: "#/components/schemas/ListOfNfts"
+              type: "object",
+              properties: {
+                data: {
+                  type: "object",
+                  properties: {
+                    nfts: {
+                      type: "array",
+                      items: {
+                        $ref: "#/components/schemas/Asset",
+                      },
+                    },
+                  },
+                },
+              },
             }
           }
         }

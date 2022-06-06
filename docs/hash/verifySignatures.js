@@ -1,23 +1,21 @@
 module.exports = {
   post: {
-    tags: ["Transaction"],
-    description: "Submit signed transaction",
-    operationId: "submitSignedTransaction",
-    parameters: [],
+    security: {
+      cookieAuth: [],
+    },
+    tags: ["Hash"],
+    description: "Verify signatures",
+    operationId: "verifySignatures",
     requestBody: {
       content: {
         "application/json": {
           schema: {
             type: "object",
             properties: {
-              signedTransaction: {
+              signatures: {
                 type: "array",
                 items: {
-                  type: "array",
-                  items: {
-                    type: "number",
-                    example: "0",
-                  },
+                  $ref: "#/components/schemas/Signature",
                 },
               },
             },
@@ -25,11 +23,11 @@ module.exports = {
         },
       },
       required: true,
-      description: "Unit8Array",
+      description: "Signatures",
     },
     responses: {
       200: {
-        description: "Transaction hash",
+        description: "List of boolean, either true or false.",
         content: {
           "application/json": {
             schema: {
@@ -38,16 +36,20 @@ module.exports = {
                 data: {
                   type: "object",
                   properties: {
-                    txHash: {
-                      $ref: "#/components/schemas/TransactionHash"
+                    results: {
+                      type: "array",
+                      items: {
+                        type: "boolean",
+                        example: true,
+                      },
                     },
                   },
-                },
-              },
+                }
+              }
             }
           }
         }
-      },
+      }
     },
   },
 };

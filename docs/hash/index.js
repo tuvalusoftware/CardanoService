@@ -1,6 +1,7 @@
 const storeHash = require('./storeHash');
 const verifyHash = require('./verifyHash');
 const verifySignature = require('./verifySignature')
+const verifySignatures = require('./verifySignatures')
 
 module.exports = {
   '/storeHash': {
@@ -11,5 +12,8 @@ module.exports = {
   },
   '/verifySignature': {
     ...verifySignature
+  },
+  '/verifySignatures': {
+    ...verifySignatures
   },
 }

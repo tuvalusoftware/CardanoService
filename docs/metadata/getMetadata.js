@@ -20,7 +20,20 @@ module.exports = {
         content: {
           "application/json": {
             schema: {
-              $ref: "#/components/schemas/Metadata"
+              type: "object",
+              properties: {
+                data: {
+                  type: "object",
+                  properties: {
+                    metadata: {
+                      type: "array",
+                      items: {
+                        $ref: "#/components/schemas/Metadata"
+                      },
+                    },
+                  },
+                },
+              },
             }
           }
         }

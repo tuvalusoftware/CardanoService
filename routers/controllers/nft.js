@@ -46,7 +46,7 @@ module.exports = {
       next(new Error('Policy ID is required'));
     }
     try {
-      const nfts = await core.getSpecificAssetByPolicyId(policyId);
+      const nfts = await core.getSpecificAssetsByPolicyId(policyId);
       res.status(200).json({
         data: {
           nfts: nfts,

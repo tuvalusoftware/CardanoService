@@ -9,14 +9,21 @@ module.exports = {
         content: {
           "application/json": {
             schema: {
-              $ref: "#/components/schemas/ProtocolParameter"
+              type: "object",
+              properties: {
+                data: {
+                  type: "object",
+                  properties: {
+                    protocolParameters: {
+                      $ref: "#/components/schemas/ProtocolParameter"
+                    },
+                  },
+                },
+              },
             }
           }
         }
       },
-      401: {
-        $ref: "#/components/responses/UnauthorizedError",
-      }
     },
   },
 };

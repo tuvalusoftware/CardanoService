@@ -14,7 +14,7 @@ module.exports = {
     }
     const token = req.cookies["access_token"];
     axios.get(
-      `${process.env.verifyAddress}/api/auth/verify`,
+      `${process.env.authUrl}/api/auth/verify`,
       {
         withCredentials: true,
         headers: {
