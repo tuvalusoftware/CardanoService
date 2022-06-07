@@ -19,20 +19,28 @@ module.exports = {
     },
     responses: {
       200: {
-        description: "True or false.",
+        description: "true or false.",
         content: {
           "application/json": {
             schema: {
               type: "object",
               properties: {
-                result: {
-                  type: "string",
-                  example: "true",
+                data: {
+                  type: "object",
+                  properties: {
+                    result: {
+                      type: "boolean",
+                      example: "true",
+                    },
+                  },
                 }
               }
             }
           }
         }
+      },
+      401: {
+        $ref: "#/components/responses/UnauthorizedError",
       }
     },
   },

@@ -36,10 +36,18 @@ module.exports = {
             schema: {
               type: "object",
               properties: {
-                result: {
-                  type: "string",
-                  example: "true",
-                }
+                data: {
+                  type: "object",
+                  properties: {
+                    result: {
+                      type: "boolean",
+                      example: "true",
+                    },
+                    policyId: {
+                      $ref: "#/components/schemas/PolicyId",
+                    }
+                  },
+                },
               }
             }
           }

@@ -11,7 +11,7 @@ module.exports = {
         name: "policyID",
         in: "query",
         schema: {
-          $ref: "#/components/schemas/PolicyID",
+          $ref: "#/components/schemas/PolicyId",
         },
         required: true,
         description: "Policy ID",
@@ -35,10 +35,15 @@ module.exports = {
             schema: {
               type: "object",
               properties: {
-                result: {
-                  type: "string",
-                  example: "true",
-                }
+                data: {
+                  type: "object",
+                  properties: {
+                    result: {
+                      type: "string",
+                      example: "true",
+                    },
+                  },
+                },
               }
             }
           }

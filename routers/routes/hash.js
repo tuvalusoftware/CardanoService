@@ -12,9 +12,9 @@ const router = express.Router();
 
 const hashController = require('../controllers/hash');
 
-router.put('/storeHash', hashController.storeHash);
-router.get('/verifyHash', hashController.verifyHash);
-router.post('/verifySignature', hashController.verifySignature);
-router.post('/verifySignatures', hashController.verifySignatures);
+router.put('/storeHash', [authControler.ensureAuthenticated], hashController.storeHash);
+router.get('/verifyHash', [authControler.ensureAuthenticated], hashController.verifyHash);
+router.post('/verifySignature', [authControler.ensureAuthenticated], hashController.verifySignature);
+router.post('/verifySignatures', [authControler.ensureAuthenticated], hashController.verifySignatures);
 
 module.exports = router;

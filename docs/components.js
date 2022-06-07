@@ -10,6 +10,23 @@ module.exports = {
     responses: {
       UnauthorizedError: {
         description: "Access token is missing or invalid",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                error_code: {
+                  type: "string",
+                  example: "Not authenticated",
+                },
+                error_message: {
+                  type: "string",
+                  example: "Not authenticated",
+                },
+              },
+            },
+          },
+        },
       }
     },
     schemas: {
