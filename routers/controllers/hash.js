@@ -11,17 +11,18 @@ module.exports = {
   storeHash: async (req, res, next) => {
     const { address, hashOfDocument } = req.body;
     if (!address || !hashOfDocument) {
-      next(new Error('Address and hash are required'));
+      next(new Error('Address and hash of document are required'));
     }
     try {
-      const policyId = await core.createNftTransaction(address, hashOfDocument);
+      const token = await core.createNftTransaction(address, hashOfDocument);
       res.status(200).json({
         data: {
           result: true,
-          policyId: policyId,
+          token: token,
         },
       });
     } catch (error) {
+      console.log(error);
       next(error);
     }
   },
@@ -38,6 +39,22 @@ module.exports = {
         },
       });
       next();
+    } catch (error) {
+      next(error);
+    }
+  },
+  getPolicyId: async (req, res, next) => {
+    const { hashOfDocument } = req.query;
+    if (!hashOfDocument) {
+      next(new Error('Hash of document is required'));
+    }
+    try {
+      const { policyId } = await core.getPolicyIdFrommNemonic(hashOfDocument, false);
+      res.status(200).json({
+        data: {
+          policyId: policyId,
+        },
+      });
     } catch (error) {
       next(error);
     }
