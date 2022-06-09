@@ -285,7 +285,7 @@ const signTransaction = (transactionBuilder, serverSignKey, documentSignKey, min
 };
 
 const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = false) => {
-  /* Determine to update or not ? */
+  /* Determine: update or not ? */
   let previousHashOfDocument = 'EMPTY';
   if (isUpdate) {
     const arrayOfHash = hashOfDocument.split(',');
