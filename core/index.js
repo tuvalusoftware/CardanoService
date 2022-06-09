@@ -174,7 +174,7 @@ const getPolicyIdFrommNemonic = async (mNemonic, isMNemonic = true) => {
   const bip32PrvKey = mnemonicToPrivateKey(mNemonic);
   const { signKey, baseAddress, decodedAddress } = deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
   const scripts = CardanoWasm.NativeScripts.new();
-  /* Add fake address to script */
+  /* Add document cardano address to script */
   const policyKeyHash = CardanoWasm.BaseAddress.from_address(baseAddress).payment_cred().to_keyhash();
   const keyHashScript = CardanoWasm.NativeScript.new_script_pubkey(CardanoWasm.ScriptPubkey.new(policyKeyHash));
   scripts.add(keyHashScript);
@@ -182,33 +182,16 @@ const getPolicyIdFrommNemonic = async (mNemonic, isMNemonic = true) => {
   const policyServerKeyHash = CardanoWasm.BaseAddress.from_address(serverBaseAddress).payment_cred().to_keyhash();
   const serverKeyHashScript = CardanoWasm.NativeScript.new_script_pubkey(CardanoWasm.ScriptPubkey.new(policyServerKeyHash));
   scripts.add(serverKeyHashScript);
-  /* Add time to live to script */
+  // Add time to live to script
   const ttl = 3155695200;
-  const lockScript = CardanoWasm.NativeScript.new_timelock_expiry(CardanoWasm.TimelockExpiry.new(ttl));
-  scripts.add(lockScript);
+  // const lockScript = CardanoWasm.NativeScript.new_timelock_expiry(CardanoWasm.TimelockExpiry.new(ttl));
+  // scripts.add(lockScript);
   const mintScript = CardanoWasm.NativeScript.new_script_all(CardanoWasm.ScriptAll.new(scripts));
   const policyId = Buffer.from(mintScript.hash().to_bytes()).toString('hex');
   return { signKey, baseAddress, decodedAddress, mintScript, policyId, ttl };
 };
 
-const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = false) => {
-  /* Determine to update or not ? */
-  let previousHashOfDocument = 'EMPTY';
-  if (isUpdate) {
-    const arrayOfHash = hashOfDocument.split(',');
-    if (arrayOfHash.length !== 2) {
-      throw new Error('Error while split hash of document');
-    }
-    hashOfDocument = arrayOfHash[0];
-    previousHashOfDocument = arrayOfHash[1];
-  }
-  const assetName = md5(hashOfDocument);
-  const { serverSignKey, serverBaseAddress, serverDecodedAddress } = getServerAccount();
-  /* Query an utxo */
-  let utxo = await getAddressUtxos(serverDecodedAddress);
-  if (utxo.length === 0) {
-    throw new Error(`You should send ADA to ${serverDecodedAddress} to have enough funds to sent a transaction.`);
-  }
+const findOptimalUtxo = (utxo) => {
   let bestUtxo = null;
   for (let id = 0; id < utxo.length; ++id) {
     const u = utxo[id];
@@ -220,10 +203,10 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
       bestUtxo = u;
     }
   }
-  if (bestUtxo === null) {
-    throw new Error('Utxo not found');
-  }
-  /* Build a transaction */
+  return bestUtxo;
+};
+
+const initTransactionBuilder = async () => {
   const protocolParameters = await getLatestEpochProtocolParameters();
   const transactionBuilder = CardanoWasm.TransactionBuilder.new(
     CardanoWasm.TransactionBuilderConfigBuilder.new()
@@ -240,8 +223,14 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
       .max_tx_size(protocolParameters.max_tx_size)
       .build()
   );
-  /* Add a transaction input */
+  return transactionBuilder;
+}
+
+const addInputAndNftToTransaction = (transactionBuilder, serverBaseAddress, bestUtxo, mintScript, assetName, metadata, ttl, outputAddress) => {
+  /* Get private keyhash from server account */
   const privKeyHash = CardanoWasm.BaseAddress.from_address(serverBaseAddress).payment_cred().to_keyhash();
+
+  /* Add input to transaction */
   transactionBuilder.add_key_input(
     privKeyHash,
     CardanoWasm.TransactionInput.new(
@@ -252,7 +241,8 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
       (bestUtxo.amount.find(a => a.unit === 'lovelace')?.quantity || 0).toString(),
     )),
   );
-  const { signKey, mintScript, policyId, ttl } = await getPolicyIdFrommNemonic(isUpdate ? previousHashOfDocument : hashOfDocument, false);
+
+  /* Add an NFT to the transaction */
   transactionBuilder.add_mint_asset_and_output_min_required_coin(
     mintScript,
     CardanoWasm.AssetName.new(Buffer.from(assetName)),
@@ -261,35 +251,25 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
       CardanoWasm.Address.from_bech32(outputAddress)
     ).next(),
   );
-  const assetId = `${policyId}${Buffer.from(assetName).toString('hex')}`;
-  /* An NFT is minted or not ? */
-  const listAddresses = await getAddressesFromAssetId(assetId);
-  if (listAddresses.length > 0 && listAddresses.find(a => a.address === outputAddress)) {
-    throw new Error('NFT Minted');
-  }
-  /* Define an NFT metadata */
-  const metadata = {
-    [policyId]: {
-      [assetName]: {
-        name: assetName,
-        hashOfDocument: hashOfDocument,
-        address: md5(outputAddress),
-      },
-    },
-  };
+
+  /* Add an NFT metadata to the transaction */
   transactionBuilder.set_ttl(ttl);
   transactionBuilder.add_json_metadatum(
     CardanoWasm.BigNum.from_str('721'),
     JSON.stringify(metadata),
   );
+
   transactionBuilder.add_change_if_needed(serverBaseAddress);
-  /* Sign a transaction */
+  return transactionBuilder;
+};
+
+const signTransaction = (transactionBuilder, serverSignKey, documentSignKey, mintScript) => {
   const transactionBody = transactionBuilder.build();
   const transactionHash = CardanoWasm.hash_transaction(transactionBody);
   const witnesses = CardanoWasm.TransactionWitnessSet.new();
   const vkeyWitnesses = CardanoWasm.Vkeywitnesses.new();
   vkeyWitnesses.add(CardanoWasm.make_vkey_witness(transactionHash, serverSignKey));
-  vkeyWitnesses.add(CardanoWasm.make_vkey_witness(transactionHash, signKey));
+  vkeyWitnesses.add(CardanoWasm.make_vkey_witness(transactionHash, documentSignKey));
   witnesses.set_vkeys(vkeyWitnesses);
   witnesses.set_native_scripts;
   const witnessScripts = CardanoWasm.NativeScripts.new();
@@ -301,6 +281,66 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
     witnesses,
     unsignedTransaction.auxiliary_data(),
   );
+  return transaction;
+};
+
+const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = false) => {
+  /* Determine to update or not ? */
+  let previousHashOfDocument = 'EMPTY';
+  if (isUpdate) {
+    const arrayOfHash = hashOfDocument.split(',');
+    if (arrayOfHash.length !== 2) {
+      throw new Error('Error while split hash of document');
+    }
+    hashOfDocument = arrayOfHash[0];
+    previousHashOfDocument = arrayOfHash[1];
+  }
+  
+  /* Define asset name from hash of document */
+  const assetName = md5(hashOfDocument);
+
+  /* Get server account */
+  const { serverSignKey, serverBaseAddress, serverDecodedAddress } = getServerAccount();
+
+  /* Get a document cardano account */
+  const { signKey, mintScript, policyId, ttl } = await getPolicyIdFrommNemonic(isUpdate ? previousHashOfDocument : hashOfDocument, false);
+
+  /* Define an asset id */
+  const assetId = `${policyId}${Buffer.from(assetName).toString('hex')}`;
+
+  /* An NFT is minted or not ? */
+  const listAddresses = await getAddressesFromAssetId(assetId);
+  if (listAddresses.length > 0 && listAddresses.find(a => a.address === outputAddress)) {
+    throw new Error('NFT Minted');
+  }
+
+  /* Query an utxo on server account */
+  let utxo = await getAddressUtxos(serverDecodedAddress);
+  if (utxo.length === 0) {
+    throw new Error(`You should send ADA to ${serverDecodedAddress} to have enough funds to sent a transaction.`);
+  }
+  const bestUtxo = findOptimalUtxo(utxo);
+  if (bestUtxo === null) {
+    throw new Error('Utxo not found');
+  }
+
+  /* Build a transaction */
+  let transactionBuilder = await initTransactionBuilder();
+  
+  /* Define an NFT metadata */
+  const metadata = {
+    [policyId]: {
+      [assetName]: {
+        name: assetName,
+        hashOfDocument: hashOfDocument,
+        address: md5(outputAddress),
+      },
+    },
+  };
+
+  transactionBuilder = addInputAndNftToTransaction(transactionBuilder, serverBaseAddress, bestUtxo, mintScript, assetName, metadata, ttl, outputAddress);
+  const transaction = signTransaction(transactionBuilder, serverSignKey, signKey, mintScript);
+  
   /* Submit a transaction */
   try {
     const result = await submitSignedTransaction(transaction.to_bytes());

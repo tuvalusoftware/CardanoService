@@ -4,14 +4,22 @@ const chai = require('chai');
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 
-const SERVER = 'http://localhost:10000';
+const server = require('../server');
+
+const SERVER_URL = 'http://localhost:10000';
 const ACCESS_TOKEN = 'FUIXLABS-TEST-ACCESS-TOKEN';
 
 const POLICY_ID = '1050dd64e77e671a0fee81f391080f5f57fefba2e26a816019aa5524';
 
 describe('Hash routes', () => {
+  before(() => {
+    server.start({
+      port: 10000,
+    })
+  });
+
   it('PUT /api/storeHash without access_token', (done) => {
-    chai.request(SERVER)
+    chai.request(SERVER_URL)
       .put(`/api/storeHash`)
       .send({
         previousHashOfDocument: 'EMPTY',
@@ -27,7 +35,7 @@ describe('Hash routes', () => {
   });
 
   it('PUT /api/storeHash with access_token', (done) => {
-    chai.request(SERVER)
+    chai.request(SERVER_URL)
       .put(`/api/storeHash`)
       .set('Cookie', `access_token=${ACCESS_TOKEN}`)
       .send({
@@ -45,7 +53,7 @@ describe('Hash routes', () => {
   });
 
   it('GET /api/getNFTs/:policyId without access_token', (done) => {
-    chai.request(SERVER)
+    chai.request(SERVER_URL)
       .get(`/api/getNFTs/${POLICY_ID}`)
       .end((err, res) => {
         chai.expect(res.status).to.equal(200);
@@ -56,7 +64,7 @@ describe('Hash routes', () => {
   });
 
   it('GET /api/getNFTs/:policyId with access_token', (done) => {
-    chai.request(SERVER)
+    chai.request(SERVER_URL)
       .get(`/api/getNFTs/${POLICY_ID}`)
       .set('Cookie', `access_token=${ACCESS_TOKEN}`)
       .end((err, res) => {
@@ -67,5 +75,9 @@ describe('Hash routes', () => {
         chai.expect(res.body.data.nfts).to.be.an('array');
         done();
       });
+  });
+
+  after(() => {
+    server.stop();
   });
 });
