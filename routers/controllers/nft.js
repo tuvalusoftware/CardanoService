@@ -11,7 +11,7 @@ module.exports = {
   getAssets: async (req, res, next) => {
     const { address } = req.params;
     if (!address) {
-      next(new Error('Address is required'));
+      return next(new Error('Address is required'));
     }
     try {
       const assets = await core.getAssetsFromAddress(address);
@@ -21,13 +21,13 @@ module.exports = {
         }
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   },
   getNFT: async (req, res, next) => {
     const { assetId } = req.params;
     if (!assetId) {
-      next(new Error('Asset ID is required'));
+      return next(new Error('Asset ID is required'));
     }
     try {
       const nft = await core.getSpecificAssetByAssetId(assetId);
@@ -37,14 +37,13 @@ module.exports = {
         }
       });
     } catch (error) {
-      console.log(error);
-      next(error);
+      return next(error);
     }
   },
   getNFTs: async (req, res, next) => {
     const { policyId } = req.params;
     if (!policyId) {
-      next(new Error('Policy ID is required'));
+      return next(new Error('Policy ID is required'));
     }
     try {
       const assets = await core.getSpecificAssetsByPolicyId(policyId);
@@ -58,8 +57,7 @@ module.exports = {
         }
       });
     } catch (error) {
-      console.log(error);
-      next(error);
+      return next(error);
     }
   }
 };

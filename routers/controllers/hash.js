@@ -11,7 +11,7 @@ module.exports = {
   storeHash: async (req, res, next) => {
     const { address, hashOfDocument, previousHashOfDocument } = req.body;
     if (!address || !hashOfDocument) {
-      next(new Error('Address and hash of document are required'));
+      return next(new Error('Address and hash of document are required'));
     }
     const isUpdate = previousHashOfDocument && previousHashOfDocument !== 'EMPTY';
     let fakeHashOfDocument = hashOfDocument;
@@ -27,14 +27,13 @@ module.exports = {
         },
       });
     } catch (error) {
-      console.log(error);
-      next(error);
+      return next(error);
     }
   },
   verifyHash: async (req, res, next) => {
     const { policyID, hashOfDocument } = req.query;
     if (!policyID || !hashOfDocument) {
-      next(new Error('Policy ID and hash of document are required'));
+      return next(new Error('Policy ID and hash of document are required'));
     }
     try {
       const result = await core.checkIfNftMinted(policyID, hashOfDocument);
@@ -44,14 +43,13 @@ module.exports = {
         },
       });
     } catch (error) {
-      console.log(error);
-      next(error);
+      return next(error);
     }
   },
   getPolicyId: async (req, res, next) => {
     const { hashOfDocument } = req.query;
     if (!hashOfDocument) {
-      next(new Error('Hash of document is required'));
+      return next(new Error('Hash of document is required'));
     }
     try {
       const { policyId } = await core.getPolicyIdFrommNemonic(hashOfDocument, false);
@@ -61,14 +59,13 @@ module.exports = {
         },
       });
     } catch (error) {
-      console.log(error);
-      next(error);
+      return next(error);
     }
   },
   verifySignature: async (req, res, next) => {
     const { address, payload, signature } = req.body;
     if (!address || !payload || !signature) {
-     next(new Error('Request body invalid'));
+     return next(new Error('Request body invalid'));
     }
     try {
       const result = await core.verifySignature(address, payload, signature);
@@ -78,14 +75,13 @@ module.exports = {
         }
       });
     } catch (error) {
-      console.log(error);
-      next(error);
+      return next(error);
     }
   },
   verifySignatures: async (req, res, next) => {
     const { signatures } = req.body;
     if (!signatures) {
-      next(new Error('Request body invalid'));
+      return next(new Error('Request body invalid'));
     }
     try {
       const results = await core.verifySignatures(signatures);
@@ -95,8 +91,7 @@ module.exports = {
         }
       });
     } catch (error) {
-      console.log(error);
-      next(error);
+      return next(error);
     }
   },
 };

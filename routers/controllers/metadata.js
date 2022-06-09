@@ -11,7 +11,7 @@ module.exports = {
   getMetadata: async (req, res, next) => {
     const { label } = req.params;
     if (!label) {
-      next(new Error('Label is required'));
+      return next(new Error('Label is required'));
     }
     try {
       const metadata = await core.getMetadataByLabel(label);
@@ -21,7 +21,7 @@ module.exports = {
         }
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 };

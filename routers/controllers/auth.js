@@ -10,7 +10,7 @@ const axios = require('axios').default;
 module.exports = {
   ensureAuthenticated(req, res, next) {
     if (!req.cookies["access_token"]) {
-      next(new Error('Not authenticated'));
+      return next(new Error('Not authenticated'));
     }
     const token = req.cookies["access_token"];
     if (token === 'FUIXLABS-TEST-ACCESS-TOKEN') {
@@ -30,11 +30,10 @@ module.exports = {
           token,
           address: response.address,
         };
-        next();
+        return next();
       },
         (error) => {
-          console.log(error);
-          next(error);
+          return next(error);
         }
       );
   },
