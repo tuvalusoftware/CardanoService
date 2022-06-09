@@ -191,13 +191,23 @@ const getPolicyIdFrommNemonic = async (mNemonic, isMNemonic = true) => {
   return { signKey, baseAddress, decodedAddress, mintScript, policyId, ttl };
 };
 
-const createNftTransaction = async (outputAddress, hashOfDocument) => {
+const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = false) => {
+  /* Determine to update or not ? */
+  let previousHashOfDocument = 'EMPTY';
+  if (isUpdate) {
+    const arrayOfHash = hashOfDocument.split(',');
+    if (arrayOfHash.length !== 2) {
+      throw new Error('Error while split hash of document');
+    }
+    hashOfDocument = arrayOfHash[0];
+    previousHashOfDocument = arrayOfHash[1];
+  }
   const assetName = md5(hashOfDocument);
   const { serverSignKey, serverBaseAddress, serverDecodedAddress } = getServerAccount();
   /* Query an utxo */
   let utxo = await getAddressUtxos(serverDecodedAddress);
   if (utxo.length === 0) {
-    throw new Error(`You should send ADA to ${address} to have enough funds to sent a transaction.`);
+    throw new Error(`You should send ADA to ${serverDecodedAddress} to have enough funds to sent a transaction.`);
   }
   let bestUtxo = null;
   for (let id = 0; id < utxo.length; ++id) {
@@ -242,7 +252,7 @@ const createNftTransaction = async (outputAddress, hashOfDocument) => {
       (bestUtxo.amount.find(a => a.unit === 'lovelace')?.quantity || 0).toString(),
     )),
   );
-  const { signKey, mintScript, policyId, ttl } = await getPolicyIdFrommNemonic(hashOfDocument, false);
+  const { signKey, mintScript, policyId, ttl } = await getPolicyIdFrommNemonic(isUpdate ? previousHashOfDocument : hashOfDocument, false);
   transactionBuilder.add_mint_asset_and_output_min_required_coin(
     mintScript,
     CardanoWasm.AssetName.new(Buffer.from(assetName)),
@@ -317,9 +327,12 @@ const submitSignedTransaction = async (signedTransaction) => {
 
 const checkIfNftMinted = async (policyID, hashOfDocument) => {
   const assetName = md5(hashOfDocument);
+  const { policyId } = await getPolicyIdFrommNemonic(hashOfDocument, false);
+  if (policyID !== policyId) {
+    throw new Error('Policy ID not matching');
+  }
   const assetId = `${policyID}${Buffer.from(assetName).toString('hex')}`;
   const assetInfo = await getSpecificAssetByAssetId(assetId);
-  await blockFrostApi.assetsById(assetId);
   if (assetInfo) {
     const ownerAddress = assetInfo.onchain_metadata.address || undefined;
     if (!ownerAddress) {
@@ -362,8 +375,6 @@ const verifySignatures = async (signatures) => {
 
 module.exports = {
   getAddressUtxos,
-  mnemonicToPrivateKey,
-  deriveAddressPrvKey,
   getLatestBlock,
   getLatestEpoch,
   getDatumValueFromDatumHash,
@@ -374,10 +385,12 @@ module.exports = {
   getAssetsFromAddress,
   getSpecificAssetByAssetId,
   getSpecificAssetsByPolicyId,
-  checkIfNftMinted,
+  getPolicyIdFrommNemonic,
+  mnemonicToPrivateKey,
+  deriveAddressPrvKey,
   createNftTransaction,
   submitSignedTransaction,
+  checkIfNftMinted,
   verifySignature,
   verifySignatures,
-  getPolicyIdFrommNemonic,
 };

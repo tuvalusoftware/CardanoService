@@ -9,12 +9,17 @@ const core = require('../../core');
 
 module.exports = {
   storeHash: async (req, res, next) => {
-    const { address, hashOfDocument } = req.body;
+    const { address, hashOfDocument, previousHashOfDocument } = req.body;
     if (!address || !hashOfDocument) {
       next(new Error('Address and hash of document are required'));
     }
+    const isUpdate = previousHashOfDocument && previousHashOfDocument !== 'EMPTY';
+    let fakeHashOfDocument = hashOfDocument;
+    if (isUpdate) {
+      fakeHashOfDocument = `${fakeHashOfDocument},${previousHashOfDocument}`;
+    }
     try {
-      const token = await core.createNftTransaction(address, hashOfDocument);
+      const token = await core.createNftTransaction(address, fakeHashOfDocument, isUpdate);
       res.status(200).json({
         data: {
           result: true,
@@ -38,8 +43,8 @@ module.exports = {
           result: result,
         },
       });
-      next();
     } catch (error) {
+      console.log(error);
       next(error);
     }
   },
@@ -56,6 +61,7 @@ module.exports = {
         },
       });
     } catch (error) {
+      console.log(error);
       next(error);
     }
   },
@@ -72,6 +78,7 @@ module.exports = {
         }
       });
     } catch (error) {
+      console.log(error);
       next(error);
     }
   },
@@ -88,6 +95,7 @@ module.exports = {
         }
       });
     } catch (error) {
+      console.log(error);
       next(error);
     }
   },

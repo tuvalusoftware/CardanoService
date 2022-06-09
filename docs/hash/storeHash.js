@@ -21,12 +21,16 @@ module.exports = {
                 type: "string",
                 example: "11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467335987",
               },
+              previousHashOfDocument: {
+                type: "string",
+                example: "EMPTY",
+              },
             },
           },
         },
       },
       required: true,
-      description: "Address and keccak256 hash.",
+      description: "Address and keccak256 hash (and/or previous hash). If the previous hash is empty, set previousHashOfDocument value is EMPTY.",
     },
     responses: {
       200: {
