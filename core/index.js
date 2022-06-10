@@ -284,6 +284,21 @@ const signTransaction = (transactionBuilder, serverSignKey, documentSignKey, min
   return transaction;
 };
 
+const findOriginHashOfDocument = async (hashOfDocument) => {
+  const policyId = getPolicyIdFrommNemonic(hashOfDocument, false);
+  const assetName = md5(hashOfDocument);
+  const assetId = `${policyId}${Buffer.from(assetName).toString('hex')}`;
+  const assetInfo = await getSpecificAssetByAssetId(assetId);
+  if (assetInfo) {
+    const originHashOfDocument = assetInfo.onchain_metadata.originHashOfDocument || undefined;
+    if (originHashOfDocument) {
+      return originHashOfDocument;
+    }
+    throw new Error('Origin hash of document not found');
+  }
+  throw new Error('Asset not found');
+};
+
 const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = false) => {
   /* Determine: update or not ? */
   let previousHashOfDocument = 'EMPTY';
@@ -302,8 +317,11 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
   /* Get server account */
   const { serverSignKey, serverBaseAddress, serverDecodedAddress } = getServerAccount();
 
+  /* Get the first policy Id of document */
+  const originHashOfDocument = isUpdate ? findOriginHashOfDocument(previousHashOfDocument) : hashOfDocument;
+
   /* Get a document cardano account */
-  const { signKey, mintScript, policyId, ttl } = await getPolicyIdFrommNemonic(isUpdate ? previousHashOfDocument : hashOfDocument, false);
+  const { signKey, mintScript, policyId, ttl } = await getPolicyIdFrommNemonic(isUpdate ? originHashOfDocument : hashOfDocument, false);
 
   /* Define an asset id */
   const assetId = `${policyId}${Buffer.from(assetName).toString('hex')}`;
@@ -333,6 +351,7 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
       [assetName]: {
         name: assetName,
         hashOfDocument: hashOfDocument,
+        originHashOfDocument: originHashOfDocument,
         address: md5(outputAddress),
       },
     },
