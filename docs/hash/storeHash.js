@@ -25,12 +25,16 @@ module.exports = {
                 type: "string",
                 example: "EMPTY",
               },
+              originPolicyId: {
+                type: "string",
+                example: "EMPTY",
+              },
             },
           },
         },
       },
       required: true,
-      description: "Address and keccak256 hash (and/or previous hash). If the previous hash is empty, set previousHashOfDocument value is EMPTY.",
+      description: "Address and keccak256 hash (and/or previous hash and the first policy id).",
     },
     responses: {
       200: {

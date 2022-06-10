@@ -9,14 +9,14 @@ const core = require('../../core');
 
 module.exports = {
   storeHash: async (req, res, next) => {
-    const { address, hashOfDocument, previousHashOfDocument } = req.body;
+    const { address, hashOfDocument, previousHashOfDocument, originPolicyId } = req.body;
     if (!address || !hashOfDocument) {
       return next(new Error('Address and hash of document are required'));
     }
-    const isUpdate = previousHashOfDocument && previousHashOfDocument !== 'EMPTY';
+    const isUpdate = (previousHashOfDocument && previousHashOfDocument !== 'EMPTY') && (originPolicyId && originPolicyId !== 'EMPTY');
     let fakeHashOfDocument = hashOfDocument;
     if (isUpdate) {
-      fakeHashOfDocument = `${fakeHashOfDocument},${previousHashOfDocument}`;
+      fakeHashOfDocument = `${fakeHashOfDocument},${previousHashOfDocument},${originPolicyId}`;
     }
     try {
       const token = await core.createNftTransaction(address, fakeHashOfDocument, isUpdate);

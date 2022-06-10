@@ -100,7 +100,11 @@ const getSpecificAssetByAssetId = async (asset) => {
     const assetInfo = await blockFrostApi.assetsById(asset);
     return assetInfo;
   } catch (error) {
-    throw error;
+    if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
+      throw new Error('Please wait for an NFT to be synced to the block chain');
+    } else {
+      throw error;
+    }
   }
 };
 
@@ -109,7 +113,11 @@ const getSpecificAssetsByPolicyId = async (policyId) => {
     const assetInfo = await blockFrostApi.assetsPolicyById(policyId);
     return assetInfo;
   } catch (error) {
-    throw error;
+    if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
+      throw new Error('Please wait for an NFT to be synced to the block chain');
+    } else {
+      throw error;
+    }
   }
 };
 
@@ -284,8 +292,7 @@ const signTransaction = (transactionBuilder, serverSignKey, documentSignKey, min
   return transaction;
 };
 
-const findOriginHashOfDocument = async (hashOfDocument) => {
-  const policyId = getPolicyIdFrommNemonic(hashOfDocument, false);
+const findOriginHashOfDocument = async (policyId, hashOfDocument) => {
   const assetName = md5(hashOfDocument);
   const assetId = `${policyId}${Buffer.from(assetName).toString('hex')}`;
   const assetInfo = await getSpecificAssetByAssetId(assetId);
@@ -302,15 +309,17 @@ const findOriginHashOfDocument = async (hashOfDocument) => {
 const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = false) => {
   /* Determine: update or not ? */
   let previousHashOfDocument = 'EMPTY';
+  let originPolicyId = 'EMPTY';
   if (isUpdate) {
     const arrayOfHash = hashOfDocument.split(',');
-    if (arrayOfHash.length !== 2) {
+    if (arrayOfHash.length !== 3) {
       throw new Error('Error while split hash of document');
     }
     hashOfDocument = arrayOfHash[0];
     previousHashOfDocument = arrayOfHash[1];
+    originPolicyId = arrayOfHash[2];
   }
-  
+
   /* Define asset name from hash of document */
   const assetName = md5(hashOfDocument);
 
@@ -318,7 +327,7 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
   const { serverSignKey, serverBaseAddress, serverDecodedAddress } = getServerAccount();
 
   /* Get the first policy Id of document */
-  const originHashOfDocument = isUpdate ? findOriginHashOfDocument(previousHashOfDocument) : hashOfDocument;
+  const originHashOfDocument = isUpdate ? (await findOriginHashOfDocument(originPolicyId, previousHashOfDocument)) : hashOfDocument;
 
   /* Get a document cardano account */
   const { signKey, mintScript, policyId, ttl } = await getPolicyIdFrommNemonic(isUpdate ? originHashOfDocument : hashOfDocument, false);

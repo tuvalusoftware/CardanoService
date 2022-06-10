@@ -3,7 +3,7 @@ module.exports = {
     securitySchemes: {
       cookieAuth: {
         type: "apiKey",
-        in: "Cookie",
+        in: "cookie",
         name: "access_token",
       }
     },
