@@ -7,6 +7,9 @@
 
 const core = require('../../core');
 
+const Logger = require('../../Logger');
+const logger = Logger.createWithDefaultConfig('routers:controllers:metadata');
+
 module.exports = {
   getMetadata: async (req, res, next) => {
     const { label } = req.params;
@@ -21,6 +24,7 @@ module.exports = {
         }
       });
     } catch (error) {
+      logger.error(error);
       return next(error);
     }
   }

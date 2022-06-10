@@ -7,6 +7,9 @@
 
 const core = require('../../core');
 
+const Logger = require('../../Logger');
+const logger = Logger.createWithDefaultConfig('routers:controllers:utils');
+
 module.exports = {
   getProtocolParameters: async (req, res, next) => {
     try {
@@ -17,6 +20,7 @@ module.exports = {
         },
       });
     } catch (error) {
+      logger.error(error);
       return next(error);
     }
   }

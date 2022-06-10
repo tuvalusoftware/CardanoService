@@ -34,7 +34,8 @@
     "jsonwebtoken": "^8.5.1",
     "keccak256": "^1.0.6",
     "md5": "^2.3.0",
-    "swagger-ui-express": "^4.3.0"
+    "swagger-ui-express": "^4.3.0",
+    "winston": "^2.4.6"
   },
   "devDependencies": {
     "mocha": "^10.0.0"

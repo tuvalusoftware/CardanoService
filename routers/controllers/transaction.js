@@ -7,6 +7,9 @@
 
 const core = require('../../core');
 
+const Logger = require('../../Logger');
+const logger = Logger.createWithDefaultConfig('routers:controllers:transaction');
+
 module.exports = {
   submitTransaction: async (req, res, next) => {
     const { signedTransaction } = req.body;
@@ -21,6 +24,7 @@ module.exports = {
         }
       });
     } catch (error) {
+      logger.error(error);
       return next(error);
     }
   }

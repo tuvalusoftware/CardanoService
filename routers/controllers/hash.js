@@ -7,6 +7,9 @@
 
 const core = require('../../core');
 
+const Logger = require('../../Logger');
+const logger = Logger.createWithDefaultConfig('routers:controllers:hash');
+
 module.exports = {
   storeHash: async (req, res, next) => {
     const { address, hashOfDocument, previousHashOfDocument, originPolicyId } = req.body;
@@ -27,6 +30,7 @@ module.exports = {
         },
       });
     } catch (error) {
+      logger.error(error);
       return next(error);
     }
   },
@@ -43,6 +47,7 @@ module.exports = {
         },
       });
     } catch (error) {
+      logger.error(error);
       return next(error);
     }
   },
@@ -52,13 +57,14 @@ module.exports = {
       return next(new Error('Hash of document is required'));
     }
     try {
-      const { policyId } = await core.getPolicyIdFrommNemonic(hashOfDocument, false);
+      const { policyId } = await core.getPolicyIdFromHashOfDocument(hashOfDocument);
       res.status(200).json({
         data: {
           policyId: policyId,
         },
       });
     } catch (error) {
+      logger.error(error);
       return next(error);
     }
   },
@@ -75,6 +81,7 @@ module.exports = {
         }
       });
     } catch (error) {
+      logger.error(error);
       return next(error);
     }
   },
@@ -91,6 +98,7 @@ module.exports = {
         }
       });
     } catch (error) {
+      logger.error(error);
       return next(error);
     }
   },

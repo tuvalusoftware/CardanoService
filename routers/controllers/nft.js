@@ -7,6 +7,9 @@
 
 const core = require('../../core');
 
+const Logger = require('../../Logger');
+const logger = Logger.createWithDefaultConfig('routers:controllers:nft');
+
 module.exports = {
   getAssets: async (req, res, next) => {
     const { address } = req.params;
@@ -21,6 +24,7 @@ module.exports = {
         }
       });
     } catch (error) {
+      logger.error(error);
       return next(error);
     }
   },
@@ -37,6 +41,7 @@ module.exports = {
         }
       });
     } catch (error) {
+      logger.error(error);
       return next(error);
     }
   },
@@ -57,6 +62,7 @@ module.exports = {
         }
       });
     } catch (error) {
+      logger.error(error);
       return next(error);
     }
   }

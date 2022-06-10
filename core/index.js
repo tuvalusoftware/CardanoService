@@ -12,25 +12,20 @@ const bip39 = require('bip39');
 const md5 = require('md5');
 require('dotenv').config();
 
+const Logger = require('../Logger');
+const logger = Logger.createWithDefaultConfig('routers:controllers:core');
+
 const blockFrostApi = new Blockfrost.BlockFrostAPI({
   projectId: process.env.blockFrostApiKey,
   isTestnet: process.env.isTestnet,
 });
-
-const getDatumValueFromDatumHash = async (datumHash) => {
-  try {
-    const datumValue = await blockFrostApi.scriptsDatum(datumHash);
-    return datumValue;
-  } catch (error) {
-    throw error;
-  }
-};
 
 const getLatestBlock = async () => {
   try {
     const latestBlock = await blockFrostApi.blocksLatest();
     return latestBlock;
   } catch (error) {
+    logger.error(error);
     throw error;
   }
 };
@@ -40,6 +35,7 @@ const getLatestEpoch = async () => {
     const latestEpoch = await blockFrostApi.epochsLatest();
     return latestEpoch;
   } catch (error) {
+    logger.error(error);
     throw error;
   }
 };
@@ -49,6 +45,7 @@ const getProtocolParameters = async (epoch) => {
     const protocolParameters = await blockFrostApi.epochsParameters(epoch);
     return protocolParameters;
   } catch (error) {
+    logger.error(error);
     throw error;
   }
 };
@@ -60,6 +57,7 @@ const getLatestEpochProtocolParameters = async () => {
     const protocolParameters = await getProtocolParameters(latestEpoch.epoch);
     return { ...protocolParameters, latestBlock };
   } catch (error) {
+    logger.error(error);
     throw error;
   }
 };
@@ -69,6 +67,7 @@ const getMetadataByLabel = async (label) => {
     const metadata = await blockFrostApi.metadataTxsLabel(label);
     return metadata;
   } catch (error) {
+    logger.error(error);
     throw error;
   }
 }
@@ -78,6 +77,7 @@ const getAssetsFromAddress = async (address) => {
     const listAssets = await blockFrostApi.addresses(address);
     return listAssets.amount || [];
   } catch (error) {
+    logger.error(error);
     throw error;
   }
 };
@@ -87,6 +87,7 @@ const getAddressesFromAssetId = async (assetId) => {
     const listAddresses = await blockFrostApi.assetsAddresses(assetId);
     return listAddresses;
   } catch (error) {
+    logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
       return [];
     } else {
@@ -100,8 +101,9 @@ const getSpecificAssetByAssetId = async (asset) => {
     const assetInfo = await blockFrostApi.assetsById(asset);
     return assetInfo;
   } catch (error) {
+    logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
-      throw new Error('Please wait for an NFT to be synced to the block chain');
+      throw new Error('Please wait for an NFT to be synced to the block chain, or asset id is invalid');
     } else {
       throw error;
     }
@@ -113,8 +115,9 @@ const getSpecificAssetsByPolicyId = async (policyId) => {
     const assetInfo = await blockFrostApi.assetsPolicyById(policyId);
     return assetInfo;
   } catch (error) {
+    logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
-      throw new Error('Please wait for an NFT to be synced to the block chain');
+      throw new Error('Please wait for an NFT to be synced to the block chain, or asset id is invalid');
     } else {
       throw error;
     }
@@ -160,6 +163,7 @@ const getAddressUtxos = async(address) => {
    const addressUtxo = await blockFrostApi.addressesUtxosAll(address);
    return addressUtxo;
   } catch (error) {
+    logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
       return [];
     } else {
@@ -174,10 +178,12 @@ const getServerAccount = () => {
   return { serverSignKey: signKey, serverBaseAddress: baseAddress, serverDecodedAddress: decodedAddress };
 }
 
-const getPolicyIdFrommNemonic = async (mNemonic, isMNemonic = true) => {
-  if (!isMNemonic) {
-    mNemonic = bip39.entropyToMnemonic(mNemonic);
-  }
+const getPolicyIdFromHashOfDocument = async (hashOfDocument) => {
+  const mNemonic = bip39.entropyToMnemonic(hashOfDocument);
+  return getPolicyIdFromMnemonic(mNemonic);
+};
+
+const getPolicyIdFromMnemonic = async (mNemonic) => {
   const { serverBaseAddress } = getServerAccount();
   const bip32PrvKey = mnemonicToPrivateKey(mNemonic);
   const { signKey, baseAddress, decodedAddress } = deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
@@ -197,21 +203,6 @@ const getPolicyIdFrommNemonic = async (mNemonic, isMNemonic = true) => {
   const mintScript = CardanoWasm.NativeScript.new_script_all(CardanoWasm.ScriptAll.new(scripts));
   const policyId = Buffer.from(mintScript.hash().to_bytes()).toString('hex');
   return { signKey, baseAddress, decodedAddress, mintScript, policyId, ttl };
-};
-
-const findOptimalUtxo = (utxo) => {
-  let bestUtxo = null;
-  for (let id = 0; id < utxo.length; ++id) {
-    const u = utxo[id];
-    if (bestUtxo === null) {
-      bestUtxo = u;
-    }
-    const amount = (u.amount.find(a => a.unit === 'lovelace')?.quantity || 0);
-    if (amount > (bestUtxo.amount.find(a => a.unit === 'lovelace')?.quantity || 0)) {
-      bestUtxo = u;
-    }
-  }
-  return bestUtxo;
 };
 
 const initTransactionBuilder = async () => {
@@ -234,21 +225,30 @@ const initTransactionBuilder = async () => {
   return transactionBuilder;
 }
 
-const addInputAndNftToTransaction = (transactionBuilder, serverBaseAddress, bestUtxo, mintScript, assetName, metadata, ttl, outputAddress) => {
+const addInputAndNftToTransaction = (transactionBuilder, serverBaseAddress, utxos, mintScript, assetName, metadata, ttl, outputAddress) => {
   /* Get private keyhash from server account */
   const privKeyHash = CardanoWasm.BaseAddress.from_address(serverBaseAddress).payment_cred().to_keyhash();
 
-  /* Add input to transaction */
-  transactionBuilder.add_key_input(
-    privKeyHash,
-    CardanoWasm.TransactionInput.new(
-      CardanoWasm.TransactionHash.from_bytes(Buffer.from(bestUtxo.tx_hash, 'hex')),
-      bestUtxo.tx_index,
-    ),
-    CardanoWasm.Value.new(CardanoWasm.BigNum.from_str(
-      (bestUtxo.amount.find(a => a.unit === 'lovelace')?.quantity || 0).toString(),
-    )),
-  );
+  /* Add multiple input to transaction */
+  for (let id = 0; id < utxos.length; ++id) {
+    const checkIfUtxoContainsAsset = (utxo) => {
+      const amounts = utxo.amount.filter(amt => amt.unit !== 'lovelace');
+      return amounts.length > 0;
+    };
+    if (checkIfUtxoContainsAsset(utxos[id])) {
+      continue;
+    }
+    transactionBuilder.add_key_input(
+      privKeyHash,
+      CardanoWasm.TransactionInput.new(
+        CardanoWasm.TransactionHash.from_bytes(Buffer.from(utxos[id].tx_hash, 'hex')),
+        utxos[id].tx_index,
+      ),
+      CardanoWasm.Value.new(CardanoWasm.BigNum.from_str(
+        (utxos[id].amount.find(a => a.unit === 'lovelace')?.quantity || 0).toString(),
+      )),
+    );  
+  }
 
   /* Add an NFT to the transaction */
   transactionBuilder.add_mint_asset_and_output_min_required_coin(
@@ -326,11 +326,11 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
   /* Get server account */
   const { serverSignKey, serverBaseAddress, serverDecodedAddress } = getServerAccount();
 
-  /* Get the first policy Id of document */
+  /* Get the origin hash of document */
   const originHashOfDocument = isUpdate ? (await findOriginHashOfDocument(originPolicyId, previousHashOfDocument)) : hashOfDocument;
 
   /* Get a document cardano account */
-  const { signKey, mintScript, policyId, ttl } = await getPolicyIdFrommNemonic(isUpdate ? originHashOfDocument : hashOfDocument, false);
+  const { signKey, mintScript, policyId, ttl } = await getPolicyIdFromHashOfDocument(isUpdate ? originHashOfDocument : hashOfDocument, false);
 
   /* Define an asset id */
   const assetId = `${policyId}${Buffer.from(assetName).toString('hex')}`;
@@ -342,13 +342,9 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
   }
 
   /* Query an utxo on server account */
-  let utxo = await getAddressUtxos(serverDecodedAddress);
-  if (utxo.length === 0) {
+  let utxos = await getAddressUtxos(serverDecodedAddress);
+  if (utxos.length === 0) {
     throw new Error(`You should send ADA to ${serverDecodedAddress} to have enough funds to sent a transaction.`);
-  }
-  const bestUtxo = findOptimalUtxo(utxo);
-  if (bestUtxo === null) {
-    throw new Error('Utxo not found');
   }
 
   /* Build a transaction */
@@ -366,7 +362,7 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
     },
   };
 
-  transactionBuilder = addInputAndNftToTransaction(transactionBuilder, serverBaseAddress, bestUtxo, mintScript, assetName, metadata, ttl, outputAddress);
+  transactionBuilder = addInputAndNftToTransaction(transactionBuilder, serverBaseAddress, utxos, mintScript, assetName, metadata, ttl, outputAddress);
   const transaction = signTransaction(transactionBuilder, serverSignKey, signKey, mintScript);
   
   /* Submit a transaction */
@@ -439,20 +435,12 @@ const verifySignatures = async (signatures) => {
 }
 
 module.exports = {
-  getAddressUtxos,
-  getLatestBlock,
-  getLatestEpoch,
-  getDatumValueFromDatumHash,
-  getProtocolParameters,
-  getAddressesFromAssetId,
   getLatestEpochProtocolParameters,
   getMetadataByLabel,
   getAssetsFromAddress,
   getSpecificAssetByAssetId,
   getSpecificAssetsByPolicyId,
-  getPolicyIdFrommNemonic,
-  mnemonicToPrivateKey,
-  deriveAddressPrvKey,
+  getPolicyIdFromHashOfDocument,
   createNftTransaction,
   submitSignedTransaction,
   checkIfNftMinted,
