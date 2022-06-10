@@ -47,20 +47,22 @@ const verifyAddress = (address, addressCose, publicKeyCose) => {
   } catch (error) {
     throw error;
   }
-  try {
-    const stakeKeyHash = publicKeyCose.hash();
-    const reconstructedAddress = CardanoWasm.RewardAddress.new(
-      checkAddress.network_id(),
-      CardanoWasm.StakeCredential.from_keyhash(stakeKeyHash)
-    );
-    if (checkAddress.to_bech32() !== reconstructedAddress.to_address().to_bech32()) {
-      return false;
-    }
-    return true;
-  } catch (error) {
-    throw error;
-  }
-  return false;
+  /**
+   * try {
+   *   const stakeKeyHash = publicKeyCose.hash();
+   *   const reconstructedAddress = CardanoWasm.RewardAddress.new(
+   *     checkAddress.network_id(),
+   *     CardanoWasm.StakeCredential.from_keyhash(stakeKeyHash)
+   *   );
+   *   if (checkAddress.to_bech32() !== reconstructedAddress.to_address().to_bech32()) {
+   *     return false;
+   *   }
+   *   return true;
+   * } catch (error) {
+   *   throw error;
+   * }
+   * return false;
+   */
 };
 
 module.exports = {

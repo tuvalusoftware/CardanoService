@@ -429,11 +429,8 @@ const verifySignature = async (address, payload, signature) => {
 const verifySignatures = async (signatures) => {
   let results = [];
   for (let i = 0; i < signatures.length; i++) {
-    const address = signatures[i].address;
-    const payload = signatures[i].payload;
-    const signature = signatures[i].signature;
     try {
-      results.push(await verifySignature(address, payload, signature));
+      results.push(await verifySignature(signatures[i].address, signatures[i].payload, signatures[i].signature));
     } catch (error) {
       throw error;
     }
