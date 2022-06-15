@@ -10,16 +10,15 @@ const axios = require('axios').default;
 const Logger = require('../../Logger');
 const logger = Logger.createWithDefaultConfig('routers:controllers:auth');
 
+const { CustomError } = require('../CustomError');
+
 module.exports = {
   ensureAuthenticated(req, res, next) {
     if (!req.cookies["access_token"]) {
       logger.debug('Not authenticated');
-      return next(new Error('Not authenticated'));
+      return next(new CustomError(10000));
     }
     const token = req.cookies["access_token"];
-    if (token === 'FUIXLABS-TEST-ACCESS-TOKEN') {
-      return next();
-    }
     axios.get(
       `${process.env.authUrl}/api/auth/verify`,
       {
@@ -37,8 +36,11 @@ module.exports = {
         return next();
       },
         (error) => {
-          logger.debug('Cookie verification failed');
-          return next(error);
+          if (process.env['isMocha']) {
+            return next();
+          }
+          logger.debug(error);
+          return next(new CustomError(10000));
         }
       );
   },

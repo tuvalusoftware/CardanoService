@@ -10,22 +10,24 @@ const core = require('../../core');
 const Logger = require('../../Logger');
 const logger = Logger.createWithDefaultConfig('routers:controllers:metadata');
 
+const { CustomError } = require('../CustomError');
+
 module.exports = {
   getMetadata: async (req, res, next) => {
     const { label } = req.params;
     if (!label) {
-      return next(new Error('Label is required'));
+      return next(new CustomError(10004));
     }
     try {
       const metadata = await core.getMetadataByLabel(label);
-      res.status(200).json({
+      return res.status(200).json({
         data: {
           metadata: metadata,
         }
       });
     } catch (error) {
       logger.error(error);
-      return next(error);
+      return next(new CustomError(10014));
     }
   }
 };

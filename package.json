@@ -4,7 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "policy": "node scripts/generate_policyid.js",
     "test": "mocha --timeout 30000",
     "coverage": "nyc npm run test"
   },
