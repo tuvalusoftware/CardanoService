@@ -15,9 +15,6 @@ const { CustomError } = require('../CustomError');
 module.exports = {
   getMetadata: async (req, res, next) => {
     const { label } = req.params;
-    if (!label) {
-      return next(new CustomError(10004));
-    }
     try {
       const metadata = await core.getMetadataByLabel(label);
       return res.status(200).json({

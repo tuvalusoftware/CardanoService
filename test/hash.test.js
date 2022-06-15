@@ -11,14 +11,27 @@ const server = require('../server');
 
 const SERVER_URL = process.env.serverUrl;
 
-// describe('Function test', () => {
-//   const HASH_OF_DOCUMENT = '11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467335987';
+describe('Function test', () => {
+  const HASH_OF_DOCUMENT = '11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467335987';
 
-//   it('getPolicyIdFromHashOfDocument', async (done) => {
-//     const { policyId } = await core.getPolicyIdFromHashOfDocument(HASH_OF_DOCUMENT);
-//     chai.expect(policyId).to.be.an('string');
-//   });
-// });
+  it('getPolicyIdFromHashOfDocument', (done) => {
+    async function t() {
+      const { policyId } = await core.getPolicyIdFromHashOfDocument(HASH_OF_DOCUMENT);
+      chai.expect(policyId).to.equal('31ca61550f066eccd9a617e9b2ab272b9eac3877cac30f377643bb00');
+    };
+    t();
+    done();
+  });
+
+  it('getAddressUtxos', (done) => {
+    async function t() {
+      const utxo = await core.getAddressUtxos('fake-address');
+      chai.expect(utxo.length).to.be.equal(0);
+    }
+    t();
+    done();
+  });
+});
 
 describe('Api test', () => {
   before(() => {
@@ -109,7 +122,7 @@ describe('Api test', () => {
         .send({
           originPolicyId: 'EMPTY',
           previousHashOfDocument: 'EMPTY',
-          hashOfDocument: '11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467339828',
+          hashOfDocument: '11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467339868',
           address: ADDRESS,
         })
         .end((err, res) => {
@@ -189,6 +202,20 @@ describe('Api test', () => {
           chai.expect(res.body).to.have.property('data');
           chai.expect(res.body.data).to.have.property('result');
           chai.expect(res.body.data.result).to.be.true;
+          done();
+        });
+    });
+
+    it('GET /api/verifyHash?policyID=?&hashOfDocument=? with access_token but false', (done) => {
+      chai.request(SERVER_URL)
+        .get(`/api/verifyHash?policyID=${POLICY_ID}z&hashOfDocument=${HASH_OF_DOCUMENT}`)
+        .set('Cookie', `access_token=${ACCESS_TOKEN}`)
+        .end((err, res) => {
+          chai.expect(res.status).to.equal(200);
+          chai.expect(res.body).to.be.an('object');
+          chai.expect(res.body).to.have.property('data');
+          chai.expect(res.body.data).to.have.property('result');
+          chai.expect(res.body.data.result).to.be.false;
           done();
         });
     });

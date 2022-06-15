@@ -28,6 +28,18 @@ describe('Api test', () => {
           done();
         });
     });
+
+    it('GET /api/getMetadata with negative label', (done) => {
+      chai.request(SERVER_URL)
+        .get(`/api/getMetadata/${-721}`)
+        .end((err, res) => {
+          chai.expect(res.status).to.equal(200);
+          chai.expect(res.body).to.be.an('object');
+          chai.expect(res.body).to.have.property('error_code');
+          chai.expect(res.body.error_code).to.equal(10014);
+          done();
+        });
+    });
   });
 
   after(() => {
