@@ -10,11 +10,13 @@ const SERVER_URL = 'http://localhost:10000';
 const ACCESS_TOKEN = 'FUIXLABS-TEST-ACCESS-TOKEN';
 
 const ADDRESS = 'addr_test1qq53em6pdpswwc7mmeq50848emp4u7gmhp2dft4ud0lhar54000k46cgk82rmlfjysyxyvh9qkj7vtuc69ulgdypcnssjk3hur';
-const POLICY_ID = 'e3d9d43540efdd28b90d73dca2de98d13052547f9ff86cdcb93d8645';
+const POLICY_ID = '31ca61550f066eccd9a617e9b2ab272b9eac3877cac30f377643bb00';
 const HASH_OF_DOCUMENT = '11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467335987';
 
 describe('/api', () => {
   before(() => {
+    process.env['isMocha'] = true;
+    process.env['fakeMnemonic'] = 'mind normal tip can maze tongue enjoy eyebrow visual leaf ring vicious';
     server.start({
       port: 10000
     });
@@ -168,7 +170,9 @@ describe('/api', () => {
         .put(`/api/storeHash`)
         .set('Cookie', `access_token=${ACCESS_TOKEN}`)
         .send({
-          hashOfDocument: '11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467337999',
+          originPolicyId: 'EMPTY',
+          previousHashOfDocument: 'EMPTY',
+          hashOfDocument: '11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467337899',
           address: ADDRESS,
         })
         .end((err, res) => {
@@ -413,6 +417,8 @@ describe('/api', () => {
   });
 
   after(() => {
+    process.env['isMocha'] = false;
+    process.env['fakeMnemonic'] = '';
     server.stop();
   });
 });

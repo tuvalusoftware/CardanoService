@@ -173,7 +173,11 @@ const getAddressUtxos = async(address) => {
 }
 
 const getServerAccount = () => {
-  const mNemonic = process.env.mNemonic;
+  let mNemonic = process.env.mNemonic;
+  if (process.env.isMocha) {
+    logger.info('Using mock server account');
+    mNemonic = process.env.fakeMnemonic;
+  }
   const { signKey, baseAddress, decodedAddress } = deriveAddressPrvKey(mnemonicToPrivateKey(mNemonic), process.env.isTestnet);
   return { serverSignKey: signKey, serverBaseAddress: baseAddress, serverDecodedAddress: decodedAddress };
 }
