@@ -51,8 +51,16 @@ module.exports = {
                       type: "boolean",
                       example: "true",
                     },
-                    policyId: {
-                      $ref: "#/components/schemas/PolicyId",
+                    token: {
+                      type: "object",
+                      properties: {
+                        policyId: {
+                          $ref: "#/components/schemas/PolicyId",
+                        },
+                        assetId: {
+                          $ref: "#/components/schemas/AssetId",
+                        },
+                      },
                     }
                   },
                 },

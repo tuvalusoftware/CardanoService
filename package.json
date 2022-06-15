@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "policy": "node scripts/generate_policyid.js",
-    "test": "mocha --timeout 30000"
+    "test": "mocha --timeout 30000",
+    "coverage": "nyc npm run test"
   },
   "repository": {
     "type": "git",
@@ -38,6 +39,7 @@
     "winston": "^2.4.6"
   },
   "devDependencies": {
-    "mocha": "^10.0.0"
+    "mocha": "^10.0.0",
+    "nyc": "^15.1.0"
   }
 }

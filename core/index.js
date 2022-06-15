@@ -391,7 +391,7 @@ const submitSignedTransaction = async (signedTransaction) => {
 
 const checkIfNftMinted = async (policyID, hashOfDocument) => {
   const assetName = md5(hashOfDocument);
-  const { policyId } = await getPolicyIdFrommNemonic(hashOfDocument, false);
+  const { policyId } = await getPolicyIdFromHashOfDocument(hashOfDocument);
   if (policyID !== policyId) {
     throw new Error('Policy ID not matching');
   }

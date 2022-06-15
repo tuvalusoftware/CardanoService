@@ -9,7 +9,7 @@ const CardanoWasm = require('@emurgo/cardano-serialization-lib-nodejs');
  const verifyMS = (address, payload, coseSign1Hex) => {
   const coseSign1 = CardanoMS.COSESign1.from_bytes(Buffer.from(coseSign1Hex, 'hex'));
   const payloadCose = coseSign1.payload();
-  if (verifyPayload(payload, payloadCose)) {
+  if (!verifyPayload(payload, payloadCose)) {
     throw new Error('Payload does not match');
   }
   const protectedHeaders = coseSign1.headers().protected().deserialized_headers();
@@ -25,7 +25,7 @@ const CardanoWasm = require('@emurgo/cardano-serialization-lib-nodejs');
 
 /* Modified by tkhang@ferdon.io */
 const verifyPayload = (payload, payloadCose) => {
-  return Buffer.from(payloadCose, 'hex').toString() === payload;
+  return Buffer.from(payloadCose, 'hex').toString('hex') === payload;
 };
 
 const verifyAddress = (address, addressCose, publicKeyCose) => {
