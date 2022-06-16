@@ -1,1 +1,0 @@
-const core = require('../core');

@@ -1,6 +1,11 @@
 require('dotenv').config();
 require('./index');
 
+const CardanoWasm = require('@emurgo/cardano-serialization-lib-nodejs');
+
+const { signData } = require('../core/SignMessage')
+const { verifyMS } = require('../core/MessageSigning')
+
 const core = require('../core');
 
 const chai = require('chai');
@@ -9,10 +14,22 @@ chai.use(chaiHttp);
 
 const server = require('../server');
 
+const Logger = require('../Logger');
+const logger = Logger.createWithDefaultConfig('routers:controllers:hash:test');
+
 const SERVER_URL = process.env.serverUrl;
 
 describe('Function test', () => {
   const HASH_OF_DOCUMENT = '11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467335987';
+
+  it('findOriginHashOfDocument', (done) => {
+    async function t() {
+      const originHash = await core.findOriginHashOfDocument('cb512718e1e1ba478a69e82d40256b3a1d72a5e7b0b0f1a8a14f611a', '11d456db221d68dc8a7eac5e293422dec669b54812e4975497d7099467339868');
+      chai.expect(originHash).to.equal('11d456db221d68dc8a7eac5e293422dec669b54812e4975497d7099467339868');
+    };
+    t();
+    done();
+  });
 
   it('getPolicyIdFromHashOfDocument', (done) => {
     async function t() {
@@ -29,6 +46,20 @@ describe('Function test', () => {
       chai.expect(utxo.length).to.be.equal(0);
     }
     t();
+    done();
+  });
+
+  it('signDataAndVerifyMS', (done) => {
+    const payload = Buffer.from(
+      JSON.stringify({
+        msg: 'test',
+      }), 'utf-8'
+    ).toString('hex');
+    const coseSign1Hex = signData(payload);
+    const { serverDecodedAddress } = core.getServerAccount();
+    const address = Buffer.from(CardanoWasm.Address.from_bech32(serverDecodedAddress).to_bytes()).toString('hex');
+    chai.expect(verifyMS(address, payload, coseSign1Hex)).to.be.true;
+    logger.warn(payload);
     done();
   });
 });
@@ -122,7 +153,7 @@ describe('Api test', () => {
         .send({
           originPolicyId: 'EMPTY',
           previousHashOfDocument: 'EMPTY',
-          hashOfDocument: '11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467339868',
+          hashOfDocument: '22d456db221d68dc8a7eac5e293422dec669b54812e4975497d7099467339868',
           address: ADDRESS,
         })
         .end((err, res) => {

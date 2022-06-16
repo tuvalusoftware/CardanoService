@@ -439,6 +439,8 @@ const verifySignatures = async (signatures) => {
 }
 
 module.exports = {
+  getServerAccount,
+  findOriginHashOfDocument,
   getLatestEpochProtocolParameters,
   getMetadataByLabel,
   getAssetsFromAddress,
