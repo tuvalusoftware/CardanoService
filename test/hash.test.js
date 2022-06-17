@@ -19,6 +19,11 @@ const logger = Logger.createWithDefaultConfig('routers:controllers:hash:test');
 
 const SERVER_URL = process.env.serverUrl;
 
+const randomHash = (currentHash) => {
+  const nw = Date.now().toString();
+  return currentHash.slice(0, -nw.length) + nw;
+}
+
 describe('Function test', () => {
   const HASH_OF_DOCUMENT = '11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467335987';
 
@@ -153,7 +158,7 @@ describe('Api test', () => {
         .send({
           originPolicyId: 'EMPTY',
           previousHashOfDocument: 'EMPTY',
-          hashOfDocument: '22d456db221d68dc8a7eac5e293422dec669b54812e4975497d7099467339868',
+          hashOfDocument: randomHash(`22d456db221d68dc8a7eac5e293422dec669b54812e4975497d7099467339868`),
           address: ADDRESS,
         })
         .end((err, res) => {
@@ -205,7 +210,7 @@ describe('Api test', () => {
           chai.expect(res.body).to.have.property('error_code');
           chai.expect(res.body).to.have.property('error_message');
           chai.expect(res.body.error_code).to.equal(10012);
-          chai.expect(res.body.error_message).to.equal('Can not fetch NFTs from policy id');
+          chai.expect(res.body.error_message).to.equal('Can not fetch an NFTs from policy id or policy id is invalid');
           done();
         });
     });

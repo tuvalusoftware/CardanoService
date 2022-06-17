@@ -54,7 +54,7 @@ describe('Api test', () => {
           chai.expect(res.body).to.have.property('error_code');
           chai.expect(res.body).to.have.property('error_message');
           chai.expect(res.body.error_code).to.equal(10011);
-          chai.expect(res.body.error_message).to.have.string('Can not fetch NFT metadata from asset id');
+          chai.expect(res.body.error_message).to.have.string('Can not fetch an NFT metadata from asset id or asset id is invalid');
           done();
         });
     });
