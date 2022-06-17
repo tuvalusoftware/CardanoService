@@ -155,7 +155,7 @@ describe('Api test', () => {
         .send({
           originPolicyId: 'EMPTY',
           previousHashOfDocument: 'EMPTY',
-          hashOfDocument: keccak256(Math.random()).toString('hex'),
+          hashOfDocument: keccak256(`${Math.random()}`).toString('hex'),
           address: ADDRESS,
         })
         .end((err, res) => {
