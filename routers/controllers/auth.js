@@ -37,6 +37,10 @@ module.exports = {
       },
         (error) => {
           if (process.env['isMocha']) {
+            req.userData = {
+              token: `FUIXLABS-TEST-ACCESS-TOKEN`,
+              address: `FUIXLABS-TEST-ADDRESS`,
+            };
             return next();
           }
           logger.debug(error);
