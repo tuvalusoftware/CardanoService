@@ -233,7 +233,7 @@ const addInputAndNftToTransaction = (transactionBuilder, serverBaseAddress, utxo
   /* Get private keyhash from server account */
   const privKeyHash = CardanoWasm.BaseAddress.from_address(serverBaseAddress).payment_cred().to_keyhash();
 
-  /* Add multiple input to transaction */
+  /* Add multiple inputs to transaction */
   for (let id = 0; id < utxos.length; ++id) {
     const checkIfUtxoContainsAsset = (utxo) => {
       const amounts = utxo.amount.filter(amt => amt.unit !== 'lovelace');
@@ -322,6 +322,8 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
     hashOfDocument = arrayOfHash[0];
     previousHashOfDocument = arrayOfHash[1];
     originPolicyId = arrayOfHash[2];
+  } else {
+    previousHashOfDocument = hashOfDocument;
   }
 
   /* Define asset name from hash of document */
@@ -360,8 +362,10 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
       [assetName]: {
         name: assetName,
         hashOfDocument: hashOfDocument,
+        previousHashOfDocument: previousHashOfDocument,
         originHashOfDocument: originHashOfDocument,
         address: md5(outputAddress),
+        createAt: Date.now(),
       },
     },
   };
