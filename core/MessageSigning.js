@@ -1,3 +1,5 @@
+const { CustomError } = require('../routers/CustomError');
+
 const CardanoMS = require('@emurgo/cardano-message-signing-nodejs');
 const CardanoWasm = require('@emurgo/cardano-serialization-lib-nodejs');
 /**
@@ -10,13 +12,13 @@ const CardanoWasm = require('@emurgo/cardano-serialization-lib-nodejs');
   const coseSign1 = CardanoMS.COSESign1.from_bytes(Buffer.from(coseSign1Hex, 'hex'));
   const payloadCose = coseSign1.payload();
   if (!verifyPayload(payload, payloadCose)) {
-    throw new Error('Payload does not match');
+    throw new CustomError(10025);
   }
   const protectedHeaders = coseSign1.headers().protected().deserialized_headers();
   const addressCose = CardanoWasm.Address.from_bytes(protectedHeaders.header(CardanoMS.Label.new_text('address')).as_bytes());
   const publicKeyCose = CardanoWasm.PublicKey.from_bytes(protectedHeaders.key_id());
   if (!verifyAddress(address, addressCose, publicKeyCose)) {
-    throw new Error('Could not verify because of address mismatch');
+    throw new CustomError(10026);
   }
   const signature = CardanoWasm.Ed25519Signature.from_bytes(coseSign1.signature());
   const data = coseSign1.signed_data().to_bytes();

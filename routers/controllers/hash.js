@@ -33,6 +33,10 @@ module.exports = {
       });
     } catch (error) {
       logger.error(error);
+      if (error instanceof CustomError) {
+        return next(error);
+      }
+      /* istanbul ignore next */
       return res.status(200).json({
         data: {
           result: false,
@@ -54,6 +58,10 @@ module.exports = {
       });
     } catch (error) {
       logger.error(error);
+      if (error instanceof CustomError) {
+        return next(error);
+      }
+      /* istanbul ignore next */
       return res.status(200).json({
         data: {
           result: false,
@@ -92,6 +100,10 @@ module.exports = {
       });
     } catch (error) {
       logger.error(error);
+      if (error instanceof CustomError) {
+        return next(error);
+      }
+      /* istanbul ignore next */
       return res.status(200).json({
         data: {
           result: false,
@@ -104,20 +116,11 @@ module.exports = {
     if (!signatures) {
       return next(new CustomError(10003));
     }
-    try {
-      const results = await core.verifySignatures(signatures);
-      return res.status(200).json({
-        data: {
-          results: results,
-        }
-      });
-    } catch (error) {
-      logger.error(error);
-      return res.status(200).json({
-        data: {
-          results: new Array(signatures.length).fill(false),
-        }
-      });
-    }
+    const results = await core.verifySignatures(signatures);
+    return res.status(200).json({
+      data: {
+        results: results,
+      }
+    });
   },
 };

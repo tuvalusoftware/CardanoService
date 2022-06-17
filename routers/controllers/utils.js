@@ -10,8 +10,6 @@ const core = require('../../core');
 const Logger = require('../../Logger');
 const logger = Logger.createWithDefaultConfig('routers:controllers:utils');
 
-const { CustomError } = require('../CustomError');
-
 module.exports = {
   getProtocolParameters: async (req, res, next) => {
     try {
@@ -21,7 +19,7 @@ module.exports = {
           protocolParameters: protocolParameters,
         },
       });
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
       logger.error(error);
       return next(new CustomError(10015));
     }

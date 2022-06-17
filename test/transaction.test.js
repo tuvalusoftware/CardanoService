@@ -9,6 +9,8 @@ const server = require('../server');
 
 const SERVER_URL = process.env.serverUrl;
 
+const errorConstants = require('../routers/errorConstants');
+
 describe('Api test', () => {
   before(() => {
     server.start({
@@ -30,7 +32,7 @@ describe('Api test', () => {
           chai.expect(res.body).to.have.property('error_code');
           chai.expect(res.body).to.have.property('error_message');
           chai.expect(res.body.error_code).to.equal(10009);
-          chai.expect(res.body.error_message).to.have.string('Submit transaction failed');
+          chai.expect(res.body.error_message).to.have.string(errorConstants[10009]);
           done();
         });
     });
@@ -44,7 +46,7 @@ describe('Api test', () => {
           chai.expect(res.body).to.have.property('error_code');
           chai.expect(res.body).to.have.property('error_message');
           chai.expect(res.body.error_code).to.equal(10008);
-          chai.expect(res.body.error_message).to.have.string('Signed transaction is required');
+          chai.expect(res.body.error_message).to.have.string(errorConstants[10008]);
           done();
         });
     });

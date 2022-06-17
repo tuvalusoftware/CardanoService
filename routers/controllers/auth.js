@@ -27,7 +27,7 @@ module.exports = {
           "Cookie": `access_token=${token};`,
         },
       }
-    ).then((response) => {
+    ).then((response) => /* istanbul ignore next */ {
         var response = response.data;
         req.userData = {
           token,
@@ -36,15 +36,17 @@ module.exports = {
         return next();
       },
         (error) => {
+          /* istanbul ignore else */
           if (process.env['isMocha']) {
             req.userData = {
               token: `FUIXLABS-TEST-ACCESS-TOKEN`,
               address: `FUIXLABS-TEST-ADDRESS`,
             };
             return next();
+          } else {
+            logger.debug(error);
+            return next(new CustomError(10000));
           }
-          logger.debug(error);
-          return next(new CustomError(10000));
         }
       );
   },

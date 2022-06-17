@@ -9,6 +9,8 @@ const server = require('../server');
 
 const SERVER_URL = process.env.serverUrl;
 
+const errorConstants = require('../routers/errorConstants');
+
 describe('Api test', () => {
   before(() => {
     server.start({
@@ -54,7 +56,7 @@ describe('Api test', () => {
           chai.expect(res.body).to.have.property('error_code');
           chai.expect(res.body).to.have.property('error_message');
           chai.expect(res.body.error_code).to.equal(10011);
-          chai.expect(res.body.error_message).to.have.string('Can not fetch an NFT metadata from asset id or asset id is invalid');
+          chai.expect(res.body.error_message).to.have.string(errorConstants[10011]);
           done();
         });
     });

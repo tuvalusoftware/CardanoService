@@ -21,6 +21,8 @@ const logger = Logger.createWithDefaultConfig('routers:controllers:hash:test');
 
 const SERVER_URL = process.env.serverUrl;
 
+const errorConstants = require('../routers/errorConstants');
+
 describe('Function test', () => {
   const HASH_OF_DOCUMENT = '11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467335987';
 
@@ -88,7 +90,7 @@ describe('Api test', () => {
           chai.expect(res.body).to.have.property('error_code');
           chai.expect(res.body).to.have.property('error_message');
           chai.expect(res.body.error_code).to.equal(10000);
-          chai.expect(res.body.error_message).to.have.string('Not authenticated');
+          chai.expect(res.body.error_message).to.have.string(errorConstants[10000]);
           done();
         });
     });
@@ -106,9 +108,9 @@ describe('Api test', () => {
         .end((err, res) => {
           chai.expect(res.status).to.equal(200);
           chai.expect(res.body).to.be.an('object');
-          chai.expect(res.body).to.have.property('data');
-          chai.expect(res.body.data).to.have.property('result');
-          chai.expect(res.body.data.result).to.be.false;
+          chai.expect(res.body).to.have.property('error_code');
+          chai.expect(res.body.error_code).to.be.equal(10019);
+          chai.expect(res.body.error_message).to.be.equal(errorConstants[10019]);
           done();
         });
     });
@@ -126,9 +128,9 @@ describe('Api test', () => {
         .end((err, res) => {
           chai.expect(res.status).to.equal(200);
           chai.expect(res.body).to.be.an('object');
-          chai.expect(res.body).to.have.property('data');
-          chai.expect(res.body.data).to.have.property('result');
-          chai.expect(res.body.data.result).to.be.false;
+          chai.expect(res.body).to.have.property('error_code');
+          chai.expect(res.body.error_code).to.be.equal(10016);
+          chai.expect(res.body.error_message).to.be.equal(errorConstants[10016]);
           done();
         });
     });
@@ -143,7 +145,7 @@ describe('Api test', () => {
           chai.expect(res.body).to.have.property('error_code');
           chai.expect(res.body).to.have.property('error_message');
           chai.expect(res.body.error_code).to.equal(10005);
-          chai.expect(res.body.error_message).to.equal('Address and hash of document are required');
+          chai.expect(res.body.error_message).to.equal(errorConstants[10005]);
           done();
         });
     });
@@ -179,7 +181,7 @@ describe('Api test', () => {
           chai.expect(res.body).to.have.property('error_code');
           chai.expect(res.body).to.have.property('error_message');
           chai.expect(res.body.error_code).to.equal(10000);
-          chai.expect(res.body.error_message).to.equal('Not authenticated');
+          chai.expect(res.body.error_message).to.equal(errorConstants[10000]);
           done();
         });
     });
@@ -207,7 +209,7 @@ describe('Api test', () => {
           chai.expect(res.body).to.have.property('error_code');
           chai.expect(res.body).to.have.property('error_message');
           chai.expect(res.body.error_code).to.equal(10012);
-          chai.expect(res.body.error_message).to.equal('Can not fetch an NFTs from policy id or policy id is invalid');
+          chai.expect(res.body.error_message).to.equal(errorConstants[10012]);
           done();
         });
     });
@@ -220,7 +222,7 @@ describe('Api test', () => {
           chai.expect(res.body).to.have.property('error_code');
           chai.expect(res.body).to.have.property('error_message');
           chai.expect(res.body.error_code).to.equal(10000);
-          chai.expect(res.body.error_message).to.equal('Not authenticated');
+          chai.expect(res.body.error_message).to.equal(errorConstants[10000]);
           done();
         });
     });
@@ -246,9 +248,8 @@ describe('Api test', () => {
         .end((err, res) => {
           chai.expect(res.status).to.equal(200);
           chai.expect(res.body).to.be.an('object');
-          chai.expect(res.body).to.have.property('data');
-          chai.expect(res.body.data).to.have.property('result');
-          chai.expect(res.body.data.result).to.be.false;
+          chai.expect(res.body).to.have.property('error_code');
+          chai.expect(res.body.error_code).to.be.equal(10022);
           done();
         });
     });
@@ -262,7 +263,7 @@ describe('Api test', () => {
           chai.expect(res.body).to.have.property('error_code');
           chai.expect(res.body).to.have.property('error_message');
           chai.expect(res.body.error_code).to.equal(10006);
-          chai.expect(res.body.error_message).to.equal('Policy id and hash of document are required');
+          chai.expect(res.body.error_message).to.equal(errorConstants[10006]);
           done();
         });
     });
@@ -275,7 +276,7 @@ describe('Api test', () => {
           chai.expect(res.body).to.have.property('error_code');
           chai.expect(res.body).to.have.property('error_message');
           chai.expect(res.body.error_code).to.equal(10000);
-          chai.expect(res.body.error_message).to.equal('Not authenticated');
+          chai.expect(res.body.error_message).to.equal(errorConstants[10000]);
           done();
         });
     });
@@ -348,9 +349,8 @@ describe('Api test', () => {
         .end((err, res) => {
           chai.expect(res.status).to.equal(200);
           chai.expect(res.body).to.be.an('object');
-          chai.expect(res.body).to.have.property('data');
-          chai.expect(res.body.data).to.have.property('result');
-          chai.expect(res.body.data.result).to.be.false;
+          chai.expect(res.body).to.have.property('error_code');
+          chai.expect(res.body.error_code).to.be.equal(10026);
           done();
         });
     });
@@ -383,8 +383,8 @@ describe('Api test', () => {
           chai.expect(res.body).to.be.an('object');
           chai.expect(res.body).to.have.property('data');
           chai.expect(res.body.data).to.have.property('results');
-          chai.expect(res.body.data.results).to.be.an('array');
-          chai.expect(res.body.data.results[0]).to.be.false;
+          chai.expect(res.body.data.results[0][0]).to.be.false;
+          chai.expect(res.body.data.results[0][1]).to.be.equal(errorConstants[10026]);
           done();
         });
     });
@@ -405,8 +405,8 @@ describe('Api test', () => {
           chai.expect(res.body).to.be.an('object');
           chai.expect(res.body).to.have.property('data');
           chai.expect(res.body.data).to.have.property('results');
-          chai.expect(res.body.data.results).to.be.an('array');
-          chai.expect(res.body.data.results[0]).to.be.false;
+          chai.expect(res.body.data.results[0][0]).to.be.false;
+          chai.expect(res.body.data.results[0][1]).to.be.equal(errorConstants[10025]);
           done();
         });
     });
@@ -420,6 +420,7 @@ describe('Api test', () => {
           chai.expect(res.status).to.equal(200);
           chai.expect(res.body).to.have.property('error_code');
           chai.expect(res.body).to.have.property('error_message');
+          chai.expect(res.body.error_code).to.be.equal(10003);
           done();
         });
     });

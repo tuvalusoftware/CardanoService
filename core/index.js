@@ -20,6 +20,8 @@ const blockFrostApi = new Blockfrost.BlockFrostAPI({
   isTestnet: process.env.isTestnet,
 });
 
+const { CustomError } = require('../routers/CustomError');
+
 const getLatestBlock = async () => {
   try {
     const latestBlock = await blockFrostApi.blocksLatest();
@@ -103,7 +105,7 @@ const getSpecificAssetByAssetId = async (asset) => {
   } catch (error) {
     logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
-      throw new Error('Please wait for an NFT to be synced to the block chain, or asset id is invalid');
+      throw new CustomError(10016);
     } else {
       throw error;
     }
@@ -117,7 +119,7 @@ const getSpecificAssetsByPolicyId = async (policyId) => {
   } catch (error) {
     logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
-      throw new Error('Please wait for an NFT to be synced to the block chain, or asset id is invalid');
+      throw new CustomError(10016);
     } else {
       throw error;
     }
@@ -175,10 +177,11 @@ const getAddressUtxos = async(address) => {
 const getServerAccount = () => {
   let mNemonic = process.env.mNemonic;
   if (process.env.isMocha) {
-    logger.info('Using mock server account');
+    logger.warn('Using mock server account');
     mNemonic = process.env.fakeMnemonic;
   }
   const { signKey, baseAddress, decodedAddress } = deriveAddressPrvKey(mnemonicToPrivateKey(mNemonic), process.env.isTestnet);
+  logger.info(decodedAddress);
   return { serverSignKey: signKey, serverBaseAddress: baseAddress, serverDecodedAddress: decodedAddress };
 }
 
@@ -305,9 +308,9 @@ const findOriginHashOfDocument = async (policyId, hashOfDocument) => {
     if (originHashOfDocument) {
       return originHashOfDocument;
     }
-    throw new Error('Origin hash of document not found');
+    throw new CustomError(10017);
   }
-  throw new Error('Asset not found');
+  throw new CustomError(10016);
 };
 
 const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = false) => {
@@ -317,7 +320,7 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
   if (isUpdate) {
     const arrayOfHash = hashOfDocument.split(',');
     if (arrayOfHash.length !== 3) {
-      throw new Error('Error while split hash of document');
+      throw new CustomError(10018);
     }
     hashOfDocument = arrayOfHash[0];
     previousHashOfDocument = arrayOfHash[1];
@@ -325,6 +328,8 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
   } else {
     previousHashOfDocument = hashOfDocument;
   }
+
+  logger.warn(isUpdate ? "Update document" : "Create document");
 
   /* Define asset name from hash of document */
   const assetName = md5(hashOfDocument);
@@ -344,13 +349,13 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
   /* An NFT is minted or not ? */
   const listAddresses = await getAddressesFromAssetId(assetId);
   if (listAddresses.length > 0 && listAddresses.find(a => a.address === outputAddress)) {
-    throw new Error('NFT Minted');
+    throw new CustomError(10019);
   }
 
   /* Query an utxo on server account */
   let utxos = await getAddressUtxos(serverDecodedAddress);
   if (utxos.length === 0) {
-    throw new Error(`You should send ADA to ${serverDecodedAddress} to have enough funds to sent a transaction.`);
+    throw new CustomError(10020);
   }
 
   /* Build a transaction */
@@ -376,12 +381,12 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
   /* Submit a transaction */
   try {
     const result = await submitSignedTransaction(transaction.to_bytes());
-    console.log(`Transaction successfully submitted: ${result}`)
+    logger.info(`Transaction successfully submitted: ${result}`)
     return { policyId, assetId };
   } catch (error) {
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 400) {
       console.log(error);
-      throw new Error(`Transaction rejected`);
+      throw new CustomError(10021);
     } else {
       throw error;
     }
@@ -401,20 +406,20 @@ const checkIfNftMinted = async (policyID, hashOfDocument) => {
   const assetName = md5(hashOfDocument);
   const { policyId } = await getPolicyIdFromHashOfDocument(hashOfDocument);
   if (policyID !== policyId) {
-    throw new Error('Policy ID not matching');
+    throw new CustomError(10022);
   }
   const assetId = `${policyID}${Buffer.from(assetName).toString('hex')}`;
   const assetInfo = await getSpecificAssetByAssetId(assetId);
   if (assetInfo) {
     const ownerAddress = assetInfo.onchain_metadata.address || undefined;
     if (!ownerAddress) {
-      throw new Error('Owner address not found');
+      throw new CustomError(10023);
     } 
     const listAddresses = await getAddressesFromAssetId(assetId);
     if (listAddresses.length > 0 && listAddresses.find(a => md5(a.address) === ownerAddress) !== undefined) {
       return true;
     }
-    throw new Error('NFT Burned');
+    throw new CustomError(10024);
   }
   return false;
 };
@@ -425,6 +430,7 @@ const verifySignature = async (address, payload, signature) => {
       return true;
     }
   } catch (error) {
+    logger.error(error);
     throw error;
   }
   return false;
@@ -436,7 +442,12 @@ const verifySignatures = async (signatures) => {
     try {
       results.push(await verifySignature(signatures[i].address, signatures[i].payload, signatures[i].signature));
     } catch (error) {
-      throw error;
+      logger.error(error);
+      if (error instanceof CustomError) {
+        results.push([false, error.message]);
+      } else {
+        results.push(false);
+      }
     }
   }
   return results;

@@ -15,6 +15,10 @@ const { CustomError } = require('../CustomError');
 module.exports = {
   getAssets: async (req, res, next) => {
     const { address } = req.params;
+    /* istanbul ignore if */
+    if (!address) {
+      return next(new CustomError(10029));
+    }
     try {
       const assets = await core.getAssetsFromAddress(address);
       return res.status(200).json({
@@ -29,6 +33,10 @@ module.exports = {
   },
   getNFT: async (req, res, next) => {
     const { assetId } = req.params;
+    /* istanbul ignore if */
+    if (!assetId) {
+      return next(new CustomError(10028));
+    }
     try {
       const nft = await core.getSpecificAssetByAssetId(assetId);
       return res.status(200).json({
@@ -43,6 +51,10 @@ module.exports = {
   },
   getNFTs: async (req, res, next) => {
     const { policyId } = req.params;
+    /* istanbul ignore if */
+    if (!policyId) {
+      return next(new CustomError(10027));
+    }
     try {
       const assets = await core.getSpecificAssetsByPolicyId(policyId);
       const nfts = assets.filter(nft => parseInt(nft.quantity) === 1);

@@ -4,7 +4,7 @@ class CustomError extends Error {
   constructor(code) {
     super();
     this.error_code = code;
-    this.message = errorConstants[code];
+    this.message = errorConstants[code] || 'Something went wrong';
   }
 }
 
