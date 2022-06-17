@@ -1,6 +1,8 @@
 require('dotenv').config();
 require('./index');
 
+const keccak256 = require('keccak256');
+
 const CardanoWasm = require('@emurgo/cardano-serialization-lib-nodejs');
 
 const { signData } = require('../core/SignMessage')
@@ -18,11 +20,6 @@ const Logger = require('../Logger');
 const logger = Logger.createWithDefaultConfig('routers:controllers:hash:test');
 
 const SERVER_URL = process.env.serverUrl;
-
-const randomHash = (currentHash) => {
-  const nw = Date.now().toString();
-  return currentHash.slice(0, -nw.length) + nw;
-}
 
 describe('Function test', () => {
   const HASH_OF_DOCUMENT = '11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467335987';
@@ -158,7 +155,7 @@ describe('Api test', () => {
         .send({
           originPolicyId: 'EMPTY',
           previousHashOfDocument: 'EMPTY',
-          hashOfDocument: randomHash(`22d456db221d68dc8a7eac5e293422dec669b54812e4975497d7099467339868`),
+          hashOfDocument: keccak256(Math.random()).toString('hex'),
           address: ADDRESS,
         })
         .end((err, res) => {
