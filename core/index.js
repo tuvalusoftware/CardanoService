@@ -26,7 +26,7 @@ const getLatestBlock = async () => {
   try {
     const latestBlock = await blockFrostApi.blocksLatest();
     return latestBlock;
-  } catch (error) {
+  } catch (error) /* istanbul ignore next */ {
     logger.error(error);
     throw error;
   }
@@ -36,7 +36,7 @@ const getLatestEpoch = async () => {
   try {
     const latestEpoch = await blockFrostApi.epochsLatest();
     return latestEpoch;
-  } catch (error) {
+  } catch (error) /* istanbul ignore next */ {
     logger.error(error);
     throw error;
   }
@@ -46,7 +46,7 @@ const getProtocolParameters = async (epoch) => {
   try {
     const protocolParameters = await blockFrostApi.epochsParameters(epoch);
     return protocolParameters;
-  } catch (error) {
+  } catch (error) /* istanbul ignore next */ {
     logger.error(error);
     throw error;
   }
@@ -58,7 +58,7 @@ const getLatestEpochProtocolParameters = async () => {
     const latestBlock = await getLatestBlock();
     const protocolParameters = await getProtocolParameters(latestEpoch.epoch);
     return { ...protocolParameters, latestBlock };
-  } catch (error) {
+  } catch (error) /* istanbul ignore next */ {
     logger.error(error);
     throw error;
   }
@@ -68,7 +68,7 @@ const getMetadataByLabel = async (label) => {
   try {
     const metadata = await blockFrostApi.metadataTxsLabel(label);
     return metadata;
-  } catch (error) {
+  } catch (error) /* istanbul ignore next */ {
     logger.error(error);
     throw error;
   }
@@ -80,7 +80,7 @@ const getAssetsFromAddress = async (address) => {
     return listAssets.amount || [];
   } catch (error) {
     logger.error(error);
-    throw error;
+    throw new CustomError(10030);
   }
 };
 
@@ -92,7 +92,7 @@ const getAddressesFromAssetId = async (assetId) => {
     logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
       return [];
-    } else {
+    } else /* istanbul ignore next */ {
       throw error;
     }
   }
@@ -106,7 +106,7 @@ const getSpecificAssetByAssetId = async (asset) => {
     logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
       throw new CustomError(10016);
-    } else {
+    } else /* istanbul ignore next */ {
       throw error;
     }
   }
@@ -120,7 +120,7 @@ const getSpecificAssetsByPolicyId = async (policyId) => {
     logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
       throw new CustomError(10016);
-    } else {
+    } else /* istanbul ignore next */ {
       throw error;
     }
   }
@@ -157,7 +157,7 @@ const deriveAddressPrvKey = (bipPrvKey, isTestnet) => {
     CardanoWasm.StakeCredential.from_keyhash(stakeKey.to_raw_key().hash()),
   );
   const decodedAddress = baseAddress.to_address().to_bech32();
-  return { signKey: utxoKey.to_raw_key(), baseAddress: baseAddress.to_address(), decodedAddress: decodedAddress };
+  return { signKey: utxoKey.to_raw_key(), baseAddress: baseAddress, decodedAddress: decodedAddress };
 };
 
 const getAddressUtxos = async(address) => {
@@ -196,11 +196,11 @@ const getPolicyIdFromMnemonic = async (mNemonic) => {
   const { signKey, baseAddress, decodedAddress } = deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
   const scripts = CardanoWasm.NativeScripts.new();
   /* Add document cardano address to script */
-  const policyKeyHash = CardanoWasm.BaseAddress.from_address(baseAddress).payment_cred().to_keyhash();
+  const policyKeyHash = CardanoWasm.BaseAddress.from_address(baseAddress.to_address()).payment_cred().to_keyhash();
   const keyHashScript = CardanoWasm.NativeScript.new_script_pubkey(CardanoWasm.ScriptPubkey.new(policyKeyHash));
   scripts.add(keyHashScript);
   /* Add server address to script */
-  const policyServerKeyHash = CardanoWasm.BaseAddress.from_address(serverBaseAddress).payment_cred().to_keyhash();
+  const policyServerKeyHash = CardanoWasm.BaseAddress.from_address(serverBaseAddress.to_address()).payment_cred().to_keyhash();
   const serverKeyHashScript = CardanoWasm.NativeScript.new_script_pubkey(CardanoWasm.ScriptPubkey.new(policyServerKeyHash));
   scripts.add(serverKeyHashScript);
   // Add time to live to script
@@ -234,7 +234,7 @@ const initTransactionBuilder = async () => {
 
 const addInputAndNftToTransaction = (transactionBuilder, serverBaseAddress, utxos, mintScript, assetName, metadata, ttl, outputAddress) => {
   /* Get private keyhash from server account */
-  const privKeyHash = CardanoWasm.BaseAddress.from_address(serverBaseAddress).payment_cred().to_keyhash();
+  const privKeyHash = CardanoWasm.BaseAddress.from_address(serverBaseAddress.to_address()).payment_cred().to_keyhash();
 
   /* Add multiple inputs to transaction */
   for (let id = 0; id < utxos.length; ++id) {
@@ -274,7 +274,7 @@ const addInputAndNftToTransaction = (transactionBuilder, serverBaseAddress, utxo
     JSON.stringify(metadata),
   );
 
-  transactionBuilder.add_change_if_needed(serverBaseAddress);
+  transactionBuilder.add_change_if_needed(serverBaseAddress.to_address());
   return transactionBuilder;
 };
 
@@ -314,10 +314,12 @@ const findOriginHashOfDocument = async (policyId, hashOfDocument) => {
 };
 
 const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = false) => {
+  
   /* Determine: update or not ? */
   let previousHashOfDocument = 'EMPTY';
   let originPolicyId = 'EMPTY';
   if (isUpdate) {
+  
     const arrayOfHash = hashOfDocument.split(',');
     if (arrayOfHash.length !== 3) {
       throw new CustomError(10018);

@@ -36,4 +36,5 @@
   10027: 'Policy id is required',
   10028: 'Asset id is required',
   10029: 'Address is required',
+  10030: 'Invalid address for this network or malformed address format.',
 };

@@ -53,6 +53,19 @@ describe('Function test', () => {
     done();
   });
 
+  it('getAssetsFromAddress', (done) => {
+    async function t() {
+      try {
+        await core.getAssetsFromAddress('fake-address');
+      } catch (error) {
+        chai.expect(error.error_code).to.be.equal(10030);
+        chai.expect(error.error_message).to.be.equal(errorConstants[10030]);
+      }
+    }
+    t();
+    done();
+  });
+
   it('signDataAndVerifyMS', (done) => {
     const payload = Buffer.from(
       JSON.stringify({
@@ -157,7 +170,7 @@ describe('Api test', () => {
         .send({
           originPolicyId: 'EMPTY',
           previousHashOfDocument: 'EMPTY',
-          hashOfDocument: keccak256(`${Math.random()}`).toString('hex'),
+          hashOfDocument: keccak256(`${Math.random()}${Date.now().toString()}`).toString('hex'),
           address: ADDRESS,
         })
         .end((err, res) => {
