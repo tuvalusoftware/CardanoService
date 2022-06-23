@@ -113,6 +113,7 @@ const getSpecificAssetByAssetId = async (asset) => {
 };
 
 const getSpecificAssetsByPolicyId = async (policyId) => {
+  logger.info(policyId);
   try {
     const assetInfo = await blockFrostApi.assetsPolicyById(policyId);
     return assetInfo;
@@ -406,7 +407,8 @@ const submitSignedTransaction = async (signedTransaction) => {
 
 const checkIfNftMinted = async (policyID, hashOfDocument) => {
   const assetName = md5(hashOfDocument);
-  const { policyId } = await getPolicyIdFromHashOfDocument(hashOfDocument);
+  const originHashOfDocument = await findOriginHashOfDocument(policyID, hashOfDocument);
+  const { policyId } = await getPolicyIdFromHashOfDocument(originHashOfDocument);
   if (policyID !== policyId) {
     throw new CustomError(10022);
   }
@@ -419,6 +421,7 @@ const checkIfNftMinted = async (policyID, hashOfDocument) => {
     } 
     const listAddresses = await getAddressesFromAssetId(assetId);
     if (listAddresses.length > 0 && listAddresses.find(a => md5(a.address) === ownerAddress) !== undefined) {
+      logger.info('checkIfNftMinted: true');
       return true;
     }
     throw new CustomError(10024);
@@ -429,6 +432,7 @@ const checkIfNftMinted = async (policyID, hashOfDocument) => {
 const verifySignature = async (address, payload, signature) => {
   try { 
     if (verifyMS(address, payload, signature)) {
+      logger.info('verifySignature: true');
       return true;
     }
   } catch (error) {
