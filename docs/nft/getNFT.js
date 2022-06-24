@@ -20,8 +20,18 @@ module.exports = {
         content: {
           "application/json": {
             schema: {
-              $ref: "#/components/schemas/NFTMetadata"
-            }
+              type: "object",
+              properties: {
+                data: {
+                  type: "object",
+                  properties: {
+                    nftMetadata: {
+                      $ref: "#/components/schemas/NFTMetadata"
+                    },
+                  },
+                },
+              },
+            },
           }
         }
       },

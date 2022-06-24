@@ -7,6 +7,9 @@
 
 const swaggerUI = require("swagger-ui-express");
 
+const Logger = require('./Logger');
+const logger = Logger.createWithDefaultConfig('routers:controllers:server');
+
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
@@ -44,15 +47,15 @@ async function start(params) {
 
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
-    res.json({
+    res.status(200).json({
       error_code: err.error_code || err.message,
       error_message: err.message,
       error_data: err.error_data,
     });
   });
-
+  
   server.listen(params.port || 80, () => {
-    console.log(`Listening on http://localhost${params.port ? `:${params.port}` : ''}`);
+    logger.info(`Listening on http://localhost${params.port ? `:${params.port}` : ''}`);
     if (params && params.done) params.done();
   });
 }

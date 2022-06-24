@@ -20,7 +20,20 @@ module.exports = {
         content: {
           "application/json": {
             schema: {
-              $ref: "#/components/schemas/Asset"
+              type: "object",
+              properties: {
+                data: {
+                  type: "object",
+                  properties: {
+                    assets: {
+                      type: "array",
+                      items: {
+                        $ref: "#/components/schemas/Asset",
+                      },
+                    },
+                  },
+                },
+              },
             }
           }
         }

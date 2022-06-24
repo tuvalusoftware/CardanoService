@@ -4,22 +4,36 @@ module.exports = {
       cookieAuth: [],
     },
     tags: ["Hash"],
-    description: "Get current policy id",
-    operationId: "getPolicyId",
-    parameters: [],
+    description: "Get policy id from the hash of document",
+    operationId: "getPolicyIdFromHash",
+    parameters: [
+      {
+        name: "hashOfDocument",
+        in: "query",
+        schema: {
+          $ref: "#/components/schemas/Hash",
+        },
+        required: true,
+        description: "Hash Of Document",
+      },
+    ],
     requestBody: {},
     responses: {
       200: {
-        description: "PolicyId",
+        description: "Policy Id",
         content: {
           "application/json": {
             schema: {
               type: "object",
               properties: {
-                result: {
-                  type: "string",
-                  example: "1050dd64e77e671a0fee81f391080f5f57fefba2e26a816019aa5524",
-                }
+                data: {
+                  type: "object",
+                  properties: {
+                    policyId: {
+                      $ref: "#/components/schemas/PolicyId",
+                    },
+                  },
+                },
               }
             }
           }

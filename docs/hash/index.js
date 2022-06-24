@@ -1,7 +1,8 @@
 const storeHash = require('./storeHash');
 const verifyHash = require('./verifyHash');
-const getPolicyId = require('./getPolicyId');
+const getPolicyId = require('./getPolicyId')
 const verifySignature = require('./verifySignature')
+const verifySignatures = require('./verifySignatures')
 
 module.exports = {
   '/storeHash': {
@@ -10,10 +11,13 @@ module.exports = {
   '/verifyHash': {
     ...verifyHash,
   },
-  '/getPolicyId': {
-    ...getPolicyId,
-  },
   '/verifySignature': {
     ...verifySignature
+  },
+  '/verifySignatures': {
+    ...verifySignatures
+  },
+  '/getPolicyId': {
+    ...getPolicyId
   },
 }

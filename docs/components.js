@@ -10,6 +10,23 @@ module.exports = {
     responses: {
       UnauthorizedError: {
         description: "Access token is missing or invalid",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                error_code: {
+                  type: "string",
+                  example: "Not authenticated",
+                },
+                error_message: {
+                  type: "string",
+                  example: "Not authenticated",
+                },
+              },
+            },
+          },
+        },
       }
     },
     schemas: {
@@ -41,12 +58,7 @@ module.exports = {
       Hash: {
         type: "string",
         description: "Hash",
-        example: "aa51202b3df8bb0a109f484b4982d70adc046d89eabddfc02df2c0a3aa3d8d7a",
-      },
-      Did: {
-        type: "string",
-        description: "DID",
-        example: "did:method:companyName:documentName:hash",
+        example: "11d456db211d68cc8a6eac5e293422dec669b54812e4975497d7099467335987",
       },
       Label: {
         type: "number",
@@ -58,46 +70,45 @@ module.exports = {
         description: "AssetId",
         example: "9cebd568ac4ad908cdd2d45a52327fc4711911054c9951b90a6033034265727279417572656c6961",
       },
+      PolicyId: {
+        type: "string",
+        description: "PolicyId",
+        example: "1050dd64e77e671a0fee81f391080f5f57fefba2e26a816019aa5524",
+      },
       TransactionHash: {
         type: "string",
         description: "TransactionHash",
         example: "03afe864808fbf49390976ecf2bf29b00d8228db6e4545c205457382c5647515",
       },
       Metadata: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            tx_hash: {
-              type: "string",
-              description: "Transaction hash",
-              example: "24b56bec4fd88c3a6012697641960ae0203a45028a5eddb0d4f224798094548e",
-            },
-            json_metadata: {
-              type: "object",
-              description: "JSON Metadata",
-              example: {
-                "name": "Fuixlabs",
-              },
+        type: "object",
+        properties: {
+          tx_hash: {
+            type: "string",
+            description: "Transaction hash",
+            example: "24b56bec4fd88c3a6012697641960ae0203a45028a5eddb0d4f224798094548e",
+          },
+          json_metadata: {
+            type: "object",
+            description: "JSON Metadata",
+            example: {
+              "name": "Fuixlabs",
             },
           },
         },
       },
       Asset: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            unit: {
-              type: "string",
-              description: "Asset ID",
-              example: "199062e26a0ea1370249e71e6224c6541e7825a192fe42c57aa538c341616461476f6c64656e526566657272616c31363339303438343435",
-            },
-            quantity: {
-              type: "number",
-              description: "Quantity",
-              example: "1",
-            },
+        type: "object",
+        properties: {
+          unit: {
+            type: "string",
+            description: "Asset ID",
+            example: "199062e26a0ea1370249e71e6224c6541e7825a192fe42c57aa538c341616461476f6c64656e526566657272616c31363339303438343435",
+          },
+          quantity: {
+            type: "number",
+            description: "Quantity",
+            example: "1",
           },
         },
       },

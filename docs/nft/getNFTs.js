@@ -1,22 +1,22 @@
 module.exports = {
   get: {
-    tags: ["Metadata"],
-    description: "Fetch metadata",
-    operationId: "getMetadata",
+    tags: ["Asset"],
+    description: "Get list of NFTs",
+    operationId: "getListOfNFTs",
     parameters: [
       {
-        name: "label",
+        name: "policyId",
         in: "path",
         schema: {
-          $ref: "#/components/schemas/Label",
+          $ref: "#/components/schemas/PolicyId",
         },
         required: true,
-        description: "Metadata Label",
+        description: "policyId",
       },
     ],
     responses: {
       200: {
-        description: "List of Metadata",
+        description: "List of NFTs",
         content: {
           "application/json": {
             schema: {
@@ -25,10 +25,10 @@ module.exports = {
                 data: {
                   type: "object",
                   properties: {
-                    metadata: {
+                    nfts: {
                       type: "array",
                       items: {
-                        $ref: "#/components/schemas/Metadata"
+                        $ref: "#/components/schemas/Asset",
                       },
                     },
                   },

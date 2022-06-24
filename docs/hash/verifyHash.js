@@ -8,28 +8,42 @@ module.exports = {
     operationId: "verifyHash",
     parameters: [
       {
-        name: "hash",
+        name: "policyID",
+        in: "query",
+        schema: {
+          $ref: "#/components/schemas/PolicyId",
+        },
+        required: true,
+        description: "Policy ID",
+      },
+      {
+        name: "hashOfDocument",
         in: "query",
         schema: {
           $ref: "#/components/schemas/Hash",
         },
         required: true,
-        description: "Hash",
+        description: "Hash Of Document",
       },
     ],
     requestBody: {},
     responses: {
       200: {
-        description: "True or false.",
+        description: "true or false.",
         content: {
           "application/json": {
             schema: {
               type: "object",
               properties: {
-                result: {
-                  type: "string",
-                  example: "true",
-                }
+                data: {
+                  type: "object",
+                  properties: {
+                    result: {
+                      type: "string",
+                      example: "true",
+                    },
+                  },
+                },
               }
             }
           }

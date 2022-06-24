@@ -7,100 +7,28 @@
 
 const Blockfrost = require('@blockfrost/blockfrost-js');
 const CardanoWasm = require('@emurgo/cardano-serialization-lib-nodejs');
-const CardanoMS = require("@emurgo/cardano-message-signing-nodejs");
+const { verifyMS } = require('./MessageSigning');
 const bip39 = require('bip39');
 const md5 = require('md5');
 require('dotenv').config();
 
-/**
- * Copied from https://github.com/Berry-Pool/nami-wallet/blob/main/MessageSigning.md
- * @param {string} address - hex encoded
- * @param {string} payload - hex encoded
- * @param {string} coseSign1Hex - hex encoded
- */
- const verify = (address, payload, coseSign1Hex) => {
-  const coseSign1 = CardanoMS.COSESign1.from_bytes(Buffer.from(coseSign1Hex, 'hex'));
-  const payloadCose = coseSign1.payload();
-  if (verifyPayload(payload, payloadCose)) {
-    throw new Error('Payload does not match');
-  }
-  const protectedHeaders = coseSign1.headers().protected().deserialized_headers();
-  const addressCose = CardanoWasm.Address.from_bytes(protectedHeaders.header(CardanoMS.Label.new_text('address')).as_bytes());
-  const publicKeyCose = CardanoWasm.PublicKey.from_bytes(protectedHeaders.key_id());
-  if (!verifyAddress(address, addressCose, publicKeyCose)) {
-    throw new Error('Could not verify because of address mismatch');
-  }
-  const signature = CardanoWasm.Ed25519Signature.from_bytes(coseSign1.signature());
-  const data = coseSign1.signed_data().to_bytes();
-  return publicKeyCose.verify(data, signature);
-};
-
-// Modified by tkhang@ferdon.io
-const verifyPayload = (payload, payloadCose) => {
-  // return Buffer.from(payloadCose, 'hex').compare(Buffer.from(payload, 'hex'));
-  const hexMessage = Buffer.from(payloadCose, 'hex').toString();
-  return hexMessage == payload;
-};
-
-const verifyAddress = (address, addressCose, publicKeyCose) => {
-  const checkAddress = CardanoWasm.Address.from_bytes(Buffer.from(address, 'hex'));
-  if (addressCose.to_bech32() !== checkAddress.to_bech32()) return false;
-  // Check if BaseAddress
-  try {
-    const baseAddress = CardanoWasm.BaseAddress.from_address(addressCose);
-    // Reconstruct address
-    const paymentKeyHash = publicKeyCose.hash();
-    const stakeKeyHash = baseAddress.stake_cred().to_keyhash();
-    const reconstructedAddress = CardanoWasm.BaseAddress.new(
-      checkAddress.network_id(),
-      CardanoWasm.StakeCredential.from_keyhash(paymentKeyHash),
-      CardanoWasm.StakeCredential.from_keyhash(stakeKeyHash)
-    );
-    if (checkAddress.to_bech32() !== reconstructedAddress.to_address().to_bech32()) {
-      return false;
-    }
-    return true;
-  } catch (error) {
-    throw new Error(error);
-  }
-  // Check if RewardAddress
-  try {
-    // Reconstruct address
-    const stakeKeyHash = publicKeyCose.hash();
-    const reconstructedAddress = CardanoWasm.RewardAddress.new(
-      checkAddress.network_id(),
-      CardanoWasm.StakeCredential.from_keyhash(stakeKeyHash)
-    );
-    if (checkAddress.to_bech32() !== reconstructedAddress.to_address().to_bech32()) {
-      return false;
-    }
-    return true;
-  } catch (error) {
-    throw new Error(error);
-  }
-  return false;
-};
+const Logger = require('../Logger');
+const logger = Logger.createWithDefaultConfig('routers:controllers:core');
 
 const blockFrostApi = new Blockfrost.BlockFrostAPI({
   projectId: process.env.blockFrostApiKey,
   isTestnet: process.env.isTestnet,
 });
 
-const getDatumValueFromDatumHash = async (datumHash) => {
-  try {
-    const datumValue = await blockFrostApi.scriptsDatum(datumHash);
-    return datumValue;
-  } catch (error) {
-    throw new Error;
-  }
-};
+const { CustomError } = require('../routers/CustomError');
 
 const getLatestBlock = async () => {
   try {
     const latestBlock = await blockFrostApi.blocksLatest();
     return latestBlock;
-  } catch (error) {
-    throw new Error(error);
+  } catch (error) /* istanbul ignore next */ {
+    logger.error(error);
+    throw error;
   }
 };
 
@@ -108,8 +36,9 @@ const getLatestEpoch = async () => {
   try {
     const latestEpoch = await blockFrostApi.epochsLatest();
     return latestEpoch;
-  } catch (error) {
-    throw new Error(error);
+  } catch (error) /* istanbul ignore next */ {
+    logger.error(error);
+    throw error;
   }
 };
 
@@ -117,8 +46,9 @@ const getProtocolParameters = async (epoch) => {
   try {
     const protocolParameters = await blockFrostApi.epochsParameters(epoch);
     return protocolParameters;
-  } catch (error) {
-    throw new Error(error);
+  } catch (error) /* istanbul ignore next */ {
+    logger.error(error);
+    throw error;
   }
 };
 
@@ -128,8 +58,9 @@ const getLatestEpochProtocolParameters = async () => {
     const latestBlock = await getLatestBlock();
     const protocolParameters = await getProtocolParameters(latestEpoch.epoch);
     return { ...protocolParameters, latestBlock };
-  } catch (error) {
-    throw new Error(error);
+  } catch (error) /* istanbul ignore next */ {
+    logger.error(error);
+    throw error;
   }
 };
 
@@ -137,49 +68,63 @@ const getMetadataByLabel = async (label) => {
   try {
     const metadata = await blockFrostApi.metadataTxsLabel(label);
     return metadata;
-  } catch (error) {
-    throw new Error(error);
+  } catch (error) /* istanbul ignore next */ {
+    logger.error(error);
+    throw error;
   }
 }
 
 const getAssetsFromAddress = async (address) => {
-  let listAssets = [];
   try {
-    listAssets = await blockFrostApi.addresses(address);
+    const listAssets = await blockFrostApi.addresses(address);
+    return listAssets.amount || [];
   } catch (error) {
-    throw new Error(error);
+    logger.error(error);
+    throw new CustomError(10030);
   }
-  return listAssets.amount;
 };
 
 const getAddressesFromAssetId = async (assetId) => {
-  let listAddresses = [];
   try {
-    listAddresses = await blockFrostApi.assetsAddresses(assetId);
+    const listAddresses = await blockFrostApi.assetsAddresses(assetId);
+    return listAddresses;
   } catch (error) {
-    throw new Error(error);
+    logger.error(error);
+    if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
+      return [];
+    } else /* istanbul ignore next */ {
+      throw error;
+    }
   }
-  return listAddresses;
 };
 
 const getSpecificAssetByAssetId = async (asset) => {
-  let assetInfo = {};
   try {
-    assetInfo = await blockFrostApi.assetsById(asset);
+    const assetInfo = await blockFrostApi.assetsById(asset);
+    return assetInfo;
   } catch (error) {
-    throw new Error(error);
+    logger.error(error);
+    if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
+      throw new CustomError(10016);
+    } else /* istanbul ignore next */ {
+      throw error;
+    }
   }
-  return assetInfo;
 };
 
-const getSpecificAssetByPolicyId = async (policyId) => {
-  let assetInfo = {};
+const getSpecificAssetsByPolicyId = async (policyId) => {
+  logger.info(policyId);
   try {
-    assetInfo = await blockFrostApi.assetsPolicyById(policyId);
+    const assetInfo = await blockFrostApi.assetsPolicyById(policyId);
+    return assetInfo;
   } catch (error) {
-    throw new Error(error);
+    logger.error(error);
+    if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
+      throw new CustomError(10016);
+    } else /* istanbul ignore next */ {
+      throw error;
+    }
   }
-  return assetInfo;
 };
 
 const mnemonicToPrivateKey = (mnemonic) => {
@@ -212,122 +157,135 @@ const deriveAddressPrvKey = (bipPrvKey, isTestnet) => {
     CardanoWasm.StakeCredential.from_keyhash(utxoKey.to_public().to_raw_key().hash()),
     CardanoWasm.StakeCredential.from_keyhash(stakeKey.to_raw_key().hash()),
   );
-  const address = baseAddress.to_address().to_bech32();
-  return { signKey: utxoKey.to_raw_key(), baseAddress: baseAddress.to_address(), address: address };
+  const decodedAddress = baseAddress.to_address().to_bech32();
+  return { signKey: utxoKey.to_raw_key(), baseAddress: baseAddress, decodedAddress: decodedAddress };
 };
 
 const getAddressUtxos = async(address) => {
-  let addressUtxo = [];
   try {
-   addressUtxo = await blockFrostApi.addressesUtxosAll(address);
+   const addressUtxo = await blockFrostApi.addressesUtxosAll(address);
+   return addressUtxo;
   } catch (error) {
+    logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
-      addressUtxo = [];
+      return [];
     } else {
       throw error;
     }
   }
-  return addressUtxo;
 }
 
-const createNftTransaction = async (outputAddress, hash) => {
-  const assetName = md5(hash);
-  const mNemonic = process.env.mNemonic;
+const getServerAccount = () => {
+  let mNemonic = process.env.mNemonic;
+  if (process.env.isMocha) {
+    logger.warn('Using mock server account');
+    mNemonic = process.env.fakeMnemonic;
+  }
+  const { signKey, baseAddress, decodedAddress } = deriveAddressPrvKey(mnemonicToPrivateKey(mNemonic), process.env.isTestnet);
+  logger.info(decodedAddress);
+  return { serverSignKey: signKey, serverBaseAddress: baseAddress, serverDecodedAddress: decodedAddress };
+}
+
+const getPolicyIdFromHashOfDocument = async (hashOfDocument) => {
+  const mNemonic = bip39.entropyToMnemonic(hashOfDocument);
+  return getPolicyIdFromMnemonic(mNemonic);
+};
+
+const getPolicyIdFromMnemonic = async (mNemonic) => {
+  const { serverBaseAddress } = getServerAccount();
   const bip32PrvKey = mnemonicToPrivateKey(mNemonic);
-  const { signKey, baseAddress, address } = deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
-  console.log(`Using address ${address}`);
-  let utxo = await getAddressUtxos(address);
-  if (utxo.length === 0) {
-    throw Error(`You should send ADA to ${address} to have enough funds to sent a transaction.`);
-  }
-  console.log(`Utxo on ${address}`);
-  console.log(JSON.stringify(utxo, undefined, 4));
-  const latestBlock = await getLatestBlock();
-  const currentSlot = latestBlock.slot;
-  if (!currentSlot) {
-    throw new Error('Failed to fetch slot number');
-  }
+  const { signKey, baseAddress, decodedAddress } = deriveAddressPrvKey(bip32PrvKey, process.env.isTestnet);
+  const scripts = CardanoWasm.NativeScripts.new();
+  /* Add document cardano address to script */
+  const policyKeyHash = CardanoWasm.BaseAddress.from_address(baseAddress.to_address()).payment_cred().to_keyhash();
+  const keyHashScript = CardanoWasm.NativeScript.new_script_pubkey(CardanoWasm.ScriptPubkey.new(policyKeyHash));
+  scripts.add(keyHashScript);
+  /* Add server address to script */
+  const policyServerKeyHash = CardanoWasm.BaseAddress.from_address(serverBaseAddress.to_address()).payment_cred().to_keyhash();
+  const serverKeyHashScript = CardanoWasm.NativeScript.new_script_pubkey(CardanoWasm.ScriptPubkey.new(policyServerKeyHash));
+  scripts.add(serverKeyHashScript);
+  // Add time to live to script
+  const ttl = 3155695200;
+  // const lockScript = CardanoWasm.NativeScript.new_timelock_expiry(CardanoWasm.TimelockExpiry.new(ttl));
+  // scripts.add(lockScript);
+  const mintScript = CardanoWasm.NativeScript.new_script_all(CardanoWasm.ScriptAll.new(scripts));
+  const policyId = Buffer.from(mintScript.hash().to_bytes()).toString('hex');
+  return { signKey, baseAddress, decodedAddress, mintScript, policyId, ttl };
+};
+
+const initTransactionBuilder = async () => {
+  const protocolParameters = await getLatestEpochProtocolParameters();
   const transactionBuilder = CardanoWasm.TransactionBuilder.new(
     CardanoWasm.TransactionBuilderConfigBuilder.new()
       .fee_algo(
         CardanoWasm.LinearFee.new(
-          CardanoWasm.BigNum.from_str('44'),
-          CardanoWasm.BigNum.from_str('155381')
+          CardanoWasm.BigNum.from_str(protocolParameters.min_fee_a.toString()),
+          CardanoWasm.BigNum.from_str(protocolParameters.min_fee_b.toString())
         )
       )
-      .coins_per_utxo_word(CardanoWasm.BigNum.from_str('34482'))
-      .pool_deposit(CardanoWasm.BigNum.from_str('500000000'))
-      .key_deposit(CardanoWasm.BigNum.from_str('2000000'))
-      .max_value_size(5000)
-      .max_tx_size(16384)
+      .coins_per_utxo_word(CardanoWasm.BigNum.from_str(protocolParameters.min_utxo.toString()))
+      .pool_deposit(CardanoWasm.BigNum.from_str(protocolParameters.pool_deposit.toString()))
+      .key_deposit(CardanoWasm.BigNum.from_str(protocolParameters.key_deposit.toString()))
+      .max_value_size(parseInt(protocolParameters.max_val_size))
+      .max_tx_size(protocolParameters.max_tx_size)
       .build()
   );
-  const scripts = CardanoWasm.NativeScripts.new();
-  const policyKeyHash = CardanoWasm.BaseAddress.from_address(baseAddress).payment_cred().to_keyhash();
-  const keyHashScript = CardanoWasm.NativeScript.new_script_pubkey(CardanoWasm.ScriptPubkey.new(policyKeyHash));
-  scripts.add(keyHashScript);
-  const ttl = 3155695200;
-  const lockScript = CardanoWasm.NativeScript.new_timelock_expiry(CardanoWasm.TimelockExpiry.new(ttl));
-  scripts.add(lockScript);
-  const mintScript = CardanoWasm.NativeScript.new_script_all(CardanoWasm.ScriptAll.new(scripts));
-  const privKeyHash = CardanoWasm.BaseAddress.from_address(baseAddress).payment_cred().to_keyhash();
-  let bestUtxo = null;
-  for (let id = 0; id < utxo.length; ++id) {
-    const u = utxo[id];
-    if (bestUtxo === null) {
-      bestUtxo = u;
+  return transactionBuilder;
+}
+
+const addInputAndNftToTransaction = (transactionBuilder, serverBaseAddress, utxos, mintScript, assetName, metadata, ttl, outputAddress) => {
+  /* Get private keyhash from server account */
+  const privKeyHash = CardanoWasm.BaseAddress.from_address(serverBaseAddress.to_address()).payment_cred().to_keyhash();
+
+  /* Add multiple inputs to transaction */
+  for (let id = 0; id < utxos.length; ++id) {
+    const checkIfUtxoContainsAsset = (utxo) => {
+      const amounts = utxo.amount.filter(amt => amt.unit !== 'lovelace');
+      return amounts.length > 0;
+    };
+    if (checkIfUtxoContainsAsset(utxos[id])) {
+      continue;
     }
-    const amount = (u.amount.find(a => a.unit === 'lovelace')?.quantity || 0);
-    if (amount > (bestUtxo.amount.find(a => a.unit === 'lovelace')?.quantity || 0)) {
-      bestUtxo = u;
-    }
+    transactionBuilder.add_key_input(
+      privKeyHash,
+      CardanoWasm.TransactionInput.new(
+        CardanoWasm.TransactionHash.from_bytes(Buffer.from(utxos[id].tx_hash, 'hex')),
+        utxos[id].tx_index,
+      ),
+      CardanoWasm.Value.new(CardanoWasm.BigNum.from_str(
+        (utxos[id].amount.find(a => a.unit === 'lovelace')?.quantity || 0).toString(),
+      )),
+    );  
   }
-  if (bestUtxo === null) {
-    throw new Error('Utxo not found');
-  }
-  console.log(bestUtxo);
-  transactionBuilder.add_key_input(
-    privKeyHash,
-    CardanoWasm.TransactionInput.new(
-      CardanoWasm.TransactionHash.from_bytes(Buffer.from(bestUtxo.tx_hash, 'hex')),
-      bestUtxo.tx_index,
-    ),
-    CardanoWasm.Value.new(CardanoWasm.BigNum.from_str(
-      (bestUtxo.amount.find(a => a.unit === 'lovelace')?.quantity || 0).toString(),
-    )),
-  );
+
+  /* Add an NFT to the transaction */
   transactionBuilder.add_mint_asset_and_output_min_required_coin(
     mintScript,
     CardanoWasm.AssetName.new(Buffer.from(assetName)),
     CardanoWasm.Int.new_i32(1),
-    CardanoWasm.TransactionOutputBuilder.new().with_address(CardanoWasm.Address.from_bech32(outputAddress)).next(),
+    CardanoWasm.TransactionOutputBuilder.new().with_address(
+      CardanoWasm.Address.from_bech32(outputAddress)
+    ).next(),
   );
-  const policyId = Buffer.from(mintScript.hash().to_bytes()).toString('hex');
-  const assetId = `${policyId}${Buffer.from(assetName).toString('hex')}`;
-  const listAddresses = await getAddressesFromAssetId(assetId);
-  if (listAddresses.length > 0 && listAddresses.find(a => a.address === outputAddress)) {
-    throw new Error('NFT Minted');
-  }
-  const metadata = {
-    [policyId]: {
-      [assetName]: {
-        name: assetName,
-        hash: hash,
-        address: md5(outputAddress),
-      },
-    },
-  };
+
+  /* Add an NFT metadata to the transaction */
   transactionBuilder.set_ttl(ttl);
   transactionBuilder.add_json_metadatum(
     CardanoWasm.BigNum.from_str('721'),
     JSON.stringify(metadata),
   );
-  transactionBuilder.add_change_if_needed(baseAddress);
+
+  transactionBuilder.add_change_if_needed(serverBaseAddress.to_address());
+  return transactionBuilder;
+};
+
+const signTransaction = (transactionBuilder, serverSignKey, documentSignKey, mintScript) => {
   const transactionBody = transactionBuilder.build();
   const transactionHash = CardanoWasm.hash_transaction(transactionBody);
   const witnesses = CardanoWasm.TransactionWitnessSet.new();
   const vkeyWitnesses = CardanoWasm.Vkeywitnesses.new();
-  vkeyWitnesses.add(CardanoWasm.make_vkey_witness(transactionHash, signKey));
+  vkeyWitnesses.add(CardanoWasm.make_vkey_witness(transactionHash, serverSignKey));
+  vkeyWitnesses.add(CardanoWasm.make_vkey_witness(transactionHash, documentSignKey));
   witnesses.set_vkeys(vkeyWitnesses);
   witnesses.set_native_scripts;
   const witnessScripts = CardanoWasm.NativeScripts.new();
@@ -339,14 +297,99 @@ const createNftTransaction = async (outputAddress, hash) => {
     witnesses,
     unsignedTransaction.auxiliary_data(),
   );
+  return transaction;
+};
+
+const findOriginHashOfDocument = async (policyId, hashOfDocument) => {
+  const assetName = md5(hashOfDocument);
+  const assetId = `${policyId}${Buffer.from(assetName).toString('hex')}`;
+  const assetInfo = await getSpecificAssetByAssetId(assetId);
+  if (assetInfo) {
+    const originHashOfDocument = assetInfo.onchain_metadata.originHashOfDocument || undefined;
+    if (originHashOfDocument) {
+      return originHashOfDocument;
+    }
+    throw new CustomError(10017);
+  }
+  throw new CustomError(10016);
+};
+
+const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = false) => {
+  
+  /* Determine: update or not ? */
+  let previousHashOfDocument = 'EMPTY';
+  let originPolicyId = 'EMPTY';
+  if (isUpdate) {
+  
+    const arrayOfHash = hashOfDocument.split(',');
+    if (arrayOfHash.length !== 3) {
+      throw new CustomError(10018);
+    }
+    hashOfDocument = arrayOfHash[0];
+    previousHashOfDocument = arrayOfHash[1];
+    originPolicyId = arrayOfHash[2];
+  } else {
+    previousHashOfDocument = hashOfDocument;
+  }
+
+  logger.warn(isUpdate ? "Update document" : "Create document");
+
+  /* Define asset name from hash of document */
+  const assetName = md5(hashOfDocument);
+
+  /* Get server account */
+  const { serverSignKey, serverBaseAddress, serverDecodedAddress } = getServerAccount();
+
+  /* Get the origin hash of document */
+  const originHashOfDocument = isUpdate ? (await findOriginHashOfDocument(originPolicyId, previousHashOfDocument)) : hashOfDocument;
+
+  /* Get a document cardano account */
+  const { signKey, mintScript, policyId, ttl } = await getPolicyIdFromHashOfDocument(isUpdate ? originHashOfDocument : hashOfDocument, false);
+
+  /* Define an asset id */
+  const assetId = `${policyId}${Buffer.from(assetName).toString('hex')}`;
+
+  /* An NFT is minted or not ? */
+  const listAddresses = await getAddressesFromAssetId(assetId);
+  if (listAddresses.length > 0 && listAddresses.find(a => a.address === outputAddress)) {
+    throw new CustomError(10019);
+  }
+
+  /* Query an utxo on server account */
+  let utxos = await getAddressUtxos(serverDecodedAddress);
+  if (utxos.length === 0) {
+    throw new CustomError(10020);
+  }
+
+  /* Build a transaction */
+  let transactionBuilder = await initTransactionBuilder();
+  
+  /* Define an NFT metadata */
+  const metadata = {
+    [policyId]: {
+      [assetName]: {
+        name: assetName,
+        hashOfDocument: hashOfDocument,
+        previousHashOfDocument: previousHashOfDocument,
+        originHashOfDocument: originHashOfDocument,
+        address: md5(outputAddress),
+        createAt: Date.now(),
+      },
+    },
+  };
+
+  transactionBuilder = addInputAndNftToTransaction(transactionBuilder, serverBaseAddress, utxos, mintScript, assetName, metadata, ttl, outputAddress);
+  const transaction = signTransaction(transactionBuilder, serverSignKey, signKey, mintScript);
+  
+  /* Submit a transaction */
   try {
     const result = await submitSignedTransaction(transaction.to_bytes());
-    console.log(`Transaction successfully submitted: ${result}`)
+    logger.info(`Transaction successfully submitted: ${result}`)
+    return { policyId, assetId };
   } catch (error) {
-    // Submit could fail if the transactions is rejected by cardano node
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 400) {
-      console.log(`Transaction ${transactionHash} rejected`);
-      console.log(error.message);
+      console.log(error);
+      throw new CustomError(10021);
     } else {
       throw error;
     }
@@ -354,70 +397,80 @@ const createNftTransaction = async (outputAddress, hash) => {
 }
 
 const submitSignedTransaction = async (signedTransaction) => {
-  let txHash = null;
   try {
-    txHash = await blockFrostApi.txSubmit(signedTransaction);
+    const txHash = await blockFrostApi.txSubmit(signedTransaction);
+    return txHash;
   } catch (error) {
-    throw new Error(error);
+    throw error;
   }
-  return txHash;
 }
 
-const checkIfNftMinted = async (hash) => {
-  const policyID = getCurrentPolicyId();
-  const assetName = md5(hash);
+const checkIfNftMinted = async (policyID, hashOfDocument) => {
+  const assetName = md5(hashOfDocument);
+  const originHashOfDocument = await findOriginHashOfDocument(policyID, hashOfDocument);
+  const { policyId } = await getPolicyIdFromHashOfDocument(originHashOfDocument);
+  if (policyID !== policyId) {
+    throw new CustomError(10022);
+  }
   const assetId = `${policyID}${Buffer.from(assetName).toString('hex')}`;
-  const listAssets = await blockFrostApi.assetsById(assetId);
-  if (listAssets) {
-    const ownerAddress = (listAssets.onchain_metadata.address || undefined);
+  const assetInfo = await getSpecificAssetByAssetId(assetId);
+  if (assetInfo) {
+    const ownerAddress = assetInfo.onchain_metadata.address || undefined;
     if (!ownerAddress) {
-      throw new Error('Owner address not found');
+      throw new CustomError(10023);
     } 
     const listAddresses = await getAddressesFromAssetId(assetId);
-    const md5OwnerAddress = md5(ownerAddress);
-    if (listAddresses.length > 0 && listAddresses.find(a => a.address === md5OwnerAddress)) {
+    if (listAddresses.length > 0 && listAddresses.find(a => md5(a.address) === ownerAddress) !== undefined) {
+      logger.info('checkIfNftMinted: true');
       return true;
     }
-    throw new Error('NFT Burned');
+    throw new CustomError(10024);
   }
   return false;
 };
 
-const getCurrentPolicyId = () => {
-  if (!process.env.policyId) {
-    throw new Error('PolicyID not found');
-  }
-  return process.env.policyId;
-}
-
 const verifySignature = async (address, payload, signature) => {
   try { 
-    if (verify(address, payload, signature)) {
+    if (verifyMS(address, payload, signature)) {
+      logger.info('verifySignature: true');
       return true;
     }
   } catch (error) {
-    throw new Error(error);
+    logger.error(error);
+    throw error;
   }
   return false;
 }
 
+const verifySignatures = async (signatures) => {
+  let results = [];
+  for (let i = 0; i < signatures.length; i++) {
+    try {
+      results.push(await verifySignature(signatures[i].address, signatures[i].payload, signatures[i].signature));
+    } catch (error) {
+      logger.error(error);
+      if (error instanceof CustomError) {
+        results.push([false, error.message]);
+      } else {
+        results.push(false);
+      }
+    }
+  }
+  return results;
+}
+
 module.exports = {
-  getAddressUtxos,
-  mnemonicToPrivateKey,
-  deriveAddressPrvKey,
-  getLatestBlock,
-  getLatestEpoch,
-  getDatumValueFromDatumHash,
-  getProtocolParameters,
-  getAddressesFromAssetId,
+  getServerAccount,
+  findOriginHashOfDocument,
   getLatestEpochProtocolParameters,
   getMetadataByLabel,
   getAssetsFromAddress,
   getSpecificAssetByAssetId,
-  getSpecificAssetByPolicyId,
-  checkIfNftMinted,
-  getCurrentPolicyId,
+  getSpecificAssetsByPolicyId,
+  getPolicyIdFromHashOfDocument,
   createNftTransaction,
   submitSignedTransaction,
+  checkIfNftMinted,
   verifySignature,
+  verifySignatures,
 };

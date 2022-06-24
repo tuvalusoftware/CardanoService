@@ -7,29 +7,68 @@
 
 const core = require('../../core');
 
+const Logger = require('../../Logger');
+const logger = Logger.createWithDefaultConfig('routers:controllers:nft');
+
+const { CustomError } = require('../CustomError');
+
 module.exports = {
   getAssets: async (req, res, next) => {
     const { address } = req.params;
+    /* istanbul ignore if */
     if (!address) {
-      throw new Error('URL invalid');
+      return next(new CustomError(10029));
     }
     try {
       const assets = await core.getAssetsFromAddress(address);
-      res.json(assets);
+      return res.status(200).json({
+        data: {
+          assets: assets,
+        }
+      });
     } catch (error) {
-      next(error);
+      logger.error(error);
+      return next(new CustomError(10010));
     }
   },
   getNFT: async (req, res, next) => {
     const { assetId } = req.params;
+    /* istanbul ignore if */
     if (!assetId) {
-      throw new Error('URL invalid');
+      return next(new CustomError(10028));
     }
     try {
-      const nfts = await core.getSpecificAssetByAssetId(assetId);
-      res.json(nfts);
+      const nft = await core.getSpecificAssetByAssetId(assetId);
+      return res.status(200).json({
+        data: {
+          nftMetadata: nft,
+        }
+      });
     } catch (error) {
-      next(error);
+      logger.error(error);
+      return next(new CustomError(10011));
+    }
+  },
+  getNFTs: async (req, res, next) => {
+    const { policyId } = req.params;
+    /* istanbul ignore if */
+    if (!policyId) {
+      return next(new CustomError(10027));
+    }
+    try {
+      const assets = await core.getSpecificAssetsByPolicyId(policyId);
+      const nfts = assets.filter(nft => parseInt(nft.quantity) === 1);
+      for (let id = 0; id < nfts.length; ++id) {
+        nfts[id].metadata = await core.getSpecificAssetByAssetId(nfts[id].asset);
+      }
+      return res.status(200).json({
+        data: {
+          nfts: nfts,
+        }
+      });
+    } catch (error) {
+      logger.error(error);
+      return next(new CustomError(10012));
     }
   }
 };

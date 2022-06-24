@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "policy": "node scripts/generate_policyid.js"
+    "test": "mocha --timeout 30000",
+    "coverage": "nyc npm run test"
   },
   "repository": {
     "type": "git",
@@ -25,6 +25,8 @@
     "axios": "^0.27.2",
     "bip39": "^3.0.4",
     "body-parser": "^1.20.0",
+    "chai": "^4.3.6",
+    "chai-http": "^4.3.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
@@ -32,6 +34,11 @@
     "jsonwebtoken": "^8.5.1",
     "keccak256": "^1.0.6",
     "md5": "^2.3.0",
-    "swagger-ui-express": "^4.3.0"
+    "swagger-ui-express": "^4.3.0",
+    "winston": "^2.4.6"
+  },
+  "devDependencies": {
+    "mocha": "^10.0.0",
+    "nyc": "^15.1.0"
   }
 }
