@@ -22,6 +22,16 @@ const blockFrostApi = new Blockfrost.BlockFrostAPI({
 
 const { CustomError } = require('../routers/CustomError');
 
+const getDatumFromDatumHash = async (datumHash) => {
+  try {
+    const datum = await blockFrostApi.scriptsDatum(datumHash);
+    return datum;
+  } catch (error) {
+    logger.error(error);
+    throw error;
+  }
+};
+
 const getLatestBlock = async () => {
   try {
     const latestBlock = await blockFrostApi.blocksLatest();
@@ -473,4 +483,5 @@ module.exports = {
   checkIfNftMinted,
   verifySignature,
   verifySignatures,
+  getDatumFromDatumHash,
 };
