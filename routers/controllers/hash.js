@@ -44,6 +44,32 @@ module.exports = {
       });
     }
   },
+  storeCredentials: async (req, res, next) => {
+    const { address, hashOfDocument, originPolicyId, indexOfCreds, credentials } = req.body;
+    if (!address || !hashOfDocument || !originPolicyId || !indexOfCreds || !credentails) {
+      return next(CustomError(10003));
+    }
+    try {
+      const token = await core.createCredNftTransaction(address, hashOfDocument, originPolicyId, indexOfCreds, credentials);
+      return res.status(200).json({
+        data: {
+          result: true,
+          token: token,
+        },
+      });
+    } catch (error) {
+      logger.error(error);
+      if (error instanceof CustomError) {
+        return next(error);
+      }
+      /* istanbul ignore next */
+      return res.status(200).json({
+        data: {
+          result: false,
+        },
+      });
+    }
+  },
   verifyHash: async (req, res, next) => {
     const { policyID, hashOfDocument } = req.query;
     if (!policyID || !hashOfDocument) {

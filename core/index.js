@@ -415,6 +415,73 @@ const submitSignedTransaction = async (signedTransaction) => {
   }
 }
 
+const createCredNftTransaction = async (outputAddress, hashOfDocument, originPolicyId, indexOfCreds, credentials) => {
+  if (credentails.length <= 0) {
+    throw new CustomError(10031);
+  }
+
+  /* Define asset name from hash of document */
+  const assetName = `Credentails#${indexOfCreds}`;
+
+  /* Get server account */
+  const { serverSignKey, serverBaseAddress, serverDecodedAddress } = getServerAccount();
+
+  /* Get the origin hash of document */
+  const originHashOfDocument = (await findOriginHashOfDocument(originPolicyId, hashOfDocument));
+
+  /* Get a document cardano account */
+  const { signKey, mintScript, policyId, ttl } = await getPolicyIdFromHashOfDocument(originHashOfDocument);
+
+  /* Define an asset id */
+  const assetId = `${policyId}${Buffer.from(assetName).toString('hex')}`;
+  logger.info(assetId);
+
+  /* An NFT is minted or not ? */
+  const listAddresses = await getAddressesFromAssetId(assetId);
+  if (listAddresses.length > 0 && listAddresses.find(a => a.address === outputAddress)) {
+    throw new CustomError(10019);
+  }
+
+  /* Query an utxo on server account */
+  let utxos = await getAddressUtxos(serverDecodedAddress);
+  if (utxos.length === 0) {
+    throw new CustomError(10020);
+  }
+
+  /* Build a transaction */
+  let transactionBuilder = await initTransactionBuilder();
+  
+  /* Define an NFT metadata */
+  const metadata = {
+    [policyId]: {
+      [assetName]: {
+        name: assetName,
+        hashOfDocument: hashOfDocument,
+        address: md5(outputAddress),
+        createAt: Date.now(),
+        credentails: credentials,
+      },
+    },
+  };
+
+  transactionBuilder = addInputAndNftToTransaction(transactionBuilder, serverBaseAddress, utxos, mintScript, assetName, metadata, ttl, outputAddress);
+  const transaction = signTransaction(transactionBuilder, serverSignKey, signKey, mintScript);
+  
+  /* Submit a transaction */
+  try {
+    const result = await submitSignedTransaction(transaction.to_bytes());
+    logger.info(`Transaction successfully submitted: ${result}`)
+    return { policyId, assetId };
+  } catch (error) {
+    if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 400) {
+      console.log(error);
+      throw new CustomError(10021);
+    } else {
+      throw error;
+    }
+  }
+}
+
 const checkIfNftMinted = async (policyID, hashOfDocument) => {
   const assetName = md5(hashOfDocument);
   const originHashOfDocument = await findOriginHashOfDocument(policyID, hashOfDocument);
@@ -479,9 +546,11 @@ module.exports = {
   getSpecificAssetsByPolicyId,
   getPolicyIdFromHashOfDocument,
   createNftTransaction,
+  createCredNftTransaction,
   submitSignedTransaction,
   checkIfNftMinted,
   verifySignature,
   verifySignatures,
   getDatumFromDatumHash,
+  getAddressUtxos,
 };
