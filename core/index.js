@@ -416,7 +416,7 @@ const submitSignedTransaction = async (signedTransaction) => {
 }
 
 const createCredNftTransaction = async (outputAddress, hashOfDocument, originPolicyId, indexOfCreds, credentials) => {
-  if (credentails.length <= 0) {
+  if (credentials.length <= 0) {
     throw new CustomError(10031);
   }
 

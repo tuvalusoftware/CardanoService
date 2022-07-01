@@ -46,7 +46,7 @@ module.exports = {
   },
   storeCredentials: async (req, res, next) => {
     const { address, hashOfDocument, originPolicyId, indexOfCreds, credentials } = req.body;
-    if (!address || !hashOfDocument || !originPolicyId || !indexOfCreds || !credentails) {
+    if (!address || !hashOfDocument || !originPolicyId || !indexOfCreds || !credentials) {
       return next(CustomError(10003));
     }
     try {
