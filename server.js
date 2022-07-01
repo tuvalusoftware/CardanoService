@@ -8,7 +8,7 @@
 const swaggerUI = require("swagger-ui-express");
 
 const Logger = require('./Logger');
-const logger = Logger.createWithDefaultConfig('routers:controllers:server');
+const logger = Logger.createWithDefaultConfig('server');
 
 const http = require('http');
 const express = require('express');

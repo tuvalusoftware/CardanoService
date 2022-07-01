@@ -13,7 +13,7 @@ const md5 = require('md5');
 require('dotenv').config();
 
 const Logger = require('../Logger');
-const logger = Logger.createWithDefaultConfig('routers:controllers:core');
+const logger = Logger.createWithDefaultConfig('core');
 
 const blockFrostApi = new Blockfrost.BlockFrostAPI({
   projectId: process.env.blockFrostApiKey,
@@ -89,6 +89,7 @@ const getAssetsFromAddress = async (address) => {
     const listAssets = await blockFrostApi.addresses(address);
     return listAssets.amount || [];
   } catch (error) {
+    logger.error("getAssetsFromAddress");
     logger.error(error);
     throw new CustomError(10030);
   }
@@ -99,6 +100,7 @@ const getAddressesFromAssetId = async (assetId) => {
     const listAddresses = await blockFrostApi.assetsAddresses(assetId);
     return listAddresses;
   } catch (error) {
+    logger.error("getAddressesFromAssetId");
     logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
       return [];
@@ -113,6 +115,7 @@ const getSpecificAssetByAssetId = async (asset) => {
     const assetInfo = await blockFrostApi.assetsById(asset);
     return assetInfo;
   } catch (error) {
+    logger.error("getSpecificAssetByAssetId");
     logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
       throw new CustomError(10016);
@@ -128,6 +131,7 @@ const getSpecificAssetsByPolicyId = async (policyId) => {
     const assetInfo = await blockFrostApi.assetsPolicyById(policyId);
     return assetInfo;
   } catch (error) {
+    logger.error("getSpecificAssetsByPolicyId");
     logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
       throw new CustomError(10016);
@@ -176,6 +180,7 @@ const getAddressUtxos = async(address) => {
    const addressUtxo = await blockFrostApi.addressesUtxosAll(address);
    return addressUtxo;
   } catch (error) {
+    logger.error("getAddressUtxos");
     logger.error(error);
     if (error instanceof Blockfrost.BlockfrostServerError && error.status_code === 404) {
       return [];
@@ -420,11 +425,15 @@ const createCredNftTransaction = async (outputAddress, hashOfDocument, originPol
     throw new CustomError(10031);
   }
 
+  logger.warn("Create credentials", outputAddress);
+
   /* Define asset name from hash of document */
   const assetName = `Credentails#${indexOfCreds}`;
 
   /* Get server account */
   const { serverSignKey, serverBaseAddress, serverDecodedAddress } = getServerAccount();
+
+  console.log(1);
 
   /* Get the origin hash of document */
   const originHashOfDocument = (await findOriginHashOfDocument(originPolicyId, hashOfDocument));
@@ -459,10 +468,12 @@ const createCredNftTransaction = async (outputAddress, hashOfDocument, originPol
         hashOfDocument: hashOfDocument,
         address: md5(outputAddress),
         createAt: Date.now(),
-        credentails: credentials,
+        credentials: credentials,
       },
     },
   };
+
+  console.log(JSON.stringify(metadata, undefined, 2));
 
   transactionBuilder = addInputAndNftToTransaction(transactionBuilder, serverBaseAddress, utxos, mintScript, assetName, metadata, ttl, outputAddress);
   const transaction = signTransaction(transactionBuilder, serverSignKey, signKey, mintScript);
@@ -513,6 +524,7 @@ const verifySignature = async (address, payload, signature) => {
       return true;
     }
   } catch (error) {
+    logger.error("verifySignature");
     logger.error(error);
     throw error;
   }
@@ -525,6 +537,7 @@ const verifySignatures = async (signatures) => {
     try {
       results.push(await verifySignature(signatures[i].address, signatures[i].payload, signatures[i].signature));
     } catch (error) {
+      logger.error("verifySignatures");
       logger.error(error);
       if (error instanceof CustomError) {
         results.push([false, error.message]);
