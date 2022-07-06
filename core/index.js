@@ -53,13 +53,46 @@ const getLatestEpoch = async () => {
 };
 
 const getProtocolParameters = async (epoch) => {
-  try {
-    const protocolParameters = await blockFrostApi.epochsParameters(epoch);
-    return protocolParameters;
-  } catch (error) /* istanbul ignore next */ {
-    logger.error(error);
-    throw error;
-  }
+  // try {
+  //   const protocolParameters = await blockFrostApi.epochsParameters(epoch);
+  //   return protocolParameters;
+  // } catch (error) /* istanbul ignore next */ {
+  //   logger.error(error);
+  //   throw error;
+  // }
+  return {
+    "epoch": 225,
+    "min_fee_a": 44,
+    "min_fee_b": 155381,
+    "max_block_size": 65536,
+    "max_tx_size": 16384,
+    "max_block_header_size": 1100,
+    "key_deposit": "2000000",
+    "pool_deposit": "500000000",
+    "e_max": 18,
+    "n_opt": 150,
+    "a0": 0.3,
+    "rho": 0.003,
+    "tau": 0.2,
+    "decentralisation_param": 0.5,
+    "extra_entropy": null,
+    "protocol_major_ver": 2,
+    "protocol_minor_ver": 0,
+    "min_utxo": "1000000",
+    "min_pool_cost": "340000000",
+    "nonce": "1a3be38bcbb7911969283716ad7aa550250226b76a61fc51cc9a9a35d9276d81",
+    "price_mem": 0.0577,
+    "price_step": 0.0000721,
+    "max_tx_ex_mem": "10000000",
+    "max_tx_ex_steps": "10000000000",
+    "max_block_ex_mem": "50000000",
+    "max_block_ex_steps": "40000000000",
+    "max_val_size": "5000",
+    "collateral_percent": 150,
+    "max_collateral_inputs": 3,
+    "coins_per_utxo_size": "34482",
+    "coins_per_utxo_word": "34482"
+  };
 };
 
 const getLatestEpochProtocolParameters = async () => {
@@ -175,10 +208,10 @@ const deriveAddressPrvKey = (bipPrvKey, isTestnet) => {
   return { signKey: utxoKey.to_raw_key(), baseAddress: baseAddress, decodedAddress: decodedAddress };
 };
 
-const getAddressUtxos = async(address) => {
+const getAddressUtxos = async (address) => {
   try {
-   const addressUtxo = await blockFrostApi.addressesUtxosAll(address);
-   return addressUtxo;
+    const addressUtxo = await blockFrostApi.addressesUtxosAll(address);
+    return addressUtxo;
   } catch (error) {
     logger.error("getAddressUtxos");
     logger.error(error);
@@ -243,6 +276,7 @@ const initTransactionBuilder = async () => {
       .key_deposit(CardanoWasm.BigNum.from_str(protocolParameters.key_deposit.toString()))
       .max_value_size(parseInt(protocolParameters.max_val_size))
       .max_tx_size(protocolParameters.max_tx_size)
+      .prefer_pure_change(true)
       .build()
   );
   return transactionBuilder;
@@ -270,7 +304,7 @@ const addInputAndNftToTransaction = (transactionBuilder, serverBaseAddress, utxo
       CardanoWasm.Value.new(CardanoWasm.BigNum.from_str(
         (utxos[id].amount.find(a => a.unit === 'lovelace')?.quantity || 0).toString(),
       )),
-    );  
+    );
   }
 
   /* Add an NFT to the transaction */
@@ -330,12 +364,12 @@ const findOriginHashOfDocument = async (policyId, hashOfDocument) => {
 };
 
 const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = false) => {
-  
+
   /* Determine: update or not ? */
   let previousHashOfDocument = 'EMPTY';
   let originPolicyId = 'EMPTY';
   if (isUpdate) {
-  
+
     const arrayOfHash = hashOfDocument.split(',');
     if (arrayOfHash.length !== 3) {
       throw new CustomError(10018);
@@ -378,7 +412,7 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
 
   /* Build a transaction */
   let transactionBuilder = await initTransactionBuilder();
-  
+
   /* Define an NFT metadata */
   const metadata = {
     [policyId]: {
@@ -395,7 +429,7 @@ const createNftTransaction = async (outputAddress, hashOfDocument, isUpdate = fa
 
   transactionBuilder = addInputAndNftToTransaction(transactionBuilder, serverBaseAddress, utxos, mintScript, assetName, metadata, ttl, outputAddress);
   const transaction = signTransaction(transactionBuilder, serverSignKey, signKey, mintScript);
-  
+
   /* Submit a transaction */
   try {
     const result = await submitSignedTransaction(transaction.to_bytes());
@@ -459,7 +493,7 @@ const createCredNftTransaction = async (outputAddress, hashOfDocument, originPol
 
   /* Build a transaction */
   let transactionBuilder = await initTransactionBuilder();
-  
+
   /* Define an NFT metadata */
   const metadata = {
     [policyId]: {
@@ -477,7 +511,7 @@ const createCredNftTransaction = async (outputAddress, hashOfDocument, originPol
 
   transactionBuilder = addInputAndNftToTransaction(transactionBuilder, serverBaseAddress, utxos, mintScript, assetName, metadata, ttl, outputAddress);
   const transaction = signTransaction(transactionBuilder, serverSignKey, signKey, mintScript);
-  
+
   /* Submit a transaction */
   try {
     const result = await submitSignedTransaction(transaction.to_bytes());
@@ -506,7 +540,7 @@ const checkIfNftMinted = async (policyID, hashOfDocument) => {
     const ownerAddress = assetInfo.onchain_metadata.address || undefined;
     if (!ownerAddress) {
       throw new CustomError(10023);
-    } 
+    }
     const listAddresses = await getAddressesFromAssetId(assetId);
     if (listAddresses.length > 0 && listAddresses.find(a => md5(a.address) === ownerAddress) !== undefined) {
       logger.info('checkIfNftMinted: true');
@@ -518,7 +552,7 @@ const checkIfNftMinted = async (policyID, hashOfDocument) => {
 };
 
 const verifySignature = async (address, payload, signature) => {
-  try { 
+  try {
     if (verifyMS(address, payload, signature)) {
       logger.info('verifySignature: true');
       return true;
