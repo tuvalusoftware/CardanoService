@@ -1,10 +1,12 @@
 {
   "name": "cardanoservice",
-  "version": "1.0.0",
+  "type": "module",
+  "version": "2.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node --experimental-specifier-resolution=node --trace-uncaught --trace-warnings index.js",
+    "test": "node --experimental-specifier-resolution=node --trace-uncaught --trace-warnings index.test.js"
   },
   "repository": {
     "type": "git",
@@ -16,5 +18,15 @@
   "bugs": {
     "url": "https://github.com/tuvalusoftware/CardanoService/issues"
   },
-  "homepage": "https://github.com/tuvalusoftware/CardanoService#readme"
+  "homepage": "https://github.com/tuvalusoftware/CardanoService#readme",
+  "dependencies": {
+    "@emurgo/cardano-message-signing-nodejs": "^1.0.1",
+    "@emurgo/cardano-serialization-lib-nodejs": "^11.0.0-rc.6",
+    "bip39": "^3.0.4",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "lucid-cardano": "^0.5.0",
+    "node-cache": "^5.1.2"
+  }
 }
