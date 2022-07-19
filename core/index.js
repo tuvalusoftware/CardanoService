@@ -1,13 +1,13 @@
-import * as U from "./utils";
+import * as T from "./transaction";
 import * as W from "./wallet";
 
 export const fetchNFTByAsset = async (asset) => {
-  const response = await U.getAssetDetails(asset);
+  const response = await T.getAssetDetails(asset);
   return response || {};
 };
 
 export const fetchNFTByPolicyId = async (policyId) => {
-  const response = await U.getMintedAssets(policyId);
+  const response = await T.getMintedAssets(policyId, {});
   return response || [];
 };
 

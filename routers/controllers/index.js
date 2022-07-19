@@ -1,6 +1,5 @@
 import * as core from "../../core";
 import * as T from "../../core/transaction";
-import * as U from "../../core/utils";
 import { errorTypes } from "./error.types";
 import { Response } from "./response";
 
@@ -37,7 +36,7 @@ export const UpdateHash = async (req, res, next) => {
     const { newHash, config } = req.body;
     if (newHash && config && config.type === "document" && config.policy && config.asset) {
 
-      let assetDetail = await U.getAssetDetails(config.asset);
+      let assetDetail = await T.getAssetDetails(config.asset);
 
       if (assetDetail && assetDetail.onchainMetadata) {
 
@@ -97,6 +96,7 @@ export const UpdateHash = async (req, res, next) => {
 export const RevokeHash = async (req, res, next) => {
   try {
     const { config } = req.body;
+    console.log(config);
     if (config && config.type === "document" && config.policy && config.asset) {
       try {
         await T.BurnNFT({
@@ -106,7 +106,7 @@ export const RevokeHash = async (req, res, next) => {
       } catch (error) {
         console.log(error);
         return res.json(Response(undefined, {
-          reason: errorTypes.NFT_BURN_FAILED,
+          reason: errorTypes.BURN_NFT_FAILED,
         }));
       }
     } else {
@@ -128,7 +128,7 @@ export const StoreCredential = async (req, res, next) => {
 
       if (config.type !== "document") {
 
-        let assetDetail = await U.getAssetDetails(config.asset);
+        let assetDetail = await T.getAssetDetails(config.asset);
         if (assetDetail && assetDetail.onchainMetadata) {
 
           const assetName = assetDetail.assetName;
@@ -207,6 +207,7 @@ export const RevokeCredential = async (req, res, next) => {
 export const FetchNFT = async (req, res, next) => {
   try {
     const filterBy = req.body;
+    console.log(filterBy);
     if (filterBy.asset) {
       const response = await core.fetchNFTByAsset(filterBy.asset);
       return res.json(Response(response || {}, undefined));
@@ -219,6 +220,7 @@ export const FetchNFT = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    console.log(error);
     return res.json(Response(undefined, error));
   }
 };
