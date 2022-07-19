@@ -3,5 +3,5 @@
 import * as Server from "./server";
 
 Server.start({
-  port: 10002,
+  port: 10003,
 });

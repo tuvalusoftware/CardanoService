@@ -9,165 +9,232 @@ export const HelloWorld = async (req, res, next) => {
 };
 
 export const StoreHash = async (req, res, next) => {
-  const { hash } = req.body;
-  if (hash && hash.length == 64) {
-    const { policy, asset } = await T.MintNFT({
-      assetName: hash,
-      metadata: {
-        attach: hash,
-        version: 0,
-        type: "document",
-      },
-      options: {}
-    });
-    return res.json(Response({ type: "document", policy, asset }, undefined));
-  } else {
-    return res.json(Response(undefined, {
-      reason: errorTypes.INVALID_BODY,
-    }));
+  try {
+    const { hash } = req.body;
+    if (hash && hash.length == 64) {
+      const { policy, asset } = await T.MintNFT({
+        assetName: hash,
+        metadata: {
+          attach: hash,
+          version: 0,
+          type: "document",
+        },
+        options: {}
+      });
+      return res.json(Response({ type: "document", policy, asset }, undefined));
+    } else {
+      return res.json(Response(undefined, {
+        reason: errorTypes.INVALID_BODY,
+      }));
+    }
+  } catch (error) {
+    return res.json(Response(undefined, error));
   }
 };
 
 export const UpdateHash = async (req, res, next) => {
-  const { newHash, config } = req.body;
-  if (newHash && config && config.type === "document" && config.policy && config.asset) {
+  try {
+    const { newHash, config } = req.body;
+    if (newHash && config && config.type === "document" && config.policy && config.asset) {
 
-    let assetDetail = await U.getAssetDetails(config.asset);
+      let assetDetail = await U.getAssetDetails(config.asset);
 
-    if (assetDetail && assetDetail.onchainMetadata) {
+      if (assetDetail && assetDetail.onchainMetadata) {
 
-      const assetName = assetDetail.assetName;
-      assetDetail.onchainMetadata = assetDetail.onchainMetadata[config.policy.id];
-      assetDetail.onchainMetadata = assetDetail.onchainMetadata[assetName];
+        const assetName = assetDetail.assetName;
+        assetDetail.onchainMetadata = assetDetail.onchainMetadata[config.policy.id];
+        assetDetail.onchainMetadata = assetDetail.onchainMetadata[assetName];
 
-      if (assetDetail.onchainMetadata.policy === config.policy.id && assetDetail.onchainMetadata.ttl === config.policy.ttl) {
+        if (assetDetail.onchainMetadata.policy === config.policy.id && assetDetail.onchainMetadata.ttl === config.policy.ttl) {
 
-        const newVersion = assetDetail.onchainMetadata.version + 1;
+          const newVersion = assetDetail.onchainMetadata.version + 1;
 
-        const { policy, asset } = await T.MintNFT({
-          assetName: newHash,
-          metadata: {
-            attach: newHash,
-            version: newVersion,
-            type: "document",
-          },
-          options: {
-            policy: config.policy,
-          },
-        });
+          const { policy, asset } = await T.MintNFT({
+            assetName: newHash,
+            metadata: {
+              attach: newHash,
+              previous: config.asset,
+              version: newVersion,
+              type: "document",
+            },
+            options: {
+              policy: config.policy,
+            },
+          });
 
-        if (policy.id !== config.policy.id || asset === config.asset) {
-          console.log("Asset: ", asset);
-          console.log("Policy Id: ", policy);
+          if (policy.id !== config.policy.id || asset === config.asset) {
+            console.log("Asset: ", asset);
+            console.log("Policy Id: ", policy);
+            return res.json(Response(undefined, {
+              reason: errorTypes.SOMETHING_WENT_WRONG,
+            }));
+          }
+
+          return res.json(Response({ type: "document", policy, asset }, undefined));
+
+        } else {
           return res.json(Response(undefined, {
-            reason: errorTypes.SOMETHING_WENT_WRONG,
+            reason: errorTypes.CONFIG_MISMATCH,
           }));
         }
 
-        return res.json(Response({ type: "document", policy, asset }, undefined));
-
       } else {
         return res.json(Response(undefined, {
-          reason: errorTypes.CONFIG_MISMATCH,
+          reason: errorTypes.COULD_NOT_FETCH_ASSET_DETAILS_OR_INVALID_NFT_METADATA,
         }));
       }
 
     } else {
       return res.json(Response(undefined, {
-        reason: errorTypes.COULD_NOT_FETCH_ASSET_DETAILS_OR_INVALID_NFT_METADATA,
+        reason: errorTypes.INVALID_BODY,
       }));
     }
-
-  } else {
-    return res.json(Response(undefined, {
-      reason: errorTypes.INVALID_BODY,
-    }));
+  } catch (error) {
+    return res.json(Response(undefined, error));
   }
 };
 
 export const RevokeHash = async (req, res, next) => {
-  const { config } = req.body;
-  console.log(config);
-  if (config && config.type === "document" && config.policy && config.asset) {
-    try {
-      await T.BurnNFT({
-        config: config
-      });
-    } catch (error) {
-      console.log(error);
+  try {
+    const { config } = req.body;
+    if (config && config.type === "document" && config.policy && config.asset) {
+      try {
+        await T.BurnNFT({
+          config: config
+        });
+        return res.json(Response("SUCCESS", undefined));
+      } catch (error) {
+        console.log(error);
+        return res.json(Response(undefined, {
+          reason: errorTypes.NFT_BURN_FAILED,
+        }));
+      }
+    } else {
       return res.json(Response(undefined, {
-        reason: errorTypes.NFT_BURN_FAILED,
+        reason: errorTypes.INVALID_BODY,
       }));
     }
-  } else {
-    return res.json(Response(undefined, {
-      reason: errorTypes.INVALID_BODY,
-    }));
+  } catch (error) {
+    return res.json(Response(undefined, error));
   }
 };
 
 export const StoreCredential = async (req, res, next) => {
-  const { credential } = req.body;
-  if (credential && credential.length == 64) {
-    const { policy, asset } = await T.MintNFT({
-      assetName: credential,
-      metadata: {
-        timestamp: new Date().getTime(),
+  try {
+    const { credential, config } = req.body;
+    if (credential && credential.length == 64 && config && (config.type === "document" || config.type === "credential") && config.policy && config.asset) {
+
+      let currIndex = 0;
+
+      if (config.type !== "document") {
+
+        let assetDetail = await U.getAssetDetails(config.asset);
+        if (assetDetail && assetDetail.onchainMetadata) {
+
+          const assetName = assetDetail.assetName;
+          assetDetail.onchainMetadata = assetDetail.onchainMetadata[config.policy.id];
+          assetDetail.onchainMetadata = assetDetail.onchainMetadata[assetName];
+
+          if (assetDetail.onchainMetadata.policy === config.policy.id && assetDetail.onchainMetadata.ttl === config.policy.ttl) {
+            currIndex = assetDetail.onchainMetadata.index + 1;
+          } else {
+            return res.json(Response(undefined, {
+              reason: errorTypes.CONFIG_MISMATCH,
+            }));
+          }
+
+        } else {
+          return res.json(Response(undefined, {
+            reason: errorTypes.COULD_NOT_FETCH_ASSET_DETAILS_OR_INVALID_NFT_METADATA,
+          }));
+        }
+
+      }
+
+      let metadata = {
         attach: credential,
-        version: 0,
+        index: currIndex,
         type: "credential",
-      },
-      options: {}
-    });
-    return res.json(Response({ type: "credential", policy, asset }, undefined));
-  } else {
-    return res.json(Response(undefined, {
-      reason: errorTypes.INVALID_BODY,
-    }));
+      };
+
+      if (currIndex !== 0) {
+        metadata.previous = config.asset;
+      }
+
+      const { policy, asset } = await T.MintNFT({
+        assetName: credential,
+        metadata: metadata,
+        options: {
+          policy: config.policy,
+        }
+      });
+
+      return res.json(Response({ type: "credential", policy, asset }, undefined));
+
+    } else {
+      return res.json(Response(undefined, {
+        reason: errorTypes.INVALID_BODY,
+      }));
+    }
+  } catch (error) {
+    return res.json(Response(undefined, error));
   }
 };
 
 export const RevokeCredential = async (req, res, next) => {
-  if (config && config.type === "document" && config.policy && config.asset) {
-    try {
-      await T.BurnNFT({
-        config: config.policy
-      });
-    } catch (error) {
+  try {
+    if (config && config.type === "credential" && config.policy && config.asset) {
+      try {
+        await T.BurnNFT({
+          config: config
+        });
+        return res.json(Response("SUCCESS", undefined));
+      } catch (error) {
+        return res.json(Response(undefined, {
+          reason: errorTypes.NFT_BURN_FAILED,
+        }));
+      }
+    } else {
       return res.json(Response(undefined, {
-        reason: errorTypes.NFT_BURN_FAILED,
+        reason: errorTypes.INVALID_BODY,
       }));
     }
-  } else {
-    return res.json(Response(undefined, {
-      reason: errorTypes.INVALID_BODY,
-    }));
+  } catch (error) {
+    return res.json(Response(undefined, error));
   }
 };
 
 export const FetchNFT = async (req, res, next) => {
-  const filterBy = req.body;
-  if (filterBy.asset) {
-    const response = await core.fetchNFTByAsset(filterBy.asset);
-    return res.json(Response(response || {}, undefined));
-  } else if (filterBy.policyId) {
-    const response = await core.fetchNFTByPolicyId(filterBy.policyId);
-    return res.json(Response(response || [], undefined));
-  } else {
-    return res.json(Response(undefined, {
-      reason: errorTypes.INVALID_BODY,
-    }));
+  try {
+    const filterBy = req.body;
+    if (filterBy.asset) {
+      const response = await core.fetchNFTByAsset(filterBy.asset);
+      return res.json(Response(response || {}, undefined));
+    } else if (filterBy.policyId) {
+      const response = await core.fetchNFTByPolicyId(filterBy.policyId);
+      return res.json(Response(response || [], undefined));
+    } else {
+      return res.json(Response(undefined, {
+        reason: errorTypes.INVALID_BODY,
+      }));
+    }
+  } catch (error) {
+    return res.json(Response(undefined, error));
   }
 };
 
 export const VerifySignature = async (req, res, next) => {
-  const { address, payload, signature, key } = req.body;
-  if (address && payload && signature && key) {
-    const response = core.verifySignature(address, payload, { signature, key });
-    return res.json(Response(response, undefined));
-  } else {
-    return res.json(Response(undefined, {
-      reason: errorTypes.INVALID_BODY,
-    }));
+  try {
+    const { address, payload, signature, key } = req.body;
+    if (address && payload && signature && key) {
+      const response = core.verifySignature(address, payload, { signature, key });
+      return res.json(Response(response, undefined));
+    } else {
+      return res.json(Response(undefined, {
+        reason: errorTypes.INVALID_BODY,
+      }));
+    }
+  } catch (error) {
+    return res.json(Response(undefined, error));
   }
 };

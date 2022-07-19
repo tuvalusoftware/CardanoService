@@ -23,11 +23,6 @@ export const createLockingPolicyScript = () => {
   return { type: "Native", id: policyId, script: finalScript, ttl: timeToLive };
 }
 
-/**
- * 
- * @param {*} payload 
- * @returns 
- */
 export const signData = async (payload) => {
   let { paymentKey, stakeKey, enterpriseAddr } = A.getCurrentAccount();
   const accountKey = true ? paymentKey : stakeKey;
@@ -87,14 +82,6 @@ export const signData = async (payload) => {
   };
 }
 
-/**
- * 
- * @param {*} address 
- * @param {*} payload 
- * @param {*} signature
- * @param {*} key 
- * @returns 
- */
 export const verifyData = (address, payload, { signature, key }) => {
   
   const verifyPayload = (_payload, _payloadCose) => {

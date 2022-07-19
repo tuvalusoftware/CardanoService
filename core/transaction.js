@@ -35,7 +35,9 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   .mintAssets({ [asset]: 1n  })
   .validTo(L.lucid.utils.slotToUnixTime(policy.ttl))
   .complete();
+  
   const signedTx = await tx.sign().complete();
+  
   try {
     await signedTx.submit();
   } catch (error) {
@@ -61,10 +63,11 @@ export const BurnNFT = async ({ config }) => {
     })
     .validTo(L.lucid.utils.slotToUnixTime(config.policy.ttl))
     .complete();
+    
     const signedTx = await tx.sign().complete();
+    
     try {
-      const txHash = await signedTx.submit();
-      return txHash;
+      await signedTx.submit();
     } catch (error) {
       console.log(error);
       throw new Error(errorTypes.TRANSACTION_REJECT);

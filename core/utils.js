@@ -1,11 +1,11 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+
 import { errorTypes } from "./error.types";
 
 import NodeCache from "node-cache";
 const memoryCache = new NodeCache();
 
-/**
- * @throws COULD_NOT_FETCH_MINTED_ASSETS
- */
 export const getMintedAssets = async (policyId, { page = 1, count = 100, order = "asc" }) => {
   try {
     if (memoryCache.get(`${policyId}`) !== undefined) {
@@ -23,10 +23,6 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
   }
 };
 
-/**
- * @param {string} asset - asset is a concatenation of the policy_id and hex-encoded asset_name.
- * @throws COULD_NOT_FETCH_ASSET_DETAILS
- */
 export const getAssetDetails = async (asset) => {
   try {
     if (memoryCache.get(`${asset}`) !== undefined) {
@@ -56,7 +52,6 @@ export const getAssetDetails = async (asset) => {
     }
     return undefined;
   } catch (error) {
-    console.log(error);
     throw new Error(errorTypes.COULD_NOT_FETCH_ASSET_DETAILS);
   }
 };
@@ -117,6 +112,7 @@ const request = async (base, endpoint, headers, body) => {
     method: body ? "POST" : "GET",
     body,
   }).then((response) => {
+    console.log(response);
     if (!response.ok) {
       throw new Error(response.status);
     }
