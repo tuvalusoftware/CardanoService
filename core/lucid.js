@@ -5,8 +5,6 @@ import { Lucid, Blockfrost } from "lucid-cardano";
 
 import * as A from "./account";
 
-import Logger from "../Logger";
-
 const lucid = await Lucid.new(
   new Blockfrost(
     process.env.CARDANO_NETWORK == 0 ? "https://cardano-testnet.blockfrost.io/api/v0" : "https://cardano-mainnet.blockfrost.io/api/v0",

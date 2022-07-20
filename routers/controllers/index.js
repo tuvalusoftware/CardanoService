@@ -35,8 +35,10 @@ export const StoreHash = async (req, res, next) => {
 };
 
 export const UpdateHash = async (req, res, next) => {
+  Logger.info("UpdateHash");
   try {
     const { newHash, config } = req.body;
+    console.log(config);
     if (newHash && config && config.type === "document" && config.policy && config.asset) {
 
       let assetDetail = await T.getAssetDetails(config.asset);
@@ -55,12 +57,14 @@ export const UpdateHash = async (req, res, next) => {
             assetName: newHash,
             metadata: {
               attach: newHash,
-              previous: config.asset,
+              previous: config.asset.slice(56),
               version: newVersion,
               type: "document",
             },
             options: {
               policy: config.policy,
+              asset: config.asset,
+              burn: config.burn,
             },
           });
 

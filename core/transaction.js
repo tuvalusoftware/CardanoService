@@ -32,6 +32,15 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
     throw new Error(errorTypes.NFT_MINTED);
   }
 
+  let mintToken = { 
+    [asset]: 1n,
+  };
+
+  if (options.burn && options.burn == true) {
+    Logger.info(" >> MintAndBurnNFT");
+    mintToken[options.asset] = -1n;
+  }
+
   const tx = await L.lucid.newTx()
   .collectFrom(utxos)
   .attachMintingPolicy(policy)
@@ -40,7 +49,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
       [Buffer.from(assetName, "hex").toString("hex")]: metadata,
     },
   })
-  .mintAssets({ [asset]: 1n  })
+  .mintAssets(mintToken)
   .validTo(L.lucid.utils.slotToUnixTime(policy.ttl))
   .complete();
   
