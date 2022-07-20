@@ -3,9 +3,15 @@ import { servers } from "./servers"
 import { tags } from "./tags";
 import { components } from "./components";
 import { hash } from "./hash";
+import { credential } from "./credential";
+import { verify } from "./verify";
+import { fetch } from "./fetch";
 
 const paths = {
-  ...hash
+  ...hash,
+  ...credential,
+  ...verify,
+  ...fetch,
 };
 
 export const swaggerDocs = {
