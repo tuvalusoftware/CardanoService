@@ -8,7 +8,10 @@ import { errorTypes } from "./error.types";
 
 import { memoryCache } from "./cache";
 
+import Logger from "../Logger";
+
 export const MintNFT = async ({ assetName, metadata, options }) => {
+  Logger.info("MintNFT");
   let policy = W.createLockingPolicyScript();
   policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
   
@@ -46,7 +49,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   try {
     await signedTx.submit();
   } catch (error) {
-    console.log(error);
+    Logger.error(error);
     throw new Error(errorTypes.TRANSACTION_REJECT);
   }
 
@@ -54,6 +57,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
 };
 
 export const BurnNFT = async ({ config }) => {
+  Logger.info("BurnNFT");
   const utxos = await L.lucid.wallet.getUtxos();
   const address = await L.lucid.wallet.address();
   const assets = await L.lucid.utxosAtWithUnit(address, config.asset);
@@ -78,7 +82,7 @@ export const BurnNFT = async ({ config }) => {
         memoryCache.del(config.asset);
       }      
     } catch (error) {
-      console.log(error);
+      Logger.error(error);
       throw new Error(errorTypes.TRANSACTION_REJECT);
     }
 
@@ -88,13 +92,12 @@ export const BurnNFT = async ({ config }) => {
 };
 
 export const getMintedAssets = async (policyId, { page = 1, count = 100, order = "asc" }) => {
-  console.log(policyId);
+  Logger.info("getMintedAssets");
   try {
     if (memoryCache.get(`${policyId}`) !== undefined) {
       return memoryCache.get(`${policyId}`);
     }
     const response = await Blockfrost(`assets/policy/${policyId}?page=${page}&count=${count}&order=${order}`);
-    console.log(response);
     let newValue = response
       .filter((asset) => parseInt(asset.quantity) === 1)
       .map((asset) => asset.asset);
@@ -102,7 +105,7 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
     memoryCache.set(`${policyId}`, newValue, 60);
     return newValue;
   } catch (error) {
-    console.log(error);
+    Logger.error(error);
     if (error.message == 404) {
       return [];
     }
@@ -111,7 +114,7 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
 };
 
 export const getAssetDetails = async (asset) => {
-  console.log(asset);
+  Logger.info("getAssetDetails");
   try {
     if (memoryCache.get(`${asset}`) !== undefined) {
       return memoryCache.get(`${asset}`);
@@ -138,8 +141,9 @@ export const getAssetDetails = async (asset) => {
       memoryCache.set(`${asset}`, newValue, 604800);
       return newValue;
     }
-    return undefined;
+    return {};
   } catch (error) {
+    Logger.error(error);
     if (error.message == 404) {
       return {};
     }
@@ -188,6 +192,7 @@ export async function delay(delayInMs) {
 }
 
 const Blockfrost = async (endpoint, headers, body) => {
+  Logger.info("Blockfrost...");
   return await request(
     process.env.CARDANO_NETWORK == 0 ? "https://cardano-testnet.blockfrost.io/api/v0/" : "https://cardano-mainnet.blockfrost.io/api/v0/",
     endpoint, headers, body
@@ -204,6 +209,7 @@ const request = async (base, endpoint, headers, body) => {
     body,
   }).then((response) => {
     if (!response.ok) {
+      Logger.error(response);
       throw new Error(response.status);
     }
     return response.json();

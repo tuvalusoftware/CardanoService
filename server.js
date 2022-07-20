@@ -15,6 +15,8 @@ import swaggerUi from "swagger-ui-express";
 import { swaggerDocs } from "./api-docs";
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+import Logger from "./Logger";
+
 export const start = async (params) => {
   routers(app);
 
@@ -27,7 +29,7 @@ export const start = async (params) => {
   });
 
   server.listen(params.port || 80, () => {
-    console.log(`Listening on http://localhost${params.port ? `:${params.port}` : ""}`);
+    Logger.info(`Listening on http://localhost${params.port ? `:${params.port}` : ""}`);
     if (params && params.done) {
       params.done();
     }

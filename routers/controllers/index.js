@@ -3,6 +3,8 @@ import * as T from "../../core/transaction";
 import { errorTypes } from "./error.types";
 import { Response } from "./response";
 
+import Logger from "../../Logger";
+
 export const HelloWorld = async (req, res, next) => {
   return res.json("Hello World!");
 };
@@ -27,6 +29,7 @@ export const StoreHash = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    Logger.error(error);
     return res.json(Response(undefined, error));
   }
 };
@@ -62,8 +65,6 @@ export const UpdateHash = async (req, res, next) => {
           });
 
           if (policy.id !== config.policy.id || asset === config.asset) {
-            console.log("Asset: ", asset);
-            console.log("Policy Id: ", policy);
             return res.json(Response(undefined, {
               reason: errorTypes.SOMETHING_WENT_WRONG,
             }));
@@ -89,6 +90,7 @@ export const UpdateHash = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    Logger.error(error);
     return res.json(Response(undefined, error));
   }
 };
@@ -96,7 +98,6 @@ export const UpdateHash = async (req, res, next) => {
 export const RevokeHash = async (req, res, next) => {
   try {
     const { config } = req.body;
-    console.log(config);
     if (config && config.type === "document" && config.policy && config.asset) {
       try {
         await T.BurnNFT({
@@ -104,7 +105,7 @@ export const RevokeHash = async (req, res, next) => {
         });
         return res.json(Response("SUCCESS", undefined));
       } catch (error) {
-        console.log(error);
+        Logger.error(error);
         return res.json(Response(undefined, {
           reason: errorTypes.BURN_NFT_FAILED,
         }));
@@ -115,6 +116,7 @@ export const RevokeHash = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    Logger.error(error);
     return res.json(Response(undefined, error));
   }
 };
@@ -177,6 +179,7 @@ export const StoreCredential = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    Logger.error(error);
     return res.json(Response(undefined, error));
   }
 };
@@ -190,6 +193,7 @@ export const RevokeCredential = async (req, res, next) => {
         });
         return res.json(Response("SUCCESS", undefined));
       } catch (error) {
+        Logger.error(error);
         return res.json(Response(undefined, {
           reason: errorTypes.NFT_BURN_FAILED,
         }));
@@ -207,7 +211,6 @@ export const RevokeCredential = async (req, res, next) => {
 export const FetchNFT = async (req, res, next) => {
   try {
     const filterBy = req.body;
-    console.log(filterBy);
     if (filterBy.asset) {
       const response = await core.fetchNFTByAsset(filterBy.asset);
       return res.json(Response(response || {}, undefined));
@@ -220,7 +223,7 @@ export const FetchNFT = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    console.log(error);
+    Logger.error(error);
     return res.json(Response(undefined, error));
   }
 };
@@ -237,6 +240,7 @@ export const VerifySignature = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    Logger.error(error);
     return res.json(Response(undefined, error));
   }
 };

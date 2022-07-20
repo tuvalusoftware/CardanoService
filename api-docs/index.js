@@ -10,8 +10,8 @@ const paths = {
 
 export const swaggerDocs = {
   ...basicInfo,
-  ...servers,
-  ...tags,
+  ...{ servers: servers },
+  ...{ tags: tags },
   ...components,
   ...{ paths: paths },
 };

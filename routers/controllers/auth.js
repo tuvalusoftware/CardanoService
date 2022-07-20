@@ -3,6 +3,8 @@ import { Response } from "./response";
 
 import axios from "axios";
 
+import Logger from "../../Logger";
+
 export const ensureAuthenticated = (req, res, next) => {
   if (!req.cookies["access_token"]) {
     return res.json(Response(undefined, {

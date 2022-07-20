@@ -3,6 +3,8 @@ import * as L from "./lucid";
 import { C as CardanoWasm } from "lucid-cardano";
 import CardanoMS from "@emurgo/cardano-message-signing-nodejs";
 
+import Logger from "../Logger";
+
 export const createLockingPolicyScript = () => {
   const timeToLive = L.lucid.utils.unixTimeToSlot(new Date()) + 3153600000;
   const { paymentKeyPub } = A.getCurrentAccount();
@@ -83,7 +85,8 @@ export const signData = async (payload) => {
 }
 
 export const verifyData = (address, payload, { signature, key }) => {
-  
+  Logger.info("verifyData");
+
   const verifyPayload = (_payload, _payloadCose) => {
     return Buffer.from(_payloadCose, "hex").compare(Buffer.from(_payload, "hex")) === 0;
   };
@@ -113,7 +116,7 @@ export const verifyData = (address, payload, { signature, key }) => {
       }
       return true;
     } catch (error) {
-      console.log(error);
+      Logger.error(error);
     }
     return false;
   };
