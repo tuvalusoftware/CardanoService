@@ -246,7 +246,7 @@ export const FetchNFT = async (req, res, next) => {
 
 export const VerifySignature = async (req, res, next) => {
   try {
-    const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.RevokeCredential);
+    const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.VerifySignature);
     if (bodyValidator.validate()) {
       const { address, payload, signature, key } = req.body;
       const response = core.verifySignature(address, payload, { signature, key });
