@@ -8,10 +8,11 @@ export const UpdateHash = {
   newHash: ["required", "string", "size:64"],
   config: ["object"],
   'config.type': ["required", "string", "size:8", BodyValidator.ruleIn(["document"])],
-  'config.policy': ["object", "size:4"],
+  'config.policy': ["object", "min:4", "max:5"],
   'config.policy.id': ["required", "string", "size:56"],
   'config.policy.script': ["required", "string", "size:84"],
   'config.policy.ttl': ["required", "integer"],
+  'config.policy.reuse': ["strict", "boolean"],
   'config.asset': ["required", "string", "size:120"],
   'config.burn': ["strict", "boolean"],
 };

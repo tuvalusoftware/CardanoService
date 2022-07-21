@@ -14,7 +14,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   let policy = W.createLockingPolicyScript();
   policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
   
-  if (options.policy && options.policy.id && options.policy.script && options.policy.ttl) {
+  if (options.policy && options.policy.id && options.policy.script && options.policy.ttl && options.policy.reuse && options.policy.reuse === true) {
     policy = options.policy;
   }
 
