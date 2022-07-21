@@ -8,7 +8,7 @@ import Logger from "../../Logger";
 import * as BodyValidator from "simple-body-validator";
 import * as RuleValidator from "./rule";
 
-import { memoryCache } from "./cache";
+import { memoryCache } from "../../core/cache";
 
 export const HelloWorld = async (req, res, next) => {
   return res.json("Hello World!");
