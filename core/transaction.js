@@ -14,7 +14,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   let policy = W.createLockingPolicyScript();
   policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
   
-  if (options.policy && options.policy.id && options.policy.script && options.policy.ttl && options.policy.reuse && options.policy.reuse === true) {
+  if (options.policy && options.policy.id && options.policy.script && options.policy.ttl && options.policy.reuse && options.policy.reuse == true) {
     policy = options.policy;
   }
 
@@ -39,7 +39,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
     mintToken[options.asset] = -1n;
   }
 
-  if (options.policy.reuse && options.policy.reuse === true && options.policy.id !== policy.id) {
+  if (options.policy && options.policy.reuse && options.policy.reuse == true && options.policy.id !== policy.id) {
     Logger.error("POLICY_ID_DIFFERENCT:", options.policy.id, policy.id);
     throw new Error(errorTypes.ERROR_WHILE_REUSING_POLICY_ID);
   }
