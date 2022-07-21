@@ -9,7 +9,7 @@ export const Response = (response, error) => {
     return {
       code: 1, 
       message: error.message || error.reason || "Something went wrong",
-      data: null
+      data: error.data || null,
     }
   }
 };

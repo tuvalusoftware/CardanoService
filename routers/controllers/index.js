@@ -5,14 +5,18 @@ import { Response } from "./response";
 
 import Logger from "../../Logger";
 
+import * as BodyValidator from "simple-body-validator";
+import * as RuleValidator from "./rule";
+
 export const HelloWorld = async (req, res, next) => {
   return res.json("Hello World!");
 };
 
 export const StoreHash = async (req, res, next) => {
   try {
-    const { hash } = req.body;
-    if (hash && hash.length == 64) {
+    const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.StoreHash);
+    if (bodyValidator.validate()) {
+      const { hash } = req.body;
       const { policy, asset } = await T.MintNFT({
         assetName: hash,
         metadata: {
@@ -26,6 +30,7 @@ export const StoreHash = async (req, res, next) => {
     } else {
       return res.json(Response(undefined, {
         reason: errorTypes.INVALID_BODY,
+        data: bodyValidator.errors().all(),
       }));
     }
   } catch (error) {
@@ -36,8 +41,9 @@ export const StoreHash = async (req, res, next) => {
 
 export const UpdateHash = async (req, res, next) => {
   try {
-    const { newHash, config } = req.body;
-    if (newHash && config && config.type === "document" && config.policy && config.asset) {
+    const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.UpdateHash);
+    if (bodyValidator.validate()) {
+      const { newHash, config } = req.body;
 
       let assetDetail = await T.getAssetDetails(config.asset);
 
@@ -89,6 +95,7 @@ export const UpdateHash = async (req, res, next) => {
     } else {
       return res.json(Response(undefined, {
         reason: errorTypes.INVALID_BODY,
+        data: bodyValidator.errors().all(),
       }));
     }
   } catch (error) {
@@ -99,8 +106,9 @@ export const UpdateHash = async (req, res, next) => {
 
 export const RevokeHash = async (req, res, next) => {
   try {
-    const { config } = req.body;
-    if (config && config.type === "document" && config.policy && config.asset) {
+    const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.RevokeHash);
+    if (bodyValidator.validate()) {
+      const { config } = req.body;
       try {
         await T.BurnNFT({
           config: config
@@ -115,6 +123,7 @@ export const RevokeHash = async (req, res, next) => {
     } else {
       return res.json(Response(undefined, {
         reason: errorTypes.INVALID_BODY,
+        data: bodyValidator.errors().all(),
       }));
     }
   } catch (error) {
@@ -125,8 +134,9 @@ export const RevokeHash = async (req, res, next) => {
 
 export const StoreCredential = async (req, res, next) => {
   try {
-    const { credential, config } = req.body;
-    if (credential && credential.length == 64 && config && (config.type === "document" || config.type === "credential") && config.policy && config.asset) {
+    const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.StoreCredential);
+    if (bodyValidator.validate()) {
+      const { credential, config } = req.body;
 
       let currIndex = 0;
 
@@ -178,6 +188,7 @@ export const StoreCredential = async (req, res, next) => {
     } else {
       return res.json(Response(undefined, {
         reason: errorTypes.INVALID_BODY,
+        data: bodyValidator.errors().all(),
       }));
     }
   } catch (error) {
@@ -188,8 +199,9 @@ export const StoreCredential = async (req, res, next) => {
 
 export const RevokeCredential = async (req, res, next) => {
   try {
-    const { config } = req.body;
-    if (config && config.type === "credential" && config.policy && config.asset) {
+    const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.RevokeCredential);
+    if (bodyValidator.validate()) {
+      const { config } = req.body;
       try {
         await T.BurnNFT({
           config: config
@@ -204,6 +216,7 @@ export const RevokeCredential = async (req, res, next) => {
     } else {
       return res.json(Response(undefined, {
         reason: errorTypes.INVALID_BODY,
+        data: bodyValidator.errors().all(),
       }));
     }
   } catch (error) {
@@ -233,13 +246,15 @@ export const FetchNFT = async (req, res, next) => {
 
 export const VerifySignature = async (req, res, next) => {
   try {
-    const { address, payload, signature, key } = req.body;
-    if (address && payload && signature && key) {
+    const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.RevokeCredential);
+    if (bodyValidator.validate()) {
+      const { address, payload, signature, key } = req.body;
       const response = core.verifySignature(address, payload, { signature, key });
       return res.json(Response(response, undefined));
     } else {
       return res.json(Response(undefined, {
         reason: errorTypes.INVALID_BODY,
+        data: bodyValidator.errors().all(),
       }));
     }
   } catch (error) {
