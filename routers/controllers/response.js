@@ -1,3 +1,12 @@
+const Resolve = (message) => {
+  try {
+    const result = message.toUpperCase().split(" ").join("_");
+    return result;
+  } catch (error) {
+    return message;
+  }
+};
+
 export const Response = (response, error) => {
   if (response) {
     return {
@@ -8,7 +17,7 @@ export const Response = (response, error) => {
   } else {
     return {
       code: 1, 
-      message: error.message || error.reason || "Something went wrong",
+      message: Resolve(error.message) || Resolve(error.reason) || Resolve("Something went wrong !"),
       data: error.data || null,
     }
   }
