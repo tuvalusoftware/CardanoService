@@ -39,6 +39,11 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
     mintToken[options.asset] = -1n;
   }
 
+  if (options.policy.reuse && options.policy.reuse === true && options.policy.id !== policy.id) {
+    Logger.error("POLICY_ID_DIFFERENCT:", options.policy.id, policy.id);
+    throw new Error(errorTypes.ERROR_WHILE_REUSING_POLICY_ID);
+  }
+
   const tx = await L.lucid.newTx()
   .collectFrom(utxos)
   .attachMintingPolicy(policy)

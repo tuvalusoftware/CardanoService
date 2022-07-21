@@ -8,6 +8,8 @@ import Logger from "../../Logger";
 import * as BodyValidator from "simple-body-validator";
 import * as RuleValidator from "./rule";
 
+import { memoryCache } from "./cache";
+
 export const HelloWorld = async (req, res, next) => {
   return res.json("Hello World!");
 };
@@ -72,7 +74,9 @@ export const UpdateHash = async (req, res, next) => {
             },
           });
 
-          if (policy.id !== config.policy.id || asset === config.asset) {
+          // if reuse, config.policy and policy must be the same.
+          // asset must be difference from config.asset.
+          if ((config.policy.reuse && config.policy.reuse === true && policy.id !== config.policy.id) || asset === config.asset) {
             return res.json(Response(undefined, {
               reason: errorTypes.SOMETHING_WENT_WRONG,
             }));
@@ -140,7 +144,31 @@ export const StoreCredential = async (req, res, next) => {
 
       let currIndex = 0;
 
+      let mintedAsset = [];
+      if (memoryCache.get(`credential-${config.policy.id}`) !== undefined) {
+        mintedAsset = memoryCache.get(`credential-${config.policy.id}`);
+      } else {
+        mintedAsset = T.getMintedAssets(config.policy.id);
+        if (mintedAsset.length > 0) {
+          mintedAsset = await Promise.all(mintedAsset.filter(async (asset) => {
+            return asset.onchainMetadata[asset.policyId][asset.assetName].type === "credential";
+          }));
+        } else {
+          return res.json(Response(undefined, {
+            reason: errorTypes.SOMETHING_WENT_WRONG,
+          }));
+        }
+        memoryCache.set(`credential-${config.policy.id}`, mintedAsset, 60);
+      }
+
       if (config.type !== "document") {
+
+        Logger.info("zzz", mintedAsset);
+        if (mintedAsset.length === 0) {
+          return res.json(Response(undefined, {
+            reason: errorTypes.ONLY_DOCUMENT_CONFIG_IS_ALLOWED_BECAUSE_THIS_DOCUMENT_HAS_NOT_ANY_CREDENTAILS,
+          }));
+        }
 
         let assetDetail = await T.getAssetDetails(config.asset);
         if (assetDetail && assetDetail.onchainMetadata) {
