@@ -11,11 +11,10 @@ import { memoryCache } from "./cache";
 import Logger from "../Logger";
 
 export const MintNFT = async ({ assetName, metadata, options }) => {
-  Logger.info("MintNFT");
   let policy = W.createLockingPolicyScript();
   policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
   
-  if (options.policy) {
+  if (options.policy && options.policy.id && options.policy.script && options.policy.ttl) {
     policy = options.policy;
   }
 
@@ -37,7 +36,6 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   };
 
   if (options.burn && options.burn == true) {
-    Logger.info(" >> MintAndBurnNFT");
     mintToken[options.asset] = -1n;
   }
 
@@ -66,7 +64,6 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
 };
 
 export const BurnNFT = async ({ config }) => {
-  Logger.info("BurnNFT");
   const utxos = await L.lucid.wallet.getUtxos();
   const address = await L.lucid.wallet.address();
   const assets = await L.lucid.utxosAtWithUnit(address, config.asset);
@@ -101,7 +98,6 @@ export const BurnNFT = async ({ config }) => {
 };
 
 export const getMintedAssets = async (policyId, { page = 1, count = 100, order = "asc" }) => {
-  Logger.info("getMintedAssets");
   try {
     if (memoryCache.get(`${policyId}`) !== undefined) {
       return memoryCache.get(`${policyId}`);
@@ -123,7 +119,6 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
 };
 
 export const getAssetDetails = async (asset) => {
-  Logger.info("getAssetDetails");
   try {
     if (memoryCache.get(`${asset}`) !== undefined) {
       return memoryCache.get(`${asset}`);
@@ -201,7 +196,6 @@ export async function delay(delayInMs) {
 }
 
 const Blockfrost = async (endpoint, headers, body) => {
-  Logger.info("Blockfrost...");
   return await request(
     process.env.CARDANO_NETWORK == 0 ? "https://cardano-testnet.blockfrost.io/api/v0/" : "https://cardano-mainnet.blockfrost.io/api/v0/",
     endpoint, headers, body

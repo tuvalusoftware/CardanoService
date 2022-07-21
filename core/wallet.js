@@ -85,7 +85,6 @@ export const signData = async (payload) => {
 }
 
 export const verifyData = (address, payload, { signature, key }) => {
-  Logger.info("verifyData");
 
   const verifyPayload = (_payload, _payloadCose) => {
     return Buffer.from(_payloadCose, "hex").compare(Buffer.from(_payload, "hex")) === 0;

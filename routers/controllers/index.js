@@ -35,10 +35,8 @@ export const StoreHash = async (req, res, next) => {
 };
 
 export const UpdateHash = async (req, res, next) => {
-  Logger.info("UpdateHash");
   try {
     const { newHash, config } = req.body;
-    console.log(config);
     if (newHash && config && config.type === "document" && config.policy && config.asset) {
 
       let assetDetail = await T.getAssetDetails(config.asset);
@@ -190,6 +188,7 @@ export const StoreCredential = async (req, res, next) => {
 
 export const RevokeCredential = async (req, res, next) => {
   try {
+    const { config } = req.body;
     if (config && config.type === "credential" && config.policy && config.asset) {
       try {
         await T.BurnNFT({
