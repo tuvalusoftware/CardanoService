@@ -148,7 +148,7 @@ export const StoreCredential = async (req, res, next) => {
       if (memoryCache.get(`credential-${config.policy.id}`) !== undefined) {
         mintedAsset = memoryCache.get(`credential-${config.policy.id}`);
       } else {
-        mintedAsset = T.getMintedAssets(config.policy.id);
+        mintedAsset = await T.getMintedAssets(config.policy.id, {});
         if (mintedAsset.length > 0) {
           mintedAsset = await Promise.all(mintedAsset.filter(async (asset) => {
             return asset.onchainMetadata[asset.policyId][asset.assetName].type === "credential";
