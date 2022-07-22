@@ -137,13 +137,19 @@ export const RevokeHash = async (req, res, next) => {
 };
 
 export const StoreCredential = async (req, res, next) => {
+  Logger.info("Tao credentails");
   try {
     const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.StoreCredential);
     if (bodyValidator.validate()) {
       const { credential, config } = req.body;
 
+      Logger.info("config: ");
+      console.log(JSON.stringify(config));
+
+      // default currIndex = 0
       let currIndex = 0;
 
+      // fetch all credential of all version document
       let mintedAsset = [];
       if (memoryCache.get(`credential-${config.policy.id}`) !== undefined) {
         mintedAsset = memoryCache.get(`credential-${config.policy.id}`);
@@ -161,15 +167,14 @@ export const StoreCredential = async (req, res, next) => {
         memoryCache.set(`credential-${config.policy.id}`, mintedAsset, 60);
       }
 
+      // default onwer is document hash
+      let owner = config.asset.slice(56);
+
+      // type = "credential"
       if (config.type !== "document") {
+        Logger.info("Tao dua tren credentails da co");
 
-        Logger.info("zzz", mintedAsset);
-        if (mintedAsset.length === 0) {
-          return res.json(Response(undefined, {
-            reason: errorTypes.ONLY_DOCUMENT_CONFIG_IS_ALLOWED_BECAUSE_THIS_DOCUMENT_HAS_NOT_ANY_CREDENTAILS,
-          }));
-        }
-
+        // fetch asset details of current config
         let assetDetail = await T.getAssetDetails(config.asset);
         if (assetDetail && assetDetail.onchainMetadata) {
 
@@ -179,9 +184,22 @@ export const StoreCredential = async (req, res, next) => {
 
           if (assetDetail.onchainMetadata.policy === config.policy.id && assetDetail.onchainMetadata.ttl === config.policy.ttl) {
             currIndex = assetDetail.onchainMetadata.index + 1;
+            // set owner is previous owner
+            owner = assetDetail.onchainMetadata.owner;
           } else {
             return res.json(Response(undefined, {
               reason: errorTypes.CONFIG_MISMATCH,
+            }));
+          }
+
+          // filter asset by owner
+          mintedAsset = await Promise.all(mintedAsset.filter(async (asset) => {
+            return asset.onchainMetadata[asset.policyId][asset.assetName].owner === owner;
+          })); 
+
+          if (mintedAsset.length === 0) {
+            return res.json(Response(undefined, {
+              reason: errorTypes.ONLY_DOCUMENT_CONFIG_IS_ALLOWED_BECAUSE_THIS_DOCUMENT_HAS_NOT_ANY_CREDENTAILS,
             }));
           }
 
@@ -191,9 +209,14 @@ export const StoreCredential = async (req, res, next) => {
           }));
         }
 
+      } else {
+
+        Logger.info("Tao credentails moi hoan toan");
+
       }
 
       let metadata = {
+        owner: owner,
         attach: credential,
         index: currIndex,
         type: "credential",
@@ -202,6 +225,9 @@ export const StoreCredential = async (req, res, next) => {
       if (currIndex !== 0) {
         metadata.previous = config.asset;
       }
+
+      Logger.info("metadata: ");
+      console.log(JSON.stringify(metadata, undefined, 2));
 
       const { policy, asset } = await T.MintNFT({
         assetName: credential,

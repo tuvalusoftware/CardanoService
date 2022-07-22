@@ -19,4 +19,6 @@ console.info(lucid);
 
 console.info(await lucid.wallet.getUtxos());
 
+console.info(await lucid.wallet.address());
+
 export { lucid };

@@ -20,10 +20,11 @@ export const UpdateHash = {
 export const RevokeHash = {
   config: ["object"],
   'config.type': ["required", "string", "size:8", BodyValidator.ruleIn(["document"])],
-  'config.policy': ["object", "size:4"],
+  'config.policy': ["object", "min:4", "max:5"],
   'config.policy.id': ["required", "string", "size:56"],
   'config.policy.script': ["required", "string", "size:84"],
   'config.policy.ttl': ["required", "integer"],
+  'config.policy.reuse': ["strict", "boolean"],
   'config.asset': ["required", "string", "size:120"],
 };
 
@@ -31,20 +32,22 @@ export const StoreCredential = {
   credential: ["required", "string", "size:64"],
   config: ["object"],
   'config.type': ["required", "string", "min:8", "max:10", BodyValidator.ruleIn(["document", "credential"])],
-  'config.policy': ["object", "size:4"],
+  'config.policy': ["object", "min:4", "max:5"],
   'config.policy.id': ["required", "string", "size:56"],
   'config.policy.script': ["required", "string", "size:84"],
   'config.policy.ttl': ["required", "integer"],
+  'config.policy.reuse': ["strict", "boolean"],
   'config.asset': ["required", "string", "size:120"],
 };
 
 export const RevokeCredential = {
   config: ["object"],
   'config.type': ["required", "string", "size:10", BodyValidator.ruleIn(["credential"])],
-  'config.policy': ["object", "size:4"],
+  'config.policy': ["object", "min:4", "max:5"],
   'config.policy.id': ["required", "string", "size:56"],
   'config.policy.script': ["required", "string", "size:84"],
   'config.policy.ttl': ["required", "integer"],
+  'config.policy.reuse': ["strict", "boolean"],
   'config.asset': ["required", "string", "size:120"],
 };
 

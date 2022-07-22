@@ -103,6 +103,7 @@ export const BurnNFT = async ({ config }) => {
 };
 
 export const getMintedAssets = async (policyId, { page = 1, count = 100, order = "asc" }) => {
+  console.log(policyId);
   try {
     if (memoryCache.get(`${policyId}`) !== undefined) {
       return memoryCache.get(`${policyId}`);
@@ -124,6 +125,7 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
 };
 
 export const getAssetDetails = async (asset) => {
+  console.log(asset);
   try {
     if (memoryCache.get(`${asset}`) !== undefined) {
       return memoryCache.get(`${asset}`);
@@ -217,7 +219,6 @@ const request = async (base, endpoint, headers, body) => {
     body,
   }).then((response) => {
     if (!response.ok) {
-      Logger.error(response);
       throw new Error(response.status);
     }
     return response.json();
