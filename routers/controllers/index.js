@@ -223,7 +223,7 @@ export const StoreCredential = async (req, res, next) => {
       };
 
       if (currIndex !== 0) {
-        metadata.previous = config.asset;
+        metadata.previous = config.asset.slice(56);
       }
 
       Logger.info("metadata: ");
