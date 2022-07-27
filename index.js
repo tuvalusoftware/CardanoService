@@ -1,7 +1,7 @@
-"use-strict";
+'use-strict';
 
-import * as Server from "./server";
+import * as Server from './server';
 
 Server.start({
-  port: 10003,
+  port: process.env.PORT,
 });
