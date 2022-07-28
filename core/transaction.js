@@ -89,6 +89,8 @@ export const BurnNFT = async ({ config }) => {
     try {
       await signedTx.submit();
 
+      console.log("delete", config.asset);
+
       if (memoryCache.get(config.asset)) {
         memoryCache.del(config.asset);
       }      
@@ -103,7 +105,7 @@ export const BurnNFT = async ({ config }) => {
 };
 
 export const getMintedAssets = async (policyId, { page = 1, count = 100, order = "asc" }) => {
-  console.log(policyId);
+  // console.log(policyId);
   try {
     if (memoryCache.get(`${policyId}`) !== undefined) {
       return memoryCache.get(`${policyId}`);
@@ -113,7 +115,7 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
       .filter((asset) => parseInt(asset.quantity) === 1)
       .map((asset) => asset.asset);
     newValue = await Promise.all(newValue.map(async (asset) => await getAssetDetails(asset)));
-    memoryCache.set(`${policyId}`, newValue, 60);
+    memoryCache.set(`${policyId}`, newValue, 30);
     return newValue;
   } catch (error) {
     Logger.error(error);
@@ -125,7 +127,7 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
 };
 
 export const getAssetDetails = async (asset) => {
-  console.log(asset);
+  // console.log(asset);
   try {
     if (memoryCache.get(`${asset}`) !== undefined) {
       return memoryCache.get(`${asset}`);

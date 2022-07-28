@@ -5,6 +5,8 @@ import CardanoMS from "@emurgo/cardano-message-signing-nodejs";
 
 import Logger from "../Logger";
 
+import { errorTypes } from "./error.types";
+
 export const createLockingPolicyScript = () => {
   const timeToLive = L.lucid.utils.unixTimeToSlot(new Date()) + 3153600000;
   const { paymentKeyPub } = A.getCurrentAccount();
