@@ -22,12 +22,12 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   metadata.policy = policy.id;
   metadata.ttl = policy.ttl;
 
-  const utxos = await L.lucid.wallet.getUtxos();
+  // const utxos = await L.lucid.wallet.getUtxos();
   const asset = `${policy.id}${Buffer.from(assetName, "hex").toString("hex")}`;
 
   const address = await L.lucid.wallet.address();
-  const assets = await L.lucid.utxosAtWithUnit(address, asset);
-  if (assets.length > 0) {
+  const utxo = await L.lucid.utxosAtWithUnit(address, asset);
+  if (utxo.length > 0) {
     throw new Error(errorTypes.NFT_MINTED);
   }
 
@@ -45,7 +45,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   }
 
   const tx = await L.lucid.newTx()
-  .collectFrom(utxos)
+  // .collectFrom(utxos)
   .attachMintingPolicy(policy)
   .attachMetadata(721, {
     [policy.id]: {
@@ -69,14 +69,14 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
 };
 
 export const BurnNFT = async ({ config }) => {
-  const utxos = await L.lucid.wallet.getUtxos();
+  // const utxos = await L.lucid.wallet.getUtxos();
   const address = await L.lucid.wallet.address();
-  const assets = await L.lucid.utxosAtWithUnit(address, config.asset);
+  const utxo = await L.lucid.utxosAtWithUnit(address, config.asset);
   
-  if (assets.length > 0) {
+  if (utxo.length > 0) {
 
     const tx = await L.lucid.newTx()
-    .collectFrom(utxos)
+    .collectFrom(utxo)
     .attachMintingPolicy(config.policy)
     .mintAssets({
       [config.asset]: -1n
