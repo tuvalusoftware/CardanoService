@@ -122,7 +122,7 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
     return newValue;
   } catch (error) {
     Logger.error(error);
-    if (error.message == 404) {
+    if (error.status == 404) {
       return [];
     }
     throw new Error(errorTypes.COULD_NOT_FETCH_MINTED_ASSETS);
@@ -160,7 +160,7 @@ export const getAssetDetails = async (asset) => {
     return {};
   } catch (error) {
     Logger.error(error);
-    if (error.message == 404) {
+    if (error.status == 404) {
       return {};
     }
     throw new Error(errorTypes.COULD_NOT_FETCH_ASSET_DETAILS);
