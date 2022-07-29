@@ -206,10 +206,15 @@ export async function delay(delayInMs) {
 }
 
 const Blockfrost = async (endpoint, headers, body) => {
-  return await request(
-    process.env.CARDANO_NETWORK == 0 ? "https://cardano-testnet.blockfrost.io/api/v0/" : "https://cardano-mainnet.blockfrost.io/api/v0/",
-    endpoint, headers, body
-  );
+  try {
+    return await request(
+      process.env.CARDANO_NETWORK == 0 ? "https://cardano-testnet.blockfrost.io/api/v0/" : "https://cardano-mainnet.blockfrost.io/api/v0/",
+      endpoint, headers, body
+    );
+  } catch (error) {
+    console.log(error);
+    throw new Error("BAD");
+  }
 };
 
 const request = async (base, endpoint, headers, body) => {
@@ -222,6 +227,7 @@ const request = async (base, endpoint, headers, body) => {
     body,
   }).then((response) => {
     if (!response.ok) {
+      console.log(response);
       throw new Error(response.status);
     }
     return response.json();
