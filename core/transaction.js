@@ -214,8 +214,7 @@ const Blockfrost = async (endpoint, headers, body) => {
       endpoint, headers, body
     );
   } catch (error) {
-    console.log(error);
-    throw new Error("BAD");
+    throw new Error(error);
   }
 };
 
