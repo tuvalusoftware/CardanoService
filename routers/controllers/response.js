@@ -15,7 +15,6 @@ export const Response = (response, error) => {
       data: response
     }
   } else {
-    console.log(11111, error);
     return {
       code: 1, 
       message: Resolve(error.message) || Resolve(error.reason) 

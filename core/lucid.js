@@ -17,8 +17,16 @@ lucid.selectWalletFromPrivateKey(A.getCurrentAccount().paymentKey.to_bech32());
 
 console.info(lucid);
 
-console.info(await lucid.wallet.getUtxos());
+try {
 
-console.info(await lucid.wallet.address());
+  console.info(await lucid.wallet.getUtxos());
+
+  console.info(await lucid.wallet.address());
+
+} catch (error) {
+
+  console.log(error);
+
+}
 
 export { lucid };

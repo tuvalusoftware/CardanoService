@@ -36,8 +36,7 @@ export const StoreHash = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    Logger.error(error);
-    console.log(error);
+    Logger.error(JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };
@@ -75,8 +74,6 @@ export const UpdateHash = async (req, res, next) => {
             },
           });
 
-          // if reuse, config.policy and policy must be the same.
-          // asset must be difference from config.asset.
           if ((config.policy.reuse && config.policy.reuse === true && policy.id !== config.policy.id) || asset === config.asset) {
             return res.json(Response(undefined, {
               reason: errorTypes.SOMETHING_WENT_WRONG,
@@ -104,7 +101,7 @@ export const UpdateHash = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    Logger.error(error);
+    Logger.error(JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };
@@ -120,7 +117,7 @@ export const RevokeHash = async (req, res, next) => {
         });
         return res.json(Response("SUCCESS", undefined));
       } catch (error) {
-        Logger.error(error);
+        Logger.error(JSON.stringify(error, undefined, 2) || error);
         return res.json(Response(undefined, {
           reason: errorTypes.BURN_NFT_FAILED,
         }));
@@ -132,25 +129,19 @@ export const RevokeHash = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    Logger.error(error);
+    Logger.error(JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };
 
 export const StoreCredential = async (req, res, next) => {
-  Logger.info("Tao credentails");
   try {
     const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.StoreCredential);
     if (bodyValidator.validate()) {
       const { credential, config } = req.body;
 
-      Logger.info("config: ");
-      console.log(JSON.stringify(config));
-
-      // default currIndex = 0
       let currIndex = 0;
 
-      // fetch all credential of all version document
       let mintedAsset = [];
       if (memoryCache.get(`credential-${config.policy.id}`) !== undefined) {
         mintedAsset = memoryCache.get(`credential-${config.policy.id}`);
@@ -168,14 +159,10 @@ export const StoreCredential = async (req, res, next) => {
         memoryCache.set(`credential-${config.policy.id}`, mintedAsset, 60);
       }
 
-      // default onwer is document hash
       let owner = config.asset.slice(56);
 
-      // type = "credential"
       if (config.type !== "document") {
-        Logger.info("Tao dua tren credentails da co");
 
-        // fetch asset details of current config
         let assetDetail = await T.getAssetDetails(config.asset);
         if (assetDetail && assetDetail.onchainMetadata) {
 
@@ -185,7 +172,6 @@ export const StoreCredential = async (req, res, next) => {
 
           if (assetDetail.onchainMetadata.policy === config.policy.id && assetDetail.onchainMetadata.ttl === config.policy.ttl) {
             currIndex = assetDetail.onchainMetadata.index + 1;
-            // set owner is previous owner
             owner = assetDetail.onchainMetadata.owner;
           } else {
             return res.json(Response(undefined, {
@@ -193,7 +179,6 @@ export const StoreCredential = async (req, res, next) => {
             }));
           }
 
-          // filter asset by owner
           mintedAsset = await Promise.all(mintedAsset.filter(async (asset) => {
             return asset.onchainMetadata[asset.policyId][asset.assetName].owner === owner;
           })); 
@@ -210,10 +195,6 @@ export const StoreCredential = async (req, res, next) => {
           }));
         }
 
-      } else {
-
-        Logger.info("Tao credentails moi hoan toan");
-
       }
 
       let metadata = {
@@ -226,9 +207,6 @@ export const StoreCredential = async (req, res, next) => {
       if (currIndex !== 0) {
         metadata.previous = config.asset.slice(56);
       }
-
-      Logger.info("metadata: ");
-      console.log(JSON.stringify(metadata, undefined, 2));
 
       const { policy, asset } = await T.MintNFT({
         assetName: credential,
@@ -247,7 +225,7 @@ export const StoreCredential = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    Logger.error(error);
+    Logger.error(JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };
@@ -263,7 +241,7 @@ export const RevokeCredential = async (req, res, next) => {
         });
         return res.json(Response("SUCCESS", undefined));
       } catch (error) {
-        Logger.error(error);
+        Logger.error(JSON.stringify(error, undefined, 2) || error);
         return res.json(Response(undefined, {
           reason: errorTypes.NFT_BURN_FAILED,
         }));
@@ -275,6 +253,7 @@ export const RevokeCredential = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    Logger.error(JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };
@@ -294,7 +273,7 @@ export const FetchNFT = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    Logger.error(error);
+    Logger.error(JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };
@@ -313,7 +292,7 @@ export const VerifySignature = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    Logger.error(error);
+    Logger.error(JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };
