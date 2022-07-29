@@ -89,9 +89,10 @@ export const BurnNFT = async ({ config }) => {
     try {
       await signedTx.submit();
 
-      console.log("delete", config.asset);
+      Logger.info("Delete ", config.asset);
 
       if (memoryCache.get(config.asset)) {
+        memoryCache.ttl(config.asset, 0);
         memoryCache.del(config.asset);
       }      
     } catch (error) {
