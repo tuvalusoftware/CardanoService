@@ -68,6 +68,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   try {
     await signedTx.submit();
   } catch (error) {
+    console.log(error);
     Logger.error(error);
     throw new Error(errorTypes.TRANSACTION_REJECT);
   }

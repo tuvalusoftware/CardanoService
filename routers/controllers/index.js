@@ -37,6 +37,7 @@ export const StoreHash = async (req, res, next) => {
     }
   } catch (error) {
     Logger.error(error);
+    console.log(error);
     return res.json(Response(undefined, error));
   }
 };
