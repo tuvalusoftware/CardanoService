@@ -10,6 +10,8 @@ import { memoryCache } from "./cache";
 
 import Logger from "../Logger";
 
+import axios from "axios";
+
 export const MintNFT = async ({ assetName, metadata, options }) => {
   let policy = W.createLockingPolicyScript();
   policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
@@ -218,18 +220,42 @@ const Blockfrost = async (endpoint, headers, body) => {
 };
 
 const request = async (base, endpoint, headers, body) => {
-  return await fetch(base + endpoint, {
-    headers: {
-      project_id: process.env.BLOCKFROST_APIKEY,
-      ...headers,
-    },
-    method: (body && Object.keys(body).length > 0) ? "POST" : "GET",
-    body,
-  }).then((response) => {
-    if (!response.ok) {
-      console.log(response);
-      throw new Error(response.status);
+  try {
+    if (body && Object.keys(body).length > 0) {
+      return await axios.post(base + endpoint, body, {
+        headers: {
+          project_id: process.env.BLOCKFROST_APIKEY,
+          ...headers,
+        },
+      }).then(({ data }) => {
+        return data;
+      });
+    } else {
+      return await axios.get(base + endpoint, {
+        headers: {
+          project_id: process.env.BLOCKFROST_APIKEY,
+          ...headers,
+        },
+      }).then(({ data }) => {
+        return data;
+      });
     }
-    return response.json();
-  });
+  } catch (error) {
+    Logger.error(error);
+    throw new Error(error.message || error);
+  }
+  // return await fetch(base + endpoint, {
+  //   headers: {
+  //     project_id: process.env.BLOCKFROST_APIKEY,
+  //     ...headers,
+  //   },
+  //   method: body ? "POST" : "GET",
+  //   body,
+  // }).then((response) => {
+  //   if (!response.ok) {
+  //     console.log(response);
+  //     throw new Error(response.status);
+  //   }
+  //   return response.json();
+  // });
 };
