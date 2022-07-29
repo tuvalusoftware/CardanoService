@@ -122,6 +122,7 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
     return newValue;
   } catch (error) {
     Logger.error(error);
+    console.log(error);
     if (error.status == 404) {
       return [];
     }
@@ -159,6 +160,7 @@ export const getAssetDetails = async (asset) => {
     }
     return {};
   } catch (error) {
+    console.log(error);
     Logger.error(error);
     if (error.status == 404) {
       return {};
