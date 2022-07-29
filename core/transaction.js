@@ -111,7 +111,7 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
     if (memoryCache.get(`${policyId}`) !== undefined) {
       return memoryCache.get(`${policyId}`);
     }
-    const response = await Blockfrost(`assets/policy/${policyId}?page=${page}&count=${count}&order=${order}`);
+    const response = await Blockfrost(`assets/policy/${policyId}?page=${page}&count=${count}&order=${order}`, {}, {});
     let newValue = response
       .filter((asset) => parseInt(asset.quantity) === 1)
       .map((asset) => asset.asset);
@@ -133,7 +133,7 @@ export const getAssetDetails = async (asset) => {
     if (memoryCache.get(`${asset}`) !== undefined) {
       return memoryCache.get(`${asset}`);
     }
-    const response = await Blockfrost(`assets/${asset}`);
+    const response = await Blockfrost(`assets/${asset}`, {}, {});
     if (parseInt(response.quantity) === 1 && response.onchain_metadata) {
       const assetDetails = {
         asset: response.asset,
@@ -223,7 +223,7 @@ const request = async (base, endpoint, headers, body) => {
       project_id: process.env.BLOCKFROST_APIKEY,
       ...headers,
     },
-    method: body ? "POST" : "GET",
+    method: (body && Object.keys(body).length > 0) ? "POST" : "GET",
     body,
   }).then((response) => {
     if (!response.ok) {
