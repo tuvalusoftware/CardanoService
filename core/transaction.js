@@ -220,7 +220,7 @@ const Blockfrost = async (endpoint, headers, body) => {
 };
 
 const request = async (base, endpoint, headers, body) => {
-  try {
+  // try {
     if (body && Object.keys(body).length > 0) {
       return await axios.post(base + endpoint, body, {
         headers: {
@@ -229,6 +229,16 @@ const request = async (base, endpoint, headers, body) => {
         },
       }).then(({ data }) => {
         return data;
+      }).catch(error => {
+        if (error.response) {
+          Logger.error(error.response.data);
+          Logger.error(error.response.headers);
+          Logger.error(error.response.status);
+          Logger.error(error.response.message);
+          throw new Error(error.response);
+        } else {
+          throw new Error(error);
+        }
       });
     } else {
       return await axios.get(base + endpoint, {
@@ -238,12 +248,22 @@ const request = async (base, endpoint, headers, body) => {
         },
       }).then(({ data }) => {
         return data;
+      }).catch(error => {
+        if (error.response) {
+          Logger.error(error.response.data);
+          Logger.error(error.response.headers);
+          Logger.error(error.response.status);
+          Logger.error(error.response.message);
+          throw new Error(error.response);
+        } else {
+          throw new Error(error);
+        }
       });
     }
-  } catch (error) {
-    Logger.error(error);
-    throw new Error(error.message || error);
-  }
+  // } catch (error) {
+  //   Logger.error(error);
+  //   throw new Error(error.message || error);
+  // }
   // return await fetch(base + endpoint, {
   //   headers: {
   //     project_id: process.env.BLOCKFROST_APIKEY,
