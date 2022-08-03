@@ -36,6 +36,7 @@ export const StoreHash = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    console.log("StoreHash", error);
     Logger.error("StoreHash | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
@@ -101,6 +102,7 @@ export const UpdateHash = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    console.log("UpdateHash", error);
     Logger.error("UpdateHash | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
@@ -129,6 +131,7 @@ export const RevokeHash = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    console.log("RevokeHash", error);
     Logger.error("RevokeHash | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
@@ -225,6 +228,7 @@ export const StoreCredential = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    console.log("StoreCredential", error);
     Logger.error("StoreCredential | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
@@ -253,6 +257,7 @@ export const RevokeCredential = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    console.log("RevokeCredential", error);
     Logger.error("RevokeCredential | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
@@ -273,6 +278,7 @@ export const FetchNFT = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    console.log("FetchNFT", error);
     Logger.error("FetchNFT | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
@@ -292,6 +298,7 @@ export const VerifySignature = async (req, res, next) => {
       }));
     }
   } catch (error) {
+    console.log("VerifySignature", error);
     Logger.error("VerifySignature | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
