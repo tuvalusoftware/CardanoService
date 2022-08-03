@@ -25,7 +25,7 @@ try {
 
 } catch (error) {
 
-  console.log(error);
+  console.log("lucid.js ", error);
 
 }
 

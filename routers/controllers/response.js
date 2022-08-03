@@ -18,7 +18,7 @@ export const Response = (response, error) => {
     return {
       code: 1, 
       message: Resolve(error.message) || Resolve(error.reason) 
-        || (typeof error === "string" && error.search("/") === -1 ? Resolve(error) : Resolve("Something went wrong !")),
+        || ((typeof error === "string" && error.search("/") === -1) ? Resolve(error) : error),
       data: error.data || null,
     }
   }

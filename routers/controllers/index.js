@@ -36,7 +36,7 @@ export const StoreHash = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    Logger.error(JSON.stringify(error, undefined, 2) || error);
+    Logger.error("StoreHash | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };
@@ -101,7 +101,7 @@ export const UpdateHash = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    Logger.error(JSON.stringify(error, undefined, 2) || error);
+    Logger.error("UpdateHash | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };
@@ -117,7 +117,7 @@ export const RevokeHash = async (req, res, next) => {
         });
         return res.json(Response("SUCCESS", undefined));
       } catch (error) {
-        Logger.error(JSON.stringify(error, undefined, 2) || error);
+        Logger.error("BurnNFT | " + JSON.stringify(error, undefined, 2) || error);
         return res.json(Response(undefined, {
           reason: errorTypes.BURN_NFT_FAILED,
         }));
@@ -129,7 +129,7 @@ export const RevokeHash = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    Logger.error(JSON.stringify(error, undefined, 2) || error);
+    Logger.error("RevokeHash | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };
@@ -225,7 +225,7 @@ export const StoreCredential = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    Logger.error(JSON.stringify(error, undefined, 2) || error);
+    Logger.error("StoreCredential | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };
@@ -241,7 +241,7 @@ export const RevokeCredential = async (req, res, next) => {
         });
         return res.json(Response("SUCCESS", undefined));
       } catch (error) {
-        Logger.error(JSON.stringify(error, undefined, 2) || error);
+        Logger.error("BurnNFT | " + JSON.stringify(error, undefined, 2) || error);
         return res.json(Response(undefined, {
           reason: errorTypes.NFT_BURN_FAILED,
         }));
@@ -253,7 +253,7 @@ export const RevokeCredential = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    Logger.error(JSON.stringify(error, undefined, 2) || error);
+    Logger.error("RevokeCredential | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };
@@ -273,7 +273,7 @@ export const FetchNFT = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    Logger.error(JSON.stringify(error, undefined, 2) || error);
+    Logger.error("FetchNFT | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };
@@ -292,7 +292,7 @@ export const VerifySignature = async (req, res, next) => {
       }));
     }
   } catch (error) {
-    Logger.error(JSON.stringify(error, undefined, 2) || error);
+    Logger.error("VerifySignature | " + JSON.stringify(error, undefined, 2) || error);
     return res.json(Response(undefined, error));
   }
 };

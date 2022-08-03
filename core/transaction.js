@@ -47,7 +47,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   }
 
   if (options.policy && options.policy.reuse && options.policy.reuse == true && options.policy.id !== policy.id) {
-    Logger.error("POLICY_ID_DIFFERENCT:", options.policy.id, policy.id);
+    Logger.error("MintNFT | POLICY_ID_DIFFERENCT:", options.policy.id, policy.id);
     throw new Error(errorTypes.ERROR_WHILE_REUSING_POLICY_ID);
   }
 
@@ -70,7 +70,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
     await L.lucid.awaitTx(txHash);
     await getAssetDetails(asset);
   } catch (error) {
-    Logger.error(JSON.stringify(error, undefined, 2) || error);
+    Logger.error("MintNFT | " + JSON.stringify(error, undefined, 2) || error);
     throw new Error(errorTypes.TRANSACTION_REJECT);
   }
 
@@ -105,7 +105,7 @@ export const BurnNFT = async ({ config }) => {
       }
       
     } catch (error) {
-      Logger.error(JSON.stringify(error, undefined, 2) || error);
+      Logger.error("MintNFT | " + JSON.stringify(error, undefined, 2) || error);
       throw new Error(errorTypes.TRANSACTION_REJECT);
     }
 
