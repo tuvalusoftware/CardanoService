@@ -47,7 +47,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   }
 
   if (options.policy && options.policy.reuse && options.policy.reuse == true && options.policy.id !== policy.id) {
-    Logger.error("MintNFT | POLICY_ID_DIFFERENCT:", options.policy.id, policy.id);
+    Logger.error("POLICY_ID_DIFFERENCT:", options.policy.id, policy.id);
     throw new Error(errorTypes.ERROR_WHILE_REUSING_POLICY_ID);
   }
 
@@ -61,6 +61,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   })
   .mintAssets(mintToken)
   .validTo(L.lucid.utils.slotToUnixTime(policy.ttl))
+  .payToAddress(address, mintToken)
   .complete();
   
   const signedTx = await tx.sign().complete();
