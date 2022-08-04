@@ -70,7 +70,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
     await L.lucid.awaitTx(txHash);
     await getAssetDetails(asset);
   } catch (error) {
-    Logger.error("MintNFT | " + JSON.stringify(error, undefined, 2) || error);
+    Logger.error(error);
     throw new Error(errorTypes.TRANSACTION_REJECT);
   }
 
@@ -105,7 +105,7 @@ export const BurnNFT = async ({ config }) => {
       }
       
     } catch (error) {
-      Logger.error("MintNFT | " + JSON.stringify(error, undefined, 2) || error);
+      Logger.error(error);
       throw new Error(errorTypes.TRANSACTION_REJECT);
     }
 

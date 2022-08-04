@@ -117,7 +117,7 @@ export const verifyData = (address, payload, { signature, key }) => {
       }
       return true;
     } catch (error) {
-      Logger.error("verifyData | verifyAddress | " + JSON.stringify(error, undefined, 2));
+      Logger.error(error);
     }
     return false;
   };
