@@ -68,9 +68,9 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   
   try {
     const txHash = await signedTx.submit();
-    // await L.lucid.awaitTx(txHash);
-    // await getAssetDetails(asset);
-    delay(10000);
+    await L.lucid.awaitTx(txHash);
+    await getAssetDetails(asset);
+    // delay(10000);
   } catch (error) {
     Logger.error(error);
     throw new Error(errorTypes.TRANSACTION_REJECT);
@@ -99,8 +99,8 @@ export const BurnNFT = async ({ config }) => {
     
     try {
       const txHash = await signedTx.submit();
-      // await L.lucid.awaitTx(txHash);
-      delay(10000);
+      await L.lucid.awaitTx(txHash);
+      // delay(10000);
 
       if (memoryCache.get(config.asset)) {
         memoryCache.ttl(config.asset, 0);
