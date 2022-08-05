@@ -13,7 +13,11 @@ app.use(express.urlencoded({ extended: true }));
 
 import swaggerUi from "swagger-ui-express";
 import { swaggerDocs } from "./api-docs";
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: "Cardano Service",
+  customfavIcon: "https://fuixlabs.com/img/favicons/favicon.ico"
+}));
 
 import Logger from "./Logger";
 
