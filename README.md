@@ -20,4 +20,6 @@ Step 2. Create .env file in root and copy-paste:
 
 If you want to get `MNEMONIC`, go to `https://iancoleman.io/bip39/` and choose `12` words to generate.
 
+**While the first runs, you will know your address on the console. To obtain 1000ADA, go to Faucet.**
+
 Step 3. Go to `https://<localhost>/api-docs/` to read a document.
