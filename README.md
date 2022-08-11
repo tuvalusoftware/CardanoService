@@ -1,3 +1,5 @@
+**Make sure you are on the correct path.** 
+
 # Guide
 
 Step 1. Go to root directory, then run:
@@ -23,3 +25,10 @@ If you want to get `MNEMONIC`, go to `https://iancoleman.io/bip39/` and choose `
 **While the first runs, you will know your address on the console. To obtain 1000ADA, go to Faucet.**
 
 Step 3. Go to `https://<localhost>/api-docs/` to read a document.
+
+# Docker
+
+Modify `ENV` variables in `Dockerfile` based on `.env`.
+
+After that, run `docker-compose up` in cmd in root directory.
+
