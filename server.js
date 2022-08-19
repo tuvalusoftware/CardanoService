@@ -1,11 +1,34 @@
 import http from "http";
 import express from "express";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 import { routers } from "./routers";
 
 const app = express();
 const server = http.createServer(app);
+
+var whitelist = [
+  // "https://docrender-fuixlabs.ap.ngrok.io",
+  // "https://auth-fuixlabs.ap.ngrok.io",
+  "https://paperless-fuixlabs.ap.ngrok.io",
+  // "https://github-fuixlabs.ap.ngrok.io",
+  "https://resolver-fuixlabs.ap.ngrok.io",
+  // "http://localhost:4000"
+  // "http://localhost:8000"
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  }
+} 
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());
