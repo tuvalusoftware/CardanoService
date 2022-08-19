@@ -9,6 +9,7 @@ const app = express();
 const server = http.createServer(app);
 
 var whitelist = [
+  "https://cardano-fuixlabs.ap.ngrok.io",
   // "https://docrender-fuixlabs.ap.ngrok.io",
   // "https://auth-fuixlabs.ap.ngrok.io",
   "https://paperless-fuixlabs.ap.ngrok.io",
