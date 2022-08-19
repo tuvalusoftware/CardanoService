@@ -11,7 +11,7 @@ import * as RuleValidator from "./rule";
 import { memoryCache } from "../../core/cache";
 
 export const HelloWorld = async (req, res, next) => {
-  return res.json("Hello World!");
+  return res.json("HELLO_WORLD!");
 };
 
 export const StoreHash = async (req, res, next) => {

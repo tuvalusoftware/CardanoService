@@ -6,7 +6,7 @@ export const routers = (app) => {
   app.get("/", (req, res, next) => {
     return res.json({
       code: 0,
-      message: "This is Cardano Service API",
+      message: "CARDANO_SERVICE_API",
       data: null,
     });
   });

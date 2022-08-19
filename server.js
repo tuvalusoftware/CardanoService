@@ -1,3 +1,6 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+
 import http from "http";
 import express from "express";
 import cookieParser from "cookie-parser";
@@ -22,28 +25,21 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
 
 import Logger from "./Logger";
 
-const whitelist = [
-  "https://cardano-fuixlabs.ap.ngrok.io",
-  // "https://docrender-fuixlabs.ap.ngrok.io",
-  // "https://auth-fuixlabs.ap.ngrok.io",
-  "https://paperless-fuixlabs.ap.ngrok.io",
-  // "https://github-fuixlabs.ap.ngrok.io",
-  "https://resolver-fuixlabs.ap.ngrok.io",
-  // "http://localhost:4000"
-  // "http://localhost:8000"
-];
+const domainsFromEnv = process.env.CORS_DOMAINS || "";
+const whitelist = domainsFromEnv.split(",").map(item => item.trim());
+
+Logger.info(whitelist);
 
 const corsOptions = {
   origin: function (origin, callback) {
-    console.log(origin);
-    if (whitelist.indexOf(origin) !== -1) {
+    if (!origin || whitelist.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error("NOT_ALLOWEB_BY_CORS"));
     }
-  }
+  },
+  optionsSuccessStatus: 200,
 };
-
 app.use(cors(corsOptions));
 
 export const start = async (params) => {
