@@ -32,4 +32,4 @@ Step 3. Go to `https://<localhost>/api-docs/` to read a document.
 
 Run `docker-compose up` in cmd in root directory.
 
-** Make sure you are on the right path and the `.env` file has all the attributes described above. **
+**Make sure you are on the right path and the `.env` file has all the attributes described above.**
