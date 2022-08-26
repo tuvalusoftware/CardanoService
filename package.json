@@ -1,11 +1,13 @@
 {
   "name": "cardanoservice",
-  "version": "1.0.0",
+  "type": "module",
+  "version": "2.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --timeout 30000",
-    "coverage": "nyc npm run test"
+    "start": "node --experimental-specifier-resolution=node --trace-uncaught --trace-warnings index.js",
+    "test": "node --experimental-specifier-resolution=node --trace-uncaught --trace-warnings index.test.js",
+    "docker": "docker compose up"
   },
   "repository": {
     "type": "git",
@@ -19,26 +21,19 @@
   },
   "homepage": "https://github.com/tuvalusoftware/CardanoService#readme",
   "dependencies": {
-    "@blockfrost/blockfrost-js": "^4.1.0",
+    "@blockfrost/blockfrost-js": "^4.2.1",
     "@emurgo/cardano-message-signing-nodejs": "^1.0.1",
-    "@emurgo/cardano-serialization-lib-nodejs": "^10.0.4",
+    "@emurgo/cardano-serialization-lib-nodejs": "^11.0.0-rc.6",
     "axios": "^0.27.2",
     "bip39": "^3.0.4",
-    "body-parser": "^1.20.0",
-    "chai": "^4.3.6",
-    "chai-http": "^4.3.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "dotenv": "^16.0.0",
-    "express": "^4.17.3",
-    "jsonwebtoken": "^8.5.1",
-    "keccak256": "^1.0.6",
-    "md5": "^2.3.0",
-    "swagger-ui-express": "^4.3.0",
-    "winston": "^2.4.6"
-  },
-  "devDependencies": {
-    "mocha": "^10.0.0",
-    "nyc": "^15.1.0"
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "lucid-cardano": "^0.5.2",
+    "node-cache": "^5.1.2",
+    "simple-body-validator": "^1.1.12",
+    "swagger-ui-express": "^4.5.0",
+    "winston": "^3.8.1"
   }
 }
