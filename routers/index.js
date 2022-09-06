@@ -1,21 +1,14 @@
-/**
- *
- * Copyright (c) 2022 - Fuixlabs
- *
- * @author Tran Quoc Khang / tkhang@ferdon.io
- */
+import * as R  from "./routes";
 
-const constants = require('./constants');
-const nftRoutes = require('./routes/nft');
-const metadataRoutes = require('./routes/metadata');
-const utilsRoutes = require('./routes/utils');
-const transactionRoutes = require('./routes/transaction');
-const hashRoutes = require('./routes/hash');
+const BASE_API = "/api/v2";
 
-module.exports = (app) => {
-  app.use(`${constants.baseApi}`, nftRoutes);
-  app.use(`${constants.baseApi}`, metadataRoutes);
-  app.use(`${constants.baseApi}`, utilsRoutes);
-  app.use(`${constants.baseApi}`, transactionRoutes);
-  app.use(`${constants.baseApi}`, hashRoutes);
+export const routers = (app) => {
+  app.get("/", (req, res, next) => {
+    return res.json({
+      code: 0,
+      message: "CARDANO_SERVICE_API",
+      data: null,
+    });
+  });
+  app.use(`${BASE_API}`, R.router);
 };

@@ -1,14 +1,7 @@
-/**
- *
- * Copyright (c) 2022 - Fuixlabs
- *
- * @author Tran Quoc Khang / tkhang@ferdon.io
- */
+"use-strict";
 
-'use-strict';
+import * as Server from "./server";
 
-const server = require('./server');
-
-server.start({
-  port: 10000,
+Server.start({
+  port: 10003,
 });
