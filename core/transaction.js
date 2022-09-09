@@ -102,10 +102,10 @@ export const BurnNFT = async ({ config }) => {
       await L.lucid.awaitTx(txHash);
       // delay(10000);
 
-      if (memoryCache.get(config.asset)) {
-        memoryCache.ttl(config.asset, 0);
-        memoryCache.del(config.asset);
-      }
+      // if (memoryCache.get(config.asset)) {
+      //   memoryCache.ttl(config.asset, 0);
+      //   memoryCache.del(config.asset);
+      // }
       
     } catch (error) {
       Logger.error(error);
@@ -135,9 +135,9 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
 
 export const getAssetDetails = async (asset) => {
   try {
-    if (memoryCache.get(`${asset}`) !== undefined) {
-      return memoryCache.get(`${asset}`);
-    }
+    // if (memoryCache.get(`${asset}`) !== undefined) {
+    //   return memoryCache.get(`${asset}`);
+    // }
     const response = await BlockfrostAPI.assetsById(asset);
     if (parseInt(response.quantity) === 1 && response.onchain_metadata) {
       const assetDetails = {
@@ -157,7 +157,7 @@ export const getAssetDetails = async (asset) => {
         metadata: response.metadata,
       };
       const newValue = deleteObjectKey(assetDetails, "");
-      memoryCache.set(`${asset}`, newValue, 604800);
+      // memoryCache.set(`${asset}`, newValue, 604800);
       return newValue;
     }
     return {};
