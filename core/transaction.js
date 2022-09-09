@@ -13,8 +13,8 @@ import { memoryCache } from "./cache";
 import { BlockFrostAPI, BlockfrostServerError } from "@blockfrost/blockfrost-js";
 
 const BlockfrostAPI = new BlockFrostAPI({
-  projectId: process.env.BLOCKFROST_APIKEY,
-  isTestnet: process.env.CARDANO_NETWORK == 0 ? true : false,
+  projectId: process.env.PREPROD_BLOCKFROST_APIKEY,
+  network: "preprod",
 });
 
 export const MintNFT = async ({ assetName, metadata, options }) => {

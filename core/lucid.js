@@ -9,10 +9,10 @@ import Logger from "../Logger";
 
 const lucid = await Lucid.new(
   new Blockfrost(
-    process.env.CARDANO_NETWORK == 0 ? "https://cardano-testnet.blockfrost.io/api/v0" : "https://cardano-mainnet.blockfrost.io/api/v0",
-    process.env.BLOCKFROST_APIKEY,
+    process.env.CARDANO_NETWORK == 0 ? "https://cardano-preprod.blockfrost.io/api/v0" : "https://cardano-mainnet.blockfrost.io/api/v0",
+    process.env.PREPROD_BLOCKFROST_APIKEY,
   ),
-  process.env.CARDANO_NETWORK == 0 ? "Testnet" : "Mainnet",
+  process.env.CARDANO_NETWORK == 0 ? "Preprod" : "Mainnet",
 );
 
 lucid.selectWalletFromPrivateKey(A.getCurrentAccount().paymentKey.to_bech32());
