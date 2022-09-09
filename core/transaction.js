@@ -6,8 +6,6 @@ import * as W from "./wallet";
 
 import { errorTypes } from "./error.types";
 
-import { memoryCache } from "./cache";
-
 import Logger from "../Logger";
 
 import { BlockFrostAPI, BlockfrostServerError } from "@blockfrost/blockfrost-js";
@@ -18,6 +16,7 @@ const BlockfrostAPI = new BlockFrostAPI({
 });
 
 export const MintNFT = async ({ assetName, metadata, options }) => {
+  Logger.info("Start MintNFT");
   let policy = W.createLockingPolicyScript();
   policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
   
@@ -69,7 +68,8 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   try {
     const txHash = await signedTx.submit();
     await L.lucid.awaitTx(txHash);
-    await getAssetDetails(asset);
+    Logger.info("Mint", txHash);
+    // await getAssetDetails(asset);
     // delay(10000);
   } catch (error) {
     Logger.error(error);
@@ -80,6 +80,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
 };
 
 export const BurnNFT = async ({ config }) => {
+  Logger.info("Start BurnNFT");
   // const utxos = await L.lucid.wallet.getUtxos();
   const address = await L.lucid.wallet.address();
   const utxo = await L.lucid.utxosAtWithUnit(address, config.asset);
@@ -100,13 +101,8 @@ export const BurnNFT = async ({ config }) => {
     try {
       const txHash = await signedTx.submit();
       await L.lucid.awaitTx(txHash);
+      Logger.info("Burn", txHash);
       // delay(10000);
-
-      // if (memoryCache.get(config.asset)) {
-      //   memoryCache.ttl(config.asset, 0);
-      //   memoryCache.del(config.asset);
-      // }
-      
     } catch (error) {
       Logger.error(error);
       throw new Error(errorTypes.TRANSACTION_REJECT);
@@ -135,9 +131,6 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
 
 export const getAssetDetails = async (asset) => {
   try {
-    // if (memoryCache.get(`${asset}`) !== undefined) {
-    //   return memoryCache.get(`${asset}`);
-    // }
     const response = await BlockfrostAPI.assetsById(asset);
     if (parseInt(response.quantity) === 1 && response.onchain_metadata) {
       const assetDetails = {
@@ -157,7 +150,6 @@ export const getAssetDetails = async (asset) => {
         metadata: response.metadata,
       };
       const newValue = deleteObjectKey(assetDetails, "");
-      // memoryCache.set(`${asset}`, newValue, 604800);
       return newValue;
     }
     return {};

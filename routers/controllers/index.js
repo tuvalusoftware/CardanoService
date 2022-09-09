@@ -8,8 +8,6 @@ import Logger from "../../Logger";
 import * as BodyValidator from "simple-body-validator";
 import * as RuleValidator from "./rule";
 
-import { memoryCache } from "../../core/cache";
-
 export const HelloWorld = async (req, res, next) => {
   return res.json("HELLO_WORLD!");
 };
@@ -142,21 +140,15 @@ export const StoreCredential = async (req, res, next) => {
 
       let currIndex = 0;
 
-      let mintedAsset = [];
-      if (memoryCache.get(`credential-${config.policy.id}`) !== undefined) {
-        mintedAsset = memoryCache.get(`credential-${config.policy.id}`);
+      let mintedAsset = mintedAsset = await T.getMintedAssets(config.policy.id, {});
+      if (mintedAsset.length > 0) {
+        mintedAsset = await Promise.all(mintedAsset.filter(async (asset) => {
+          return asset.onchainMetadata[asset.policyId][asset.assetName].type === "credential";
+        }));
       } else {
-        mintedAsset = await T.getMintedAssets(config.policy.id, {});
-        if (mintedAsset.length > 0) {
-          mintedAsset = await Promise.all(mintedAsset.filter(async (asset) => {
-            return asset.onchainMetadata[asset.policyId][asset.assetName].type === "credential";
-          }));
-        } else {
-          return res.json(Response(undefined, {
-            reason: errorTypes.SOMETHING_WENT_WRONG,
-          }));
-        }
-        memoryCache.set(`credential-${config.policy.id}`, mintedAsset, 60);
+        return res.json(Response(undefined, {
+          reason: errorTypes.SOMETHING_WENT_WRONG,
+        }));
       }
 
       let owner = config.asset.slice(56);
