@@ -12,13 +12,15 @@ import { memoryCache } from "./cache";
 
 import { BlockFrostAPI, BlockfrostServerError } from "@blockfrost/blockfrost-js";
 
+import { BlockfrostConfig } from "./blockfrost";
+
 const BlockfrostAPI = new BlockFrostAPI({
-  projectId: process.env.PREPROD_BLOCKFROST_APIKEY,
-  network: "preprod",
+  projectId: BlockfrostConfig.apiKey,
+  network: BlockfrostConfig.network,
 });
 
 export const MintNFT = async ({ assetName, metadata, options }) => {
-  Logger.info("Start MintNFT");
+  Logger.info("Mint");
   let policy = W.createLockingPolicyScript();
   policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
   
@@ -70,7 +72,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   try {
     const txHash = await signedTx.submit();
     await L.lucid.awaitTx(txHash);
-    Logger.info("Mint", txHash);
+    Logger.info("Minted", txHash);
     await getAssetDetails(asset);
     // delay(10000);
   } catch (error) {
@@ -82,7 +84,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
 };
 
 export const BurnNFT = async ({ config }) => {
-  Logger.info("Start BurnNFT");
+  Logger.info("Burn");
   // const utxos = await L.lucid.wallet.getUtxos();
   const address = await L.lucid.wallet.address();
   const utxo = await L.lucid.utxosAtWithUnit(address, config.asset);
@@ -103,7 +105,7 @@ export const BurnNFT = async ({ config }) => {
     try {
       const txHash = await signedTx.submit();
       await L.lucid.awaitTx(txHash);
-      Logger.info("Burn", txHash);
+      Logger.info("Burned", txHash);
       // delay(10000);
       if (memoryCache.get(config.asset)) {
         memoryCache.ttl(config.asset, 0);

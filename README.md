@@ -11,9 +11,13 @@ Step 1. Go to root directory, then run:
 Step 2. Create .env file in root and copy-paste:
 
 ```
-  BLOCKFROST_APIKEY=#
+  TESTNET_BLOCKFROST_APIKEY="" # CARDANO_NETWORK=0
+  MAINNET_BLOCKFROST_APIKEY="" # CARDANO_NETWORK=1
+  PREPROD_BLOCKFROST_APIKEY="" # CARDANO_NETWORK=2
+  PREVIEW_BLOCKFROST_APIKEY="" # CARDANO_NETWORK=4
 
   CARDANO_NETWORK=0
+  
   AUTH_SERVER=https://auth-fuixlabs.ap.ngrok.io
 
   CORS_DOMAINS="https://paperless-fuixlabs.ap.ngrok.io,https://resolver-fuixlabs.ap.ngrok.io"

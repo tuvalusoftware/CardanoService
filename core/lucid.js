@@ -7,12 +7,14 @@ import * as A from "./account";
 
 import Logger from "../Logger";
 
+import { BlockfrostConfig, capitalize } from "./blockfrost";
+
 const lucid = await Lucid.new(
   new Blockfrost(
-    process.env.CARDANO_NETWORK == 0 ? "https://cardano-preprod.blockfrost.io/api/v0" : "https://cardano-mainnet.blockfrost.io/api/v0",
-    process.env.PREPROD_BLOCKFROST_APIKEY,
+    BlockfrostConfig.serverUrl,
+    BlockfrostConfig.apiKey,
   ),
-  process.env.CARDANO_NETWORK == 0 ? "Preprod" : "Mainnet",
+  capitalize(BlockfrostConfig.network),
 );
 
 lucid.selectWalletFromPrivateKey(A.getCurrentAccount().paymentKey.to_bech32());
