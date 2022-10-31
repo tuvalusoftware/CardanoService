@@ -69,8 +69,9 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   
   const signedTx = await tx.sign().complete();
   
+  const txHash = "TX_HASH";
   try {
-    const txHash = await signedTx.submit();
+    txHash = await signedTx.submit();
     await L.lucid.awaitTx(txHash);
     Logger.info("Minted", txHash);
     await getAssetDetails(asset);
