@@ -15,7 +15,7 @@ export const UpdateHash = {
   'config.policy.reuse': ["strict", "boolean"],
   'config.asset': ["required", "string", "size:120"],
   'config.burn': ["strict", "boolean"],
-  'config.txHash': ["required", "string", "size:64"],
+  'config.txHash': ["string", "size:64"],
 };
 
 export const RevokeHash = {
@@ -27,7 +27,7 @@ export const RevokeHash = {
   'config.policy.ttl': ["required", "integer"],
   'config.policy.reuse': ["strict", "boolean"],
   'config.asset': ["required", "string", "size:120"],
-  'config.txHash': ["required", "string", "size:64"],
+  'config.txHash': ["string", "size:64"],
 };
 
 export const StoreCredential = {
@@ -40,7 +40,7 @@ export const StoreCredential = {
   'config.policy.ttl': ["required", "integer"],
   'config.policy.reuse': ["strict", "boolean"],
   'config.asset': ["required", "string", "size:120"],
-  'config.txHash': ["required", "string", "size:64"],
+  'config.txHash': ["string", "size:64"],
 };
 
 export const RevokeCredential = {
@@ -52,7 +52,7 @@ export const RevokeCredential = {
   'config.policy.ttl': ["required", "integer"],
   'config.policy.reuse': ["strict", "boolean"],
   'config.asset': ["required", "string", "size:120"],
-  'config.txHash': ["required", "string", "size:64"],
+  'config.txHash': ["string", "size:64"],
 };
 
 export const VerifySignature = {
