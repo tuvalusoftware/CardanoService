@@ -1,3 +1,5 @@
+core/database.*
+
 # Logs
 logs
 *.log

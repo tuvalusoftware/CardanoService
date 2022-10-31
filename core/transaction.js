@@ -20,7 +20,7 @@ const BlockfrostAPI = new BlockFrostAPI({
 });
 
 export const MintNFT = async ({ assetName, metadata, options }) => {
-  Logger.info("Mint");
+  Logger.info("[Mint NFT] start");
   let policy = W.createLockingPolicyScript();
   policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
   
@@ -80,11 +80,12 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
     throw new Error(errorTypes.TRANSACTION_REJECT);
   }
 
-  return { policy, asset };
+  Logger.info("[Mint NFT] finish");
+  return { policy, asset, txHash };
 };
 
 export const BurnNFT = async ({ config }) => {
-  Logger.info("Burn");
+  Logger.info("[Burn NFT] start");
   // const utxos = await L.lucid.wallet.getUtxos();
   const address = await L.lucid.wallet.address();
   const utxo = await L.lucid.utxosAtWithUnit(address, config.asset);
@@ -116,6 +117,7 @@ export const BurnNFT = async ({ config }) => {
       throw new Error(errorTypes.TRANSACTION_REJECT);
     }
 
+    Logger.info("[Burn NFT] finish");
   } else {
     throw new Error(errorTypes.NFT_COULD_NOT_BE_FOUND_IN_WALLET);
   }
