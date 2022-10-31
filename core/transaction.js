@@ -69,7 +69,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   
   const signedTx = await tx.sign().complete();
   
-  const txHash = "TX_HASH";
+  let txHash = "TX_HASH";
   try {
     txHash = await signedTx.submit();
     await L.lucid.awaitTx(txHash);
