@@ -1,4 +1,5 @@
 core/database.*
+core/wallet.*
 
 # Logs
 logs

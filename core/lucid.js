@@ -19,18 +19,13 @@ const lucid = await Lucid.new(
 
 lucid.selectWalletFromPrivateKey(A.getCurrentAccount().paymentKey.to_bech32());
 
-Logger.info(lucid);
+Logger.info(lucid.provider);
+Logger.info("Network:", lucid.network);
 
 try {
-
-  Logger.info(await lucid.wallet.getUtxos());
-
   Logger.info(await lucid.wallet.address());
-
 } catch (error) {
-
   Logger.error(error);
-
 }
 
 export { lucid };

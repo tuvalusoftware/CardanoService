@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import * as L from "./lucid";
-import * as W from "./wallet";
+// import * as W from "./wallet";
 
 import { errorTypes } from "./error.types";
 
@@ -21,9 +21,31 @@ const BlockfrostAPI = new BlockFrostAPI({
 
 export const MintNFT = async ({ assetName, metadata, options }) => {
   Logger.info("[Mint NFT] start");
-  let policy = W.createLockingPolicyScript();
-  policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
   
+  const timeToLive = L.lucid.utils.unixTimeToSlot(new Date()) + 3153600000;
+
+  // let policy = W.createLockingPolicyScript();
+  const { paymentCredential } = L.lucid.utils.getAddressDetails(
+    await L.lucid.wallet.address(),
+  );
+
+  let policy = L.lucid.utils.nativeScriptFromJson({
+    type: "all",
+    scripts: [
+      { type: "sig", keyHash: paymentCredential.hash },
+      {
+        type: "before",
+        slot: timeToLive,
+      },
+    ],
+  });
+
+  policy.ttl = timeToLive;
+  policy.id = L.lucid.utils.mintingPolicyToId(policy);
+  // policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
+  
+  Logger.info(policy);
+
   if (options.policy && options.policy.id && options.policy.script && options.policy.ttl && options.policy.reuse && options.policy.reuse == true) {
     policy = options.policy;
   }
@@ -55,7 +77,6 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   }
 
   const tx = await L.lucid.newTx()
-  // .collectFrom(utxos)
   .attachMintingPolicy(policy)
   .attachMetadata(721, {
     [policy.id]: {
@@ -75,7 +96,6 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
     await L.lucid.awaitTx(txHash);
     Logger.info("Minted", txHash);
     await getAssetDetails(asset);
-    // delay(10000);
   } catch (error) {
     Logger.error(error);
     throw new Error(errorTypes.TRANSACTION_REJECT);
@@ -87,6 +107,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
 
 export const BurnNFT = async ({ config }) => {
   Logger.info("[Burn NFT] start");
+
   // const utxos = await L.lucid.wallet.getUtxos();
   const address = await L.lucid.wallet.address();
   const utxo = await L.lucid.utxosAtWithUnit(address, config.asset);
@@ -108,11 +129,12 @@ export const BurnNFT = async ({ config }) => {
       const txHash = await signedTx.submit();
       await L.lucid.awaitTx(txHash);
       Logger.info("Burned", txHash);
-      // delay(10000);
+
       if (memoryCache.get(config.asset)) {
         memoryCache.ttl(config.asset, 0);
         memoryCache.del(config.asset);
       }
+      
     } catch (error) {
       Logger.error(error);
       throw new Error(errorTypes.TRANSACTION_REJECT);
