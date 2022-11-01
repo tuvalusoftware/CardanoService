@@ -72,6 +72,10 @@ export const hash = {
                       asset: {
                         type: "string",
                         example: "03c25bba38be9ffc375394ac3dc690ae2ad78bed62cb0fffca39e61421c48f072b87b4c0cbf2d3b7be8750ca9bc37c14a46aa140fcbe401b570b98d1",
+                      },
+                      txHash: {
+                        type: "string",
+                        example: "a0cb715a0edba3107ab81f9b56b7884f5ef1933f62107531318ea8c2ce1d99a9",
                       }
                     },
                   },
@@ -135,6 +139,10 @@ export const hash = {
                     asset: {
                       type: "string",
                       example: "03c25bba38be9ffc375394ac3dc690ae2ad78bed62cb0fffca39e61421c48f072b87b4c0cbf2d3b7be8750ca9bc37c14a46aa140fcbe401b570b98d1",
+                    },
+                    txHash: {
+                      type: "string",
+                      example: "a0cb715a0edba3107ab81f9b56b7884f5ef1933f62107531318ea8c2ce1d99a9",
                     }
                   },
                 },
@@ -192,6 +200,10 @@ export const hash = {
                       asset: {
                         type: "string",
                         example: "03c25bba38be9ffc375394ac3dc690ae2ad78bed62cb0fffca39e61421c48f072b87b4c0cbf2d3b7be8750ca9bc37c14a46aa140fcbe401b570b98d1",
+                      },
+                      txHash: {
+                        type: "string",
+                        example: "a0cb715a0edba3107ab81f9b56b7884f5ef1933f62107531318ea8c2ce1d99a9",
                       }
                     },
                   },
@@ -251,6 +263,10 @@ export const hash = {
                     asset: {
                       type: "string",
                       example: "03c25bba38be9ffc375394ac3dc690ae2ad78bed62cb0fffca39e61421c48f072b87b4c0cbf2d3b7be8750ca9bc37c14a46aa140fcbe401b570b98d1",
+                    },
+                    txHash: {
+                      type: "string",
+                      example: "a0cb715a0edba3107ab81f9b56b7884f5ef1933f62107531318ea8c2ce1d99a9",
                     }
                   },
                 },

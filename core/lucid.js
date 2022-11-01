@@ -7,28 +7,25 @@ import * as A from "./account";
 
 import Logger from "../Logger";
 
+import { BlockfrostConfig, capitalize } from "./blockfrost";
+
 const lucid = await Lucid.new(
   new Blockfrost(
-    process.env.CARDANO_NETWORK == 0 ? "https://cardano-testnet.blockfrost.io/api/v0" : "https://cardano-mainnet.blockfrost.io/api/v0",
-    process.env.BLOCKFROST_APIKEY,
+    BlockfrostConfig.serverUrl,
+    BlockfrostConfig.apiKey,
   ),
-  process.env.CARDANO_NETWORK == 0 ? "Testnet" : "Mainnet",
+  capitalize(BlockfrostConfig.network),
 );
 
 lucid.selectWalletFromPrivateKey(A.getCurrentAccount().paymentKey.to_bech32());
 
-Logger.info(lucid);
+Logger.info(lucid.provider);
+Logger.info("Network:", lucid.network);
 
 try {
-
-  Logger.info(await lucid.wallet.getUtxos());
-
   Logger.info(await lucid.wallet.address());
-
 } catch (error) {
-
   Logger.error(error);
-
 }
 
 export { lucid };

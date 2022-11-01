@@ -19,7 +19,7 @@ export const StoreHash = async (req, res, next) => {
     const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.StoreHash);
     if (bodyValidator.validate()) {
       const { hash } = req.body;
-      const { policy, asset } = await T.MintNFT({
+      const { policy, asset, txHash } = await T.MintNFT({
         assetName: hash,
         metadata: {
           attach: hash,
@@ -28,7 +28,7 @@ export const StoreHash = async (req, res, next) => {
         },
         options: {}
       });
-      return res.json(Response({ type: "document", policy, asset }, undefined));
+      return res.json(Response({ type: "document", policy, asset, txHash }, undefined));
     } else {
       return res.json(Response(undefined, {
         reason: errorTypes.INVALID_BODY,
@@ -59,7 +59,7 @@ export const UpdateHash = async (req, res, next) => {
 
           const newVersion = assetDetail.onchainMetadata.version + 1;
 
-          const { policy, asset } = await T.MintNFT({
+          const { policy, asset, txHash } = await T.MintNFT({
             assetName: newHash,
             metadata: {
               attach: newHash,
@@ -80,7 +80,7 @@ export const UpdateHash = async (req, res, next) => {
             }));
           }
 
-          return res.json(Response({ type: "document", policy, asset }, undefined));
+          return res.json(Response({ type: "document", policy, asset, txHash }, undefined));
 
         } else {
           return res.json(Response(undefined, {
@@ -208,7 +208,7 @@ export const StoreCredential = async (req, res, next) => {
         metadata.previous = config.asset.slice(56);
       }
 
-      const { policy, asset } = await T.MintNFT({
+      const { policy, asset, txHash } = await T.MintNFT({
         assetName: credential,
         metadata: metadata,
         options: {
@@ -216,7 +216,7 @@ export const StoreCredential = async (req, res, next) => {
         }
       });
 
-      return res.json(Response({ type: "credential", policy, asset }, undefined));
+      return res.json(Response({ type: "credential", policy, asset, txHash }, undefined));
 
     } else {
       return res.json(Response(undefined, {

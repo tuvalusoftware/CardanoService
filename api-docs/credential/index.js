@@ -34,21 +34,25 @@ export const credential = {
                         },
                         id: {
                           type: "string",
-                          example: ""
+                          example: "c5a4eaddd753ed6966b7de4841b0f2dac3e1d524e0b6c33cc3c40eb8"
                         },
                         script: {
                           type: "string",
-                          example: "",
+                          example: "8201828200581c4b3230ba5b12fffd92edd7aea44b6bebbcdf57ef7fe262760a3722ee82051abca7f228",
                         },
                         ttl: {
                           type: "number",
-                          example: 0,
+                          example: 3165123112,
                         }
                       }
                     },
                     asset: {
                       type: "string",
-                      example: "",
+                      example: "c5a4eaddd753ed6966b7de4841b0f2dac3e1d524e0b6c33cc3c40eb811d456db211d68cc8a6eac5e293444dec669b54812e4975497d7099467335987",
+                    },
+                    txHash: {
+                      type: "string",
+                      example: "a0cb715a0edba3107ab81f9b56b7884f5ef1933f62107531318ea8c2ce1d99a9",
                     }
                   },
                 },
@@ -91,21 +95,25 @@ export const credential = {
                           },
                           id: {
                             type: "string",
-                            example: ""
+                            example: "c5a4eaddd753ed6966b7de4841b0f2dac3e1d524e0b6c33cc3c40eb8"
                           },
                           script: {
                             type: "string",
-                            example: "",
+                            example: "8201828200581c4b3230ba5b12fffd92edd7aea44b6bebbcdf57ef7fe262760a3722ee82051abca7f228",
                           },
                           ttl: {
                             type: "number",
-                            example: 0,
+                            example: 3165123112,
                           }
                         }
                       },
                       asset: {
                         type: "string",
-                        example: "",
+                        example: "c5a4eaddd753ed6966b7de4841b0f2dac3e1d524e0b6c33cc3c40eb811d456db211d68cc8a6eac5e293444dec669b54812e4975497d7099467335987",
+                      },
+                      txHash: {
+                        type: "string",
+                        example: "a0cb715a0edba3107ab81f9b56b7884f5ef1933f62107531318ea8c2ce1d99a9",
                       }
                     },
                   },
@@ -150,21 +158,25 @@ export const credential = {
                         },
                         id: {
                           type: "string",
-                          example: ""
+                          example: "c5a4eaddd753ed6966b7de4841b0f2dac3e1d524e0b6c33cc3c40eb8"
                         },
                         script: {
                           type: "string",
-                          example: "",
+                          example: "8201828200581c4b3230ba5b12fffd92edd7aea44b6bebbcdf57ef7fe262760a3722ee82051abca7f228",
                         },
                         ttl: {
                           type: "number",
-                          example: 0,
+                          example: 3165123112,
                         }
                       }
                     },
                     asset: {
                       type: "string",
-                      example: "",
+                      example: "c5a4eaddd753ed6966b7de4841b0f2dac3e1d524e0b6c33cc3c40eb811d456db211d68cc8a6eac5e293444dec669b54812e4975497d7099467335987",
+                    },
+                    txHash: {
+                      type: "string",
+                      example: "a0cb715a0edba3107ab81f9b56b7884f5ef1933f62107531318ea8c2ce1d99a9",
                     }
                   },
                 },

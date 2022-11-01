@@ -1,13 +1,14 @@
+core/database.*
+core/wallet.*
+
 # Logs
 logs
 *.log
-logs.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
-.vscode/*
 
 .DS_Store
 config.yaml
