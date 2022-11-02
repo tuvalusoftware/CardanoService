@@ -1,6 +1,10 @@
+import { C } from "lucid-cardano";
+
 import * as T from "./transaction";
 import * as L from "./lucid";
 // import * as W from "./wallet"; -- Use Lucid instead.
+
+import logger from "../Logger";
 
 export const fetchNFTByAsset = async (asset) => {
   const response = await T.getAssetDetails(asset);
@@ -15,11 +19,13 @@ export const fetchNFTByPolicyId = async (policyId) => {
 // @verifyData
 export const verifySignature = (address, payload, { signature, key }) => {
   // const response = W.verifyData(address, payload, { signature, key });
+  address = C.Address.from_bytes(Buffer.from(address, "hex")).to_bech32();
   const signedMessage = {
     signature: signature,
     key: key,
   };
   const hasSigned = L.lucid.verifyMessage(address, payload, signedMessage);
+  logger.info(address, payload, signature, key);
   return hasSigned;
   // return response;
 };
