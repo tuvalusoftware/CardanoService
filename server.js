@@ -8,6 +8,11 @@ import cors from "cors";
 
 import { routers } from "./routers";
 
+import swaggerUi from "swagger-ui-express";
+import { swaggerDocs } from "./api-docs";
+
+import Logger from "./Logger";
+
 const app = express();
 const server = http.createServer(app);
 
@@ -15,15 +20,11 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
-import swaggerUi from "swagger-ui-express";
-import { swaggerDocs } from "./api-docs";
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "Cardano Service",
   customfavIcon: "https://fuixlabs.com/img/favicons/favicon.ico"
 }));
-
-import Logger from "./Logger";
 
 const domainsFromEnv = process.env.CORS_DOMAINS || "";
 const whitelist = domainsFromEnv.split(",").map(item => item.trim());
@@ -40,6 +41,7 @@ const corsOptions = {
   },
   optionsSuccessStatus: 200,
 };
+
 app.use(cors(corsOptions));
 
 export const start = async (params) => {

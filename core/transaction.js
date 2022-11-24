@@ -2,25 +2,50 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import * as L from "./lucid";
-import * as W from "./wallet";
+// import * as W from "./wallet";
 
 import { errorTypes } from "./error.types";
 
-import { memoryCache } from "./cache";
-
 import Logger from "../Logger";
+
+import { memoryCache } from "./cache";
 
 import { BlockFrostAPI, BlockfrostServerError } from "@blockfrost/blockfrost-js";
 
+import { BlockfrostConfig } from "./blockfrost";
+
 const BlockfrostAPI = new BlockFrostAPI({
-  projectId: process.env.BLOCKFROST_APIKEY,
-  isTestnet: process.env.CARDANO_NETWORK == 0 ? true : false,
+  projectId: BlockfrostConfig.apiKey,
+  network: BlockfrostConfig.network,
 });
 
 export const MintNFT = async ({ assetName, metadata, options }) => {
-  let policy = W.createLockingPolicyScript();
-  policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
+  Logger.info("[Mint NFT] start");
   
+  const timeToLive = L.lucid.utils.unixTimeToSlot(new Date()) + 3153600000;
+
+  // let policy = W.createLockingPolicyScript();
+  const { paymentCredential } = L.lucid.utils.getAddressDetails(
+    await L.lucid.wallet.address(),
+  );
+
+  let policy = L.lucid.utils.nativeScriptFromJson({
+    type: "all",
+    scripts: [
+      { type: "sig", keyHash: paymentCredential.hash },
+      {
+        type: "before",
+        slot: timeToLive,
+      },
+    ],
+  });
+
+  policy.ttl = timeToLive;
+  policy.id = L.lucid.utils.mintingPolicyToId(policy);
+  // policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
+  
+  Logger.info(policy);
+
   if (options.policy && options.policy.id && options.policy.script && options.policy.ttl && options.policy.reuse && options.policy.reuse == true) {
     policy = options.policy;
   }
@@ -52,7 +77,6 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   }
 
   const tx = await L.lucid.newTx()
-  // .collectFrom(utxos)
   .attachMintingPolicy(policy)
   .attachMetadata(721, {
     [policy.id]: {
@@ -66,20 +90,24 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   
   const signedTx = await tx.sign().complete();
   
+  let txHash = "TX_HASH";
   try {
-    const txHash = await signedTx.submit();
+    txHash = await signedTx.submit();
     await L.lucid.awaitTx(txHash);
+    Logger.info("Minted", txHash);
     await getAssetDetails(asset);
-    // delay(10000);
   } catch (error) {
     Logger.error(error);
     throw new Error(errorTypes.TRANSACTION_REJECT);
   }
 
-  return { policy, asset };
+  Logger.info("[Mint NFT] finish");
+  return { policy, asset, txHash };
 };
 
 export const BurnNFT = async ({ config }) => {
+  Logger.info("[Burn NFT] start");
+
   // const utxos = await L.lucid.wallet.getUtxos();
   const address = await L.lucid.wallet.address();
   const utxo = await L.lucid.utxosAtWithUnit(address, config.asset);
@@ -100,7 +128,7 @@ export const BurnNFT = async ({ config }) => {
     try {
       const txHash = await signedTx.submit();
       await L.lucid.awaitTx(txHash);
-      // delay(10000);
+      Logger.info("Burned", txHash);
 
       if (memoryCache.get(config.asset)) {
         memoryCache.ttl(config.asset, 0);
@@ -112,6 +140,7 @@ export const BurnNFT = async ({ config }) => {
       throw new Error(errorTypes.TRANSACTION_REJECT);
     }
 
+    Logger.info("[Burn NFT] finish");
   } else {
     throw new Error(errorTypes.NFT_COULD_NOT_BE_FOUND_IN_WALLET);
   }
@@ -135,30 +164,34 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
 
 export const getAssetDetails = async (asset) => {
   try {
-    if (memoryCache.get(`${asset}`) !== undefined) {
-      return memoryCache.get(`${asset}`);
-    }
-    const response = await BlockfrostAPI.assetsById(asset);
-    if (parseInt(response.quantity) === 1 && response.onchain_metadata) {
-      const assetDetails = {
-        asset: response.asset,
-        policyId: response.policy_id,
-        assetName: response.asset_name,
-        readableAssetName: Buffer.from(response.asset_name, "hex").toString(),
-        fingerprint: response.fingerprint,
-        quantity: parseInt(response.quantity),
-        initialMintTxHash: response.initial_mint_tx_hash,
-        mintOrBurnCount: parseInt(response.mint_or_burn_count),
-        onchainMetadata: renameObjectKey(
-          response.onchain_metadata,
-          "Name",
-          "name"
-        ),
-        metadata: response.metadata,
-      };
-      const newValue = deleteObjectKey(assetDetails, "");
-      memoryCache.set(`${asset}`, newValue, 604800);
-      return newValue;
+    const address = await L.lucid.wallet.address();
+    const utxo = await L.lucid.utxosAtWithUnit(address, asset);
+    if (utxo.length > 0) {
+      if (memoryCache.get(`${asset}`) !== undefined) {
+        return memoryCache.get(`${asset}`);
+      }
+      const response = await BlockfrostAPI.assetsById(asset);
+      if (parseInt(response.quantity) === 1 && response.onchain_metadata) {
+        const assetDetails = {
+          asset: response.asset,
+          policyId: response.policy_id,
+          assetName: response.asset_name,
+          readableAssetName: Buffer.from(response.asset_name, "hex").toString(),
+          fingerprint: response.fingerprint,
+          quantity: parseInt(response.quantity),
+          initialMintTxHash: response.initial_mint_tx_hash,
+          mintOrBurnCount: parseInt(response.mint_or_burn_count),
+          onchainMetadata: renameObjectKey(
+            response.onchain_metadata,
+            "Name",
+            "name"
+          ),
+          metadata: response.metadata,
+        };
+        const newValue = deleteObjectKey(assetDetails, "");
+        memoryCache.set(`${asset}`, newValue, 604800);
+        return newValue;
+      }
     }
     return {};
   } catch (error) {
