@@ -1,13 +1,11 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { Lucid, Blockfrost } from "lucid-cardano";
-
 import * as A from "./account";
 
-import Logger from "../Logger";
-
+import { Lucid, Blockfrost } from "lucid-cardano";
 import { BlockfrostConfig, capitalize } from "./blockfrost";
+import logger from "../Logger";
 
 const lucid = await Lucid.new(
   new Blockfrost(
@@ -19,13 +17,13 @@ const lucid = await Lucid.new(
 
 lucid.selectWalletFromPrivateKey(A.getCurrentAccount().paymentKey.to_bech32());
 
-Logger.info(lucid.provider);
-Logger.info("Network:", lucid.network);
+logger.info(lucid.provider);
+logger.info("Network:", lucid.network);
 
 try {
-  Logger.info(await lucid.wallet.address());
+  logger.info(await lucid.wallet.address());
 } catch (error) {
-  Logger.error(error);
+  logger.error(error);
 }
 
 export { lucid };

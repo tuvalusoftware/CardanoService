@@ -5,11 +5,10 @@ import http from "http";
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-
-import { routers } from "./routers";
-
 import swaggerUi from "swagger-ui-express";
+
 import { swaggerDocs } from "./api-docs";
+import { routers } from "./routers";
 
 import Logger from "./Logger";
 

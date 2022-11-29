@@ -2,17 +2,13 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import * as L from "./lucid";
-// import * as W from "./wallet";
 
 import { errorTypes } from "./error.types";
-
-import Logger from "../Logger";
-
 import { memoryCache } from "./cache";
-
 import { BlockFrostAPI, BlockfrostServerError } from "@blockfrost/blockfrost-js";
-
 import { BlockfrostConfig } from "./blockfrost";
+
+import logger from "../Logger";
 
 const BlockfrostAPI = new BlockFrostAPI({
   projectId: BlockfrostConfig.apiKey,
@@ -20,7 +16,7 @@ const BlockfrostAPI = new BlockFrostAPI({
 });
 
 export const MintNFT = async ({ assetName, metadata, options }) => {
-  Logger.info("[Mint NFT] start");
+  logger.info("[Mint NFT] start");
   
   const timeToLive = L.lucid.utils.unixTimeToSlot(new Date()) + 3153600000;
 
@@ -44,7 +40,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   policy.id = L.lucid.utils.mintingPolicyToId(policy);
   // policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
   
-  Logger.info(policy);
+  logger.info(policy);
 
   if (options.policy && options.policy.id && options.policy.script && options.policy.ttl && options.policy.reuse && options.policy.reuse == true) {
     policy = options.policy;
@@ -72,7 +68,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   }
 
   if (options.policy && options.policy.reuse && options.policy.reuse == true && options.policy.id !== policy.id) {
-    Logger.error("POLICY_ID_DIFFERENCT:", options.policy.id, policy.id);
+    logger.error("POLICY_ID_DIFFERENCT:", options.policy.id, policy.id);
     throw new Error(errorTypes.ERROR_WHILE_REUSING_POLICY_ID);
   }
 
@@ -94,19 +90,19 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   try {
     txHash = await signedTx.submit();
     await L.lucid.awaitTx(txHash);
-    Logger.info("Minted", txHash);
+    logger.info("Minted", txHash);
     await getAssetDetails(asset);
   } catch (error) {
-    Logger.error(error);
+    logger.error(error);
     throw new Error(errorTypes.TRANSACTION_REJECT);
   }
 
-  Logger.info("[Mint NFT] finish");
+  logger.info("[Mint NFT] finish");
   return { policy, asset, txHash };
 };
 
 export const BurnNFT = async ({ config }) => {
-  Logger.info("[Burn NFT] start");
+  logger.info("[Burn NFT] start");
 
   // const utxos = await L.lucid.wallet.getUtxos();
   const address = await L.lucid.wallet.address();
@@ -128,7 +124,7 @@ export const BurnNFT = async ({ config }) => {
     try {
       const txHash = await signedTx.submit();
       await L.lucid.awaitTx(txHash);
-      Logger.info("Burned", txHash);
+      logger.info("Burned", txHash);
 
       if (memoryCache.get(config.asset)) {
         memoryCache.ttl(config.asset, 0);
@@ -136,11 +132,11 @@ export const BurnNFT = async ({ config }) => {
       }
       
     } catch (error) {
-      Logger.error(error);
+      logger.error(error);
       throw new Error(errorTypes.TRANSACTION_REJECT);
     }
 
-    Logger.info("[Burn NFT] finish");
+    logger.info("[Burn NFT] finish");
   } else {
     throw new Error(errorTypes.NFT_COULD_NOT_BE_FOUND_IN_WALLET);
   }

@@ -12,7 +12,7 @@ export const ensureAuthenticated = (req, res, next) => {
   }
   const token = req.cookies["access_token"];
   axios.get(
-    `${process.env.AUTH_SERVER}/api/auth/verify`,
+    `${process.env.AUTH_SERVER}/api/auth/v2/verify?network=Cardano`,
     {
       withCredentials: true,
       headers: {
@@ -20,10 +20,16 @@ export const ensureAuthenticated = (req, res, next) => {
       },
     }
   ).then((response) => {
-    var response = response.data;
+    var data = response.data;
+    if (data.network != "Cardano") {
+      return res.json(Response(undefined, {
+        reason: errorTypes.WRONG_NETWORK,
+      }))
+    }
     req.userData = {
       token,
-      address: response.address,
+      address: data.address,
+      network: data.network,
     };
     return next();
   },

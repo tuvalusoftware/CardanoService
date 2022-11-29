@@ -1,17 +1,18 @@
 import * as core from "../../core";
-import * as T from "../../core/transaction";
-import { errorTypes } from "./error.types";
-import { Response } from "./response";
-
-import Logger from "../../Logger";
 
 import * as BodyValidator from "simple-body-validator";
 import * as RuleValidator from "./rule";
 
+import * as T from "../../core/transaction";
+
+import { errorTypes } from "./error.types";
+import { Response } from "./response";
 import { memoryCache } from "../../core/cache";
 
+import Logger from "../../Logger";
+
 export const HelloWorld = async (req, res, next) => {
-  return res.json("HELLO_WORLD!");
+  return res.json("HELLO_WORLD");
 };
 
 export const StoreHash = async (req, res, next) => {
