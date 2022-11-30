@@ -1,6 +1,8 @@
 core/database.*
 core/wallet.*
 
+index.test.js
+
 # Logs
 logs
 *.log

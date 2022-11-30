@@ -9,8 +9,9 @@ export const fetchNFTByAsset = async (asset) => {
 };
 
 export const fetchNFTByPolicyId = async (policyId) => {
-  const response = await T.getMintedAssets(policyId, {});
-  return response || [];
+  const response = await T.getMintedAssets(policyId, {}) || [];
+  const finalResponse = response.filter(value => Object.keys(value).length !== 0);
+  return finalResponse;
 };
 
 export const verifySignature = (address, payload, { signature, key }) => {
