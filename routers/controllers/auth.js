@@ -38,7 +38,7 @@ export const ensureAuthenticated = (req, res, next) => {
     //     reason: errorTypes.WRONG_NETWORK,
     //   }))
     // }
-    // let respAddress = data.address;
+    let respAddress = data.address;
     // try {
     //   respAddress = addressFromWithNetworkCheck(data.address, L.lucid);
     // } catch (error) {
