@@ -72,12 +72,20 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
     throw new Error(errorTypes.ERROR_WHILE_REUSING_POLICY_ID);
   }
 
+  console.log(721, {
+    [policy.id]: {
+      [Buffer.from(assetName, "hex").toString("hex")]: metadata,
+    },
+    version: 2,
+  });
+
   const tx = await L.lucid.newTx()
   .attachMintingPolicy(policy)
   .attachMetadata(721, {
     [policy.id]: {
       [Buffer.from(assetName, "hex").toString("hex")]: metadata,
     },
+    version: 2,
   })
   .mintAssets(mintToken)
   .validTo(L.lucid.utils.slotToUnixTime(policy.ttl))
@@ -167,6 +175,7 @@ export const getAssetDetails = async (asset) => {
         return memoryCache.get(`${asset}`);
       }
       const response = await BlockfrostAPI.assetsById(asset);
+      console.log(response);
       if (parseInt(response.quantity) === 1 && response.onchain_metadata) {
         const assetDetails = {
           asset: response.asset,

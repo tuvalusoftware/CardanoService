@@ -23,6 +23,17 @@ export const StoreHash = async (req, res, next) => {
       const { policy, asset, txHash } = await T.MintNFT({
         assetName: hash,
         metadata: {
+          name: hash,
+          description: "Fuixlab's wrap document",
+          image: "ipfs://QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2",
+          mediaType: "image/png",
+          files: [
+            {
+              src: "QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2",
+              name: hash,
+              mediaType: "image/png"
+            }
+          ],
           attach: hash,
           version: 0,
           type: "document",
@@ -63,6 +74,17 @@ export const UpdateHash = async (req, res, next) => {
           const { policy, asset, txHash } = await T.MintNFT({
             assetName: newHash,
             metadata: {
+              name: newHash,
+              description: "Fuixlab's Wrap Document",
+              image: "ipfs://QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2",
+              mediaType: "image/png",
+              files: [
+                {
+                  src: "QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2",
+                  name: newHash,
+                  mediaType: "image/png"
+                }
+              ],
               attach: newHash,
               previous: config.asset.slice(56),
               version: newVersion,
@@ -199,6 +221,17 @@ export const StoreCredential = async (req, res, next) => {
       }
 
       let metadata = {
+        name: credential,
+        description: "Fuixlab's credential",
+        image: "ipfs://QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2",
+        mediaType: "image/png",
+        files: [
+          {
+            src: "QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2",
+            name: credential,
+            mediaType: "image/png"
+          }
+        ],
         owner: owner,
         attach: credential,
         index: currIndex,
