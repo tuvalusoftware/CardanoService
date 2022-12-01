@@ -64,8 +64,8 @@ export const UpdateHash = async (req, res, next) => {
       if (assetDetail && assetDetail.onchainMetadata) {
 
         const assetName = assetDetail.assetName;
-        assetDetail.onchainMetadata = assetDetail.onchainMetadata[config.policy.id];
-        assetDetail.onchainMetadata = assetDetail.onchainMetadata[assetName];
+        // assetDetail.onchainMetadata = assetDetail.onchainMetadata[config.policy.id];
+        // assetDetail.onchainMetadata = assetDetail.onchainMetadata[assetName];
 
         if (assetDetail.onchainMetadata.policy === config.policy.id && assetDetail.onchainMetadata.ttl === config.policy.ttl) {
 
@@ -172,7 +172,8 @@ export const StoreCredential = async (req, res, next) => {
         mintedAsset = await T.getMintedAssets(config.policy.id, {});
         if (mintedAsset.length > 0) {
           mintedAsset = await Promise.all(mintedAsset.filter(async (asset) => {
-            return asset.onchainMetadata[asset.policyId][asset.assetName].type === "credential";
+            return asset.onchainMetadata.type === "credential";
+            // return asset.onchainMetadata[asset.policyId][asset.assetName].type === "credential";
           }));
         } else {
           return res.json(Response(undefined, {
@@ -190,8 +191,8 @@ export const StoreCredential = async (req, res, next) => {
         if (assetDetail && assetDetail.onchainMetadata) {
 
           const assetName = assetDetail.assetName;
-          assetDetail.onchainMetadata = assetDetail.onchainMetadata[config.policy.id];
-          assetDetail.onchainMetadata = assetDetail.onchainMetadata[assetName];
+          // assetDetail.onchainMetadata = assetDetail.onchainMetadata[config.policy.id];
+          // assetDetail.onchainMetadata = assetDetail.onchainMetadata[assetName];
 
           if (assetDetail.onchainMetadata.policy === config.policy.id && assetDetail.onchainMetadata.ttl === config.policy.ttl) {
             currIndex = assetDetail.onchainMetadata.index + 1;
@@ -203,7 +204,8 @@ export const StoreCredential = async (req, res, next) => {
           }
 
           mintedAsset = await Promise.all(mintedAsset.filter(async (asset) => {
-            return asset.onchainMetadata[asset.policyId][asset.assetName].owner === owner;
+            return asset.onchainMetadata.owner === owner;
+            // return asset.onchainMetadata[asset.policyId][asset.assetName].owner === owner;
           })); 
 
           if (mintedAsset.length === 0) {
