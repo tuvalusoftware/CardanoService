@@ -17,7 +17,7 @@ const BlockfrostAPI = new BlockFrostAPI({
 
 export const MintNFT = async ({ assetName, metadata, options }) => {
   logger.info("[Mint NFT] start");
-  
+
   const timeToLive = L.lucid.utils.unixTimeToSlot(new Date()) + 3153600000;
 
   // let policy = W.createLockingPolicyScript();
@@ -39,7 +39,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   policy.ttl = timeToLive;
   policy.id = L.lucid.utils.mintingPolicyToId(policy);
   // policy.script = Buffer.from(policy.script.to_bytes(), "hex").toString("hex");
-  
+
   logger.info(policy);
 
   if (options.policy && options.policy.id && options.policy.script && options.policy.ttl && options.policy.reuse && options.policy.reuse == true) {
@@ -59,7 +59,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
     throw new Error(errorTypes.NFT_MINTED);
   }
 
-  let mintToken = { 
+  let mintToken = {
     [asset]: 1n,
   };
 
@@ -72,7 +72,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
     throw new Error(errorTypes.ERROR_WHILE_REUSING_POLICY_ID);
   }
 
-  console.log(721, {
+  logger.info(721, {
     [policy.id]: {
       [Buffer.from(assetName, "hex").toString("hex")]: metadata,
     },
@@ -80,20 +80,20 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
   });
 
   const tx = await L.lucid.newTx()
-  .attachMintingPolicy(policy)
-  .attachMetadata(721, {
-    [policy.id]: {
-      [Buffer.from(assetName, "hex").toString("hex")]: metadata,
-    },
-    version: 2,
-  })
-  .mintAssets(mintToken)
-  .validTo(L.lucid.utils.slotToUnixTime(policy.ttl))
-  .payToAddress(address, mintToken)
-  .complete();
-  
+    .attachMintingPolicy(policy)
+    .attachMetadata(721, {
+      [policy.id]: {
+        [Buffer.from(assetName, "hex").toString("hex")]: metadata,
+      },
+      version: 2,
+    })
+    .mintAssets(mintToken)
+    .validTo(L.lucid.utils.slotToUnixTime(policy.ttl))
+    .payToAddress(address, mintToken)
+    .complete();
+
   const signedTx = await tx.sign().complete();
-  
+
   let txHash = "TX_HASH";
   try {
     txHash = await signedTx.submit();
@@ -115,20 +115,20 @@ export const BurnNFT = async ({ config }) => {
   // const utxos = await L.lucid.wallet.getUtxos();
   const address = await L.lucid.wallet.address();
   const utxo = await L.lucid.utxosAtWithUnit(address, config.asset);
-  
+
   if (utxo.length > 0) {
 
     const tx = await L.lucid.newTx()
-    .collectFrom(utxo)
-    .attachMintingPolicy(config.policy)
-    .mintAssets({
-      [config.asset]: -1n
-    })
-    .validTo(L.lucid.utils.slotToUnixTime(config.policy.ttl))
-    .complete();
-    
+      .collectFrom(utxo)
+      .attachMintingPolicy(config.policy)
+      .mintAssets({
+        [config.asset]: -1n
+      })
+      .validTo(L.lucid.utils.slotToUnixTime(config.policy.ttl))
+      .complete();
+
     const signedTx = await tx.sign().complete();
-    
+
     try {
       const txHash = await signedTx.submit();
       await L.lucid.awaitTx(txHash);
@@ -138,7 +138,7 @@ export const BurnNFT = async ({ config }) => {
         memoryCache.ttl(config.asset, 0);
         memoryCache.del(config.asset);
       }
-      
+
     } catch (error) {
       logger.error(error);
       throw new Error(errorTypes.TRANSACTION_REJECT);
@@ -166,6 +166,15 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
   }
 };
 
+const IsObjectEmpty = (obj) => {
+  for(var prop in obj) {
+    if(obj.hasOwnProperty(prop)) {
+      return false;
+    }
+  }
+  return Object.keys(obj).length === 0;
+};
+
 export const getAssetDetails = async (asset) => {
   try {
     const address = await L.lucid.wallet.address();
@@ -175,9 +184,25 @@ export const getAssetDetails = async (asset) => {
         return memoryCache.get(`${asset}`);
       }
       const response = await BlockfrostAPI.assetsById(asset);
-      console.log(response);
-      if (parseInt(response.quantity) === 1 && response.onchain_metadata) {
-        const assetDetails = {
+      logger.info(response);
+      if (parseInt(response.quantity) === 1 && !IsObjectEmpty(response.onchain_metadata)) {
+        let rawMetadata = renameObjectKey(
+          response.onchain_metadata,
+          "Name",
+          "name"
+        );
+        const _assetName = response.asset_name;
+        const _policyId  = response.policy_id;
+        let finalMetadata = rawMetadata;
+        if (rawMetadata.hasOwnProperty(`${_policyId}`) && !IsObjectEmpty(rawMetadata[_policyId])) {
+          if (rawMetadata[_policyId].hasOwnProperty(`${_assetName}`) && !IsObjectEmpty(rawMetadata[_policyId][_assetName])) {
+            finalMetadata = rawMetadata[_policyId][_assetName];
+          }
+        }
+        if (IsObjectEmpty(finalMetadata)) {
+          throw new Error(errorTypes.METADATA_IS_EMPTY);
+        }
+        let assetDetails = {
           asset: response.asset,
           policyId: response.policy_id,
           assetName: response.asset_name,
@@ -186,7 +211,8 @@ export const getAssetDetails = async (asset) => {
           quantity: parseInt(response.quantity),
           initialMintTxHash: response.initial_mint_tx_hash,
           mintOrBurnCount: parseInt(response.mint_or_burn_count),
-          onchainMetadata: renameObjectKey(
+          onchainMetadata: finalMetadata,
+          originalOnchainMetadata: renameObjectKey(
             response.onchain_metadata,
             "Name",
             "name"
