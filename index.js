@@ -1,7 +1,11 @@
 "use-strict";
 
+import { validateEnv } from "./validateEnv";
+
+validateEnv();
+
 import * as Server from "./server";
 
 Server.start({
-  port: 10003,
+	port: process.env.PORT || 10003,
 });

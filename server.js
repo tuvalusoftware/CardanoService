@@ -20,48 +20,46 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: "Cardano Service",
-  customfavIcon: "https://fuixlabs.com/img/favicons/favicon.ico"
+	customCss: '.swagger-ui .topbar { display: none }',
+	customSiteTitle: "Cardano Service",
+	customfavIcon: "https://auth-fuixlabs.ap.ngrok.io/favicon.ico"
 }));
 
 const domainsFromEnv = process.env.CORS_DOMAINS || "";
 const whitelist = domainsFromEnv.split(",").map(item => item.trim());
 
-Logger.info(whitelist);
-
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || whitelist.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("NOT_ALLOWEB_BY_CORS"));
-    }
-  },
-  optionsSuccessStatus: 200,
+	origin: function (origin, callback) {
+		if (!origin || whitelist.indexOf(origin) !== -1) {
+			callback(null, true);
+		} else {
+			callback(new Error("NOT_ALLOWEB_BY_CORS"));
+		}
+	},
+	optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
 
 export const start = async (params) => {
-  routers(app);
+	routers(app);
 
-  app.use((err, req, res, next) => {
-    res.status(200).json({
-      code: err.error_code || 1,
-      message: err.message,
-      data: err.data || null,
-    });
-  });
+	app.use((err, req, res, next) => {
+		res.status(200).json({
+			code: err.error_code || 1,
+			message: err.message,
+			data: err.data || null,
+		});
+	});
 
-  server.listen(params.port || 80, () => {
-    Logger.info(`Listening on http://localhost${params.port ? `:${params.port}` : ""}`);
-    if (params && params.done) {
-      params.done();
-    }
-  });
+	server.listen(params.port || 80, () => {
+		Logger.info(`Listening on http://localhost${params.port ? `:${params.port}` : ""}`);
+		if (params && params.done) {
+			params.done();
+		}
+	});
 };
 
 export const stop = (done) => {
-  server.close(done);
+	server.close(done);
 };

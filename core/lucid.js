@@ -8,22 +8,23 @@ import { BlockfrostConfig, capitalize } from "./blockfrost";
 import logger from "../Logger";
 
 const lucid = await Lucid.new(
-  new Blockfrost(
-    BlockfrostConfig.serverUrl,
-    BlockfrostConfig.apiKey,
-  ),
-  capitalize(BlockfrostConfig.network),
+	new Blockfrost(
+		BlockfrostConfig.serverUrl,
+		BlockfrostConfig.apiKey,
+	),
+	capitalize(BlockfrostConfig.network),
 );
 
-lucid.selectWalletFromPrivateKey(A.getCurrentAccount().paymentKey.to_bech32());
-
-logger.info(lucid.provider);
-logger.info("Network:", lucid.network);
-
-try {
-  logger.info(await lucid.wallet.address());
-} catch (error) {
-  logger.error(error);
+if (!process.env.DEVELOP_MNEMONIC && process.env.ENVIRONMENT == "develop") {
+	process.exit(1);
 }
+
+if (!process.env.MNEMONIC && process.env.ENVIRONMENT == "prod") {
+	process.exit(1);
+}
+
+lucid.selectWalletFromPrivateKey(A.getCurrentAccount(
+	process.env.ENVIRONMENT === "develop" ? process.env.DEVELOP_MNEMONIC : process.env.MNEMONIC
+).paymentKey.to_bech32());
 
 export { lucid };
