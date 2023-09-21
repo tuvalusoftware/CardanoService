@@ -20,11 +20,12 @@ export const StoreHash = async (req, res, next) => {
 	try {
 		const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.StoreHash);
 		if (bodyValidator.validate()) {
-			const { hash } = req.body;
+			const { hash, did } = req.body;
 			const { policy, asset, txHash } = await T.MintNFT({
 				assetName: hash,
 				metadata: {
 					name: hash,
+					did: did,
 					description: "Fuixlab's wrap document",
 					image: "ipfs://QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2",
 					mediaType: "image/png",
@@ -58,9 +59,9 @@ export const UpdateHash = async (req, res, next) => {
 	try {
 		const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.UpdateHash);
 		if (bodyValidator.validate()) {
-			const { newHash, config } = req.body;
+			const { newHash, did, config } = req.body;
 
-			let assetDetail = await T.getAssetDetails(config.asset);
+			let assetDetail = await H.getAssetDetails(config.asset);
 
 			if (assetDetail && assetDetail.onchainMetadata) {
 
@@ -76,6 +77,7 @@ export const UpdateHash = async (req, res, next) => {
 						assetName: newHash,
 						metadata: {
 							name: newHash,
+							did: did,
 							description: "Fuixlab's Wrap Document",
 							image: "ipfs://QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2",
 							mediaType: "image/png",
@@ -188,7 +190,7 @@ export const StoreCredential = async (req, res, next) => {
 
 			if (config.type !== "document") {
 
-				let assetDetail = await T.getAssetDetails(config.asset);
+				let assetDetail = await H.getAssetDetails(config.asset);
 				if (assetDetail && assetDetail.onchainMetadata) {
 
 					const assetName = assetDetail.assetName;

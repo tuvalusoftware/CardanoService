@@ -2,10 +2,12 @@ import * as BodyValidator from "simple-body-validator";
 
 export const StoreHash = {
 	hash: ["required", "string", "size:64"],
+	did: ["string"],
 };
 
 export const UpdateHash = {
 	newHash: ["required", "string", "size:64"],
+	did: ["string"],
 	config: ["object"],
 	'config.type': ["required", "string", "size:8", BodyValidator.ruleIn(["document"])],
 	'config.policy': ["object", "min:4", "max:5"],
