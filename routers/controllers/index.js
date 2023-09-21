@@ -17,10 +17,12 @@ export const HelloWorld = async (req, res, next) => {
 };
 
 export const StoreHash = async (req, res, next) => {
+	Logger.info("StoreHash");
 	try {
 		const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.StoreHash);
 		if (bodyValidator.validate()) {
 			const { hash, did } = req.body;
+			Logger.info(JSON.stringify(req.body));
 			const { policy, asset, txHash } = await T.MintNFT({
 				assetName: hash,
 				metadata: {
@@ -56,10 +58,12 @@ export const StoreHash = async (req, res, next) => {
 };
 
 export const UpdateHash = async (req, res, next) => {
+	Logger.info("UpdateHash");
 	try {
 		const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.UpdateHash);
 		if (bodyValidator.validate()) {
 			const { newHash, did, config } = req.body;
+			Logger.info(JSON.stringify(req.body));
 
 			let assetDetail = await H.getAssetDetails(config.asset);
 
