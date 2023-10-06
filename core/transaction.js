@@ -2,6 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import * as L from "./lucid";
+import * as A from "./account";
 
 import { errorTypes } from "./error.types";
 import { memoryCache } from "./cache";
@@ -17,7 +18,31 @@ export const BlockfrostAPI = new BlockFrostAPI({
 	network: BlockfrostConfig.network,
 });
 
-export const MintNFT = async ({ assetName, metadata, options }) => {
+export const MintNFTRandom = async ({ assetName, metadata, options }) => {
+	const rng = Math.floor(Math.random() * 4);
+
+	let MNEMONIC = [
+		process.env.MNEMONIC,
+		process.env.MNEMONIC2,
+		process.env.MNEMONIC3,
+		process.env.MNEMONIC4,
+	];
+
+	const currentMnemonic = MNEMONIC[rng] || process.env.MNEMONIC4;
+
+	logger.info("Random wallet selection", rng, currentMnemonic);
+	L.lucid.selectWalletFromPrivateKey(A.getCurrentAccount(currentMnemonic).paymentKey.to_bech32());
+
+	return await MintNFT({ assetName, metadata, options, walletId: Number(rng) });
+};
+
+export const MintNFT = async ({ assetName, metadata, options, walletId }) => {
+	if (walletId && !isNaN(walletId)) {
+		// Do nothing
+	} else {
+		L.lucid.selectWalletFromPrivateKey(A.getCurrentAccount(process.env.MNEMONIC4).paymentKey.to_bech32());
+	}
+
 	logger.info("[Mint NFT] start");
 
 	const timeToLive = L.lucid.utils.unixTimeToSlot(new Date()) + 3153600000;
@@ -100,7 +125,7 @@ export const MintNFT = async ({ assetName, metadata, options }) => {
 	}
 
 	logger.info("[Mint NFT] finish");
-	return { policy, asset, txHash };
+	return { policy, asset, txHash, walletId };
 };
 
 export const BurnNFT = async ({ config }) => {

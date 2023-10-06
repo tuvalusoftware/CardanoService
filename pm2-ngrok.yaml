@@ -1,0 +1,12 @@
+apps:
+      - name : "ngrok"
+        script: "./ngrok"
+        args: "start --all"
+        instances: "1"
+        autorestart: true
+        max_restarts: 10
+        max_memory_restart: "500M"
+        watch : true
+        error_file: "ngrok.err.log"
+        out_file: "ngrok.out.log"
+        log_file: "ngrok.combine.log"

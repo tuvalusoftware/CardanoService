@@ -16,6 +16,47 @@ export const HelloWorld = async (req, res, next) => {
 	return res.json("HELLO_WORLD");
 };
 
+export const StoreHashRandom = async (req, res, next) => {
+	Logger.info("StoreHashRandom");
+	try {
+		const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.StoreHash);
+		if (bodyValidator.validate()) {
+			const { hash, did } = req.body;
+			Logger.info(JSON.stringify(req.body));
+			const { policy, asset, txHash, walletId } = await T.MintNFTRandom({
+				assetName: hash,
+				metadata: {
+					name: hash,
+					did: did,
+					description: "Fuixlab's wrap document",
+					image: "ipfs://QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2",
+					mediaType: "image/png",
+					files: [
+						{
+							src: "QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2",
+							name: hash,
+							mediaType: "image/png"
+						}
+					],
+					attach: hash,
+					version: 0,
+					type: "document",
+				},
+				options: {}
+			});
+			return res.json(Response({ type: "document", policy, asset, txHash, walletId }, undefined));
+		} else {
+			return res.json(Response(undefined, {
+				reason: errorTypes.INVALID_BODY,
+				data: bodyValidator.errors().all(),
+			}));
+		}
+	} catch (error) {
+		Logger.error(error);
+		return res.json(Response(undefined, error));
+	}
+};
+
 export const StoreHash = async (req, res, next) => {
 	Logger.info("StoreHash");
 	try {
@@ -177,9 +218,10 @@ export const StoreCredential = async (req, res, next) => {
 				mintedAsset = memoryCache.get(`credential-${config.policy.id}`);
 			} else {
 				mintedAsset = await H.getMintedAssets(config.policy.id, {});
+				Logger.info("mintedAsset", JSON.stringify(mintedAsset));
 				if (mintedAsset.length > 0) {
 					mintedAsset = await Promise.all(mintedAsset.filter(async (asset) => {
-						return asset.onchainMetadata.type === "credential";
+						return asset?.onchainMetadata?.type == "credential";
 						// return asset.onchainMetadata[asset.policyId][asset.assetName].type === "credential";
 					}));
 				} else {
@@ -260,6 +302,122 @@ export const StoreCredential = async (req, res, next) => {
 			});
 
 			return res.json(Response({ type: "credential", policy, asset, txHash }, undefined));
+
+		} else {
+			return res.json(Response(undefined, {
+				reason: errorTypes.INVALID_BODY,
+				data: bodyValidator.errors().all(),
+			}));
+		}
+	} catch (error) {
+		Logger.error(error);
+		return res.json(Response(undefined, error));
+	}
+};
+
+export const StoreCredentialRandom = async (req, res, next) => {
+	try {
+		const bodyValidator = BodyValidator.make().setData(req.body).setRules(RuleValidator.StoreCredential);
+		if (bodyValidator.validate()) {
+			const { credential, config } = req.body;
+
+			let currIndex = 0;
+
+			// let mintedAsset = [];
+			// if (memoryCache.get(`credential-${config.policy.id}`) !== undefined) {
+			// 	mintedAsset = memoryCache.get(`credential-${config.policy.id}`);
+			// } else {
+			// 	mintedAsset = await H.getMintedAssets(config.policy.id, {});
+			// 	Logger.info("mintedAsset", JSON.stringify(mintedAsset));
+			// 	if (mintedAsset.length > 0) {
+			// 		mintedAsset = await Promise.all(mintedAsset.filter(async (asset) => {
+			// 			return asset?.onchainMetadata?.type == "credential";
+			// 			// return asset.onchainMetadata[asset.policyId][asset.assetName].type === "credential";
+			// 		}));
+			// 	} else {
+			// 		return res.json(Response(undefined, {
+			// 			reason: errorTypes.SOMETHING_WENT_WRONG,
+			// 		}));
+			// 	}
+			// 	memoryCache.set(`credential-${config.policy.id}`, mintedAsset, 60);
+			// }
+
+			let owner = config.asset.slice(56);
+
+			if (config.type !== "document") {
+				return res.json(Response(undefined, {
+					reason: "Only document type is allowed"
+				}));
+			}
+
+			// if (config.type !== "document") {
+
+			// 	let assetDetail = await H.getAssetDetails(config.asset);
+			// 	if (assetDetail && assetDetail.onchainMetadata) {
+
+			// 		const assetName = assetDetail.assetName;
+			// 		// assetDetail.onchainMetadata = assetDetail.onchainMetadata[config.policy.id];
+			// 		// assetDetail.onchainMetadata = assetDetail.onchainMetadata[assetName];
+
+			// 		if (assetDetail.onchainMetadata.policy === config.policy.id && assetDetail.onchainMetadata.ttl === config.policy.ttl) {
+			// 			currIndex = assetDetail.onchainMetadata.index + 1;
+			// 			owner = assetDetail.onchainMetadata.owner;
+			// 		} else {
+			// 			return res.json(Response(undefined, {
+			// 				reason: errorTypes.CONFIG_MISMATCH,
+			// 			}));
+			// 		}
+
+			// 		mintedAsset = await Promise.all(mintedAsset.filter(async (asset) => {
+			// 			return asset.onchainMetadata.owner === owner;
+			// 			// return asset.onchainMetadata[asset.policyId][asset.assetName].owner === owner;
+			// 		}));
+
+			// 		if (mintedAsset.length === 0) {
+			// 			return res.json(Response(undefined, {
+			// 				reason: errorTypes.ONLY_DOCUMENT_CONFIG_IS_ALLOWED_BECAUSE_THIS_DOCUMENT_HAS_NOT_ANY_CREDENTAILS,
+			// 			}));
+			// 		}
+
+			// 	} else {
+			// 		return res.json(Response(undefined, {
+			// 			reason: errorTypes.COULD_NOT_FETCH_ASSET_DETAILS_OR_INVALID_NFT_METADATA,
+			// 		}));
+			// 	}
+
+			// }
+
+			let metadata = {
+				name: credential,
+				description: "Fuixlab's credential",
+				image: "ipfs://QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2",
+				mediaType: "image/png",
+				files: [
+					{
+						src: "QmPnRTjGG7h8YKmVa94gyC3Yc1Xz1hf1uq4QZwgpeTq9D2",
+						name: credential,
+						mediaType: "image/png"
+					}
+				],
+				owner: owner,
+				attach: credential,
+				index: currIndex,
+				type: "credential",
+			};
+
+			if (currIndex !== 0) {
+				metadata.previous = config.asset.slice(56);
+			}
+
+			const { policy, asset, txHash, walletId } = await T.MintNFTRandom({
+				assetName: credential,
+				metadata: metadata,
+				options: {
+					policy: config.policy,
+				}
+			});
+
+			return res.json(Response({ type: "credential", policy, asset, txHash, walletId }, undefined));
 
 		} else {
 			return res.json(Response(undefined, {

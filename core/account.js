@@ -4,6 +4,7 @@ dotenv.config();
 import * as BIP39 from "bip39";
 
 import { C as CardanoWasm } from "lucid-cardano";
+import logger from "../Logger";
 
 export const getCurrentAccount = (mnemonic = process.env.MNEMONIC || "Something went wrong") => {
 	const entropy = BIP39.mnemonicToEntropy(mnemonic);
@@ -27,16 +28,18 @@ export const getCurrentAccount = (mnemonic = process.env.MNEMONIC || "Something 
 
 	// Base address with Staking Key
 	const paymentAddr = CardanoWasm.BaseAddress.new(
-		process.env.CARDANO_NETWORK !== 1 ? CardanoWasm.NetworkInfo.testnet().network_id() : CardanoWasm.NetworkInfo.mainnet().network_id(),
+		Number(process.env.CARDANO_NETWORK) !== 1 ? CardanoWasm.NetworkInfo.testnet().network_id() : CardanoWasm.NetworkInfo.mainnet().network_id(),
 		CardanoWasm.StakeCredential.from_keyhash(paymentKeyPub.hash()),
 		CardanoWasm.StakeCredential.from_keyhash(stakeKeyPub.hash()),
 	).to_address().to_bech32();
 
 	// Enterprise address without staking ability, for use by exchanges/etc
 	const enterpriseAddr = CardanoWasm.EnterpriseAddress.new(
-		process.env.CARDANO_NETWORK !== 1 ? CardanoWasm.NetworkInfo.testnet().network_id() : CardanoWasm.NetworkInfo.mainnet().network_id(),
+		Number(process.env.CARDANO_NETWORK) !== 1 ? CardanoWasm.NetworkInfo.testnet().network_id() : CardanoWasm.NetworkInfo.mainnet().network_id(),
 		CardanoWasm.StakeCredential.from_keyhash(paymentKeyPub.hash()),
 	).to_address().to_bech32();
+
+	logger.info(paymentAddr);
 
 	return {
 		rootKey: rootKey,
