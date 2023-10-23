@@ -39,7 +39,7 @@ const logger = winston.createLogger({
 					return arg;
 				}).join(" ");
 
-				info[Symbol.for("message")] = `${info[Symbol.for("level")]}: ${msg}${info.stack ? " " + info.stack : ""}`;
+				info[Symbol.for("message")] = `${info?.timestamp || new Date().toUTCString()} - ${info[Symbol.for("level")]}: ${msg}${info.stack ? " " + info.stack : ""}`;
 
 				return info;
 			}

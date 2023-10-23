@@ -8,7 +8,7 @@ import { errorTypes } from "./error.types";
 
 import logger from "../Logger";
 
-export const getMintedAssets = async (policyId, { page = 1, count = 100, order = "asc" }) => {
+export const getMintedAssets = async (policyId, { page = 1, count = 100000, order = "asc" }) => {
     try {
         const response = await BlockfrostAPI.assetsPolicyByIdAll(policyId, { page, count, order });
         let newValue = response
@@ -26,8 +26,12 @@ export const getMintedAssets = async (policyId, { page = 1, count = 100, order =
 
 export const getAssetDetails = async (asset) => {
     try {
-        const address = await L.lucid.wallet.address();
-        const utxo = await L.lucid.utxosAtWithUnit(address, asset);
+        let utxo = await L.lucid.utxoByUnit(asset);
+        if (utxo) {
+            utxo = [utxo];
+        } else {
+            utxo = [];
+        }
         if (utxo.length > 0) {
             if (memoryCache.get(`${asset}`) !== undefined) {
                 return memoryCache.get(`${asset}`);

@@ -17,7 +17,7 @@ export const UpdateHash = {
 	'config.policy.reuse': ["strict", "boolean"],
 	'config.asset': ["required", "string", "size:120"],
 	'config.burn': ["strict", "boolean"],
-	'config.txHash': ["string", "size:64"],
+	'config.txHash': ["string"],
 };
 
 export const RevokeHash = {
@@ -29,7 +29,8 @@ export const RevokeHash = {
 	'config.policy.ttl': ["required", "integer"],
 	'config.policy.reuse': ["strict", "boolean"],
 	'config.asset': ["required", "string", "size:120"],
-	'config.txHash': ["string", "size:64"],
+	'config.txHash': ["string"],
+	burnAll: ["boolean"],
 };
 
 export const StoreCredential = {
@@ -42,7 +43,21 @@ export const StoreCredential = {
 	'config.policy.ttl': ["required", "integer"],
 	'config.policy.reuse': ["strict", "boolean"],
 	'config.asset': ["required", "string", "size:120"],
-	'config.txHash': ["string", "size:64"],
+	'config.txHash': ["string"],
+};
+
+export const StoreCredentials = {
+	credentials: ["required", "array"],
+	// 'credentials.*': ["required", "string", "size:64"],
+	config: ["object"],
+	'config.type': ["required", "string", "min:8", "max:10", BodyValidator.ruleIn(["document", "credential"])],
+	'config.policy': ["object", "min:4", "max:5"],
+	'config.policy.id': ["required", "string", "size:56"],
+	'config.policy.script': ["required", "string", "size:84"],
+	'config.policy.ttl': ["required", "integer"],
+	'config.policy.reuse': ["strict", "boolean"],
+	'config.asset': ["required", "string", "size:120"],
+	'config.txHash': ["string"],
 };
 
 export const RevokeCredential = {
@@ -54,7 +69,7 @@ export const RevokeCredential = {
 	'config.policy.ttl': ["required", "integer"],
 	'config.policy.reuse': ["strict", "boolean"],
 	'config.asset': ["required", "string", "size:120"],
-	'config.txHash': ["string", "size:64"],
+	'config.txHash': ["string"],
 };
 
 export const VerifySignature = {

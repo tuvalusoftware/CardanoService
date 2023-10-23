@@ -15,6 +15,13 @@ const NETWORK = [
 	"preview"
 ];
 
+const MAESTRO_API_KEY = [
+	process.env.TESTNET_MAESTRO_APIKEY || "",
+	process.env.MAINNET_MAESTRO_APIKEY || "",
+	process.env.PREPROD_MAESTRO_APIKEY || "",
+	process.env.PREVIEW_MAESTRO_APIKEY || ""
+];
+
 const API_KEY = [
 	process.env.TESTNET_BLOCKFROST_APIKEY || "",
 	process.env.MAINNET_BLOCKFROST_APIKEY || "",
@@ -31,6 +38,14 @@ const BlockfrostConfig = {
 	serverUrl: SERVER[NETWORK_ID],
 };
 
+
+const MaestroConfig = {
+	networkId: NETWORK_ID,
+	network: NETWORK[NETWORK_ID],
+	apiKey: MAESTRO_API_KEY[NETWORK_ID],
+	serverUrl: SERVER[NETWORK_ID],
+};
+
 const capitalize = s => (s && s[0].toUpperCase() + s.slice(1)) || "";
 
-export { BlockfrostConfig, capitalize };
+export { BlockfrostConfig, capitalize, MaestroConfig };
