@@ -15,7 +15,7 @@ let lucid = await Lucid.new(
 	new Maestro({
 		network: capitalize(BlockfrostConfig.network),
 		apiKey: MaestroConfig.apiKey,
-		turboSubmit: false,
+		turboSubmit: true,
 	}),
 	capitalize(BlockfrostConfig.network),
 );
@@ -24,12 +24,12 @@ if (!process.env.DEVELOP_MNEMONIC && process.env.ENVIRONMENT == "develop") {
 	process.exit(1);
 }
 
-if (!process.env.MNEMONIC && process.env.ENVIRONMENT == "prod") {
+if (!process.env.PROD_MNEMONIC && process.env.ENVIRONMENT == "prod") {
 	process.exit(1);
 }
 
 lucid.selectWalletFromPrivateKey(A.getCurrentAccount(
-	process.env.ENVIRONMENT === "develop" ? process.env.DEVELOP_MNEMONIC : process.env.MNEMONIC4
+	process.env.ENVIRONMENT === "develop" ? process.env.DEVELOP_MNEMONIC : process.env.PROD_MNEMONIC
 ).paymentKey.to_bech32());
 
 export { lucid };

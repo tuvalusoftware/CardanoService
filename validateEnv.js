@@ -10,6 +10,7 @@ const validateEnv = () => {
         CARDANO_NETWORK: num(),
         AUTH_SERVER: str(),
         MNEMONIC: str(),
+        PROD_MNEMONIC: str(),
         CRYPTO_SECRET_PASSWORD: str(),
         CRYPTO_SECRET_PASSWORD_HASH: str(),
         CRYPTO_SECRET_PASSWORD_IV: str(),

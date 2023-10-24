@@ -46,6 +46,8 @@ const MaestroConfig = {
 	serverUrl: SERVER[NETWORK_ID],
 };
 
+console.log("MaestroConfig", MaestroConfig);
+
 const capitalize = s => (s && s[0].toUpperCase() + s.slice(1)) || "";
 
 export { BlockfrostConfig, capitalize, MaestroConfig };

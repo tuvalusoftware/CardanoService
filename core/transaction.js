@@ -9,7 +9,7 @@ import { memoryCache } from "./cache";
 import { BlockFrostAPI, } from "@blockfrost/blockfrost-js";
 import { BlockfrostConfig } from "./blockfrost";
 
-import { getAssetDetails } from "./helpers";
+import { delay, getAssetDetails } from "./helpers";
 
 import logger from "../Logger";
 
@@ -18,7 +18,7 @@ export const BlockfrostAPI = new BlockFrostAPI({
 	network: BlockfrostConfig.network,
 });
 
-export const MintNFTRandom = async ({ assetName, metadata, options }) => {
+export const MintNFTRandom = async ({ assetName, metadata, options, tries = 0 }) => {
 	// const rng = Math.floor(Math.random() * 4);
 
 	// let MNEMONIC = [
@@ -33,10 +33,14 @@ export const MintNFTRandom = async ({ assetName, metadata, options }) => {
 	// logger.info("Random wallet selection", rng, currentMnemonic);
 	// L.lucid.selectWalletFromPrivateKey(A.getCurrentAccount(currentMnemonic).paymentKey.to_bech32());
 
-	return await MintNFT({ assetName, metadata, options, walletId: undefined, kek: true });
+	return await MintNFT({ assetName, metadata, options, walletId: undefined, kek: true, tries: tries });
 };
 
-export const MintNFT = async ({ assetName, metadata, options, walletId, kek }) => {
+export const MintNFT = async ({ assetName, metadata, options, walletId, kek, tries }) => {
+	if (!tries) {
+		tries = 0;
+	}
+
 	// if (walletId && !isNaN(walletId)) {
 	// 	// Do nothing
 	// } else {
@@ -139,6 +143,9 @@ export const MintNFT = async ({ assetName, metadata, options, walletId, kek }) =
 		// .mintAssets(mintToken2)
 		.validTo(L.lucid.utils.slotToUnixTime(policy.ttl))
 		.payToAddress(address, mintToken)
+		.payToAddress(address, {
+			lovelace: 2_000_000,
+		})
 		// .payToAddress(address, mintToken2)
 		.complete({
 			coinSelection: true,
@@ -154,14 +161,22 @@ export const MintNFT = async ({ assetName, metadata, options, walletId, kek }) =
 
 		try {
 			// if (!kek) {
-				await L.lucid.awaitTx(txHash);
-				await getAssetDetails(asset);
+				// await L.lucid.awaitTx(txHash);
+				// await delay(10000);
+				// await getAssetDetails(asset);
 			// }
 		} catch (doNothing) { }
 
 		logger.info("Minted", txHash);
 	} catch (error) {
 		logger.error(error);
+
+		// if (tries < 2) {
+		// 	++tries;
+		// 	logger.info("Trying again", tries);
+		// 	return await MintNFT({ assetName, metadata, options, walletId, kek: kek, tries: tries });
+		// }
+
 		throw new Error(errorTypes.TRANSACTION_REJECT);
 	}
 
@@ -246,7 +261,6 @@ export const MintBatchNFT = async ({ assetNames, metadata, options, walletId }) 
 		.payToAddress(address, mintToken)
 		.complete({
 			coinSelection: true,
-			nativeUplc: false,
 		});
 
 	const signedTx = await tx.sign().complete();

@@ -6,7 +6,7 @@ import * as BIP39 from "bip39";
 import { C as CardanoWasm } from "lucid-cardano";
 import logger from "../Logger";
 
-export const getCurrentAccount = (mnemonic = process.env.MNEMONIC || "Something went wrong") => {
+export const getCurrentAccount = (mnemonic = process.env.PROD_MNEMONIC || "Something went wrong") => {
 	const entropy = BIP39.mnemonicToEntropy(mnemonic);
 	const rootKey = CardanoWasm.Bip32PrivateKey.from_bip39_entropy(
 		Buffer.from(entropy, "hex"),
