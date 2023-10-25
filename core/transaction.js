@@ -7,7 +7,9 @@ import * as A from "./account";
 import { errorTypes } from "./error.types";
 import { memoryCache } from "./cache";
 import { BlockFrostAPI, } from "@blockfrost/blockfrost-js";
-import { BlockfrostConfig } from "./blockfrost";
+import { MaestroClient, Configuration } from "@maestro-org/typescript-sdk";
+import { Lucid, Blockfrost, Maestro } from "lucid-cardano";
+import { BlockfrostConfig, MaestroConfig, capitalize } from "./blockfrost";
 
 import { delay, getAssetDetails } from "./helpers";
 
@@ -17,6 +19,16 @@ export const BlockfrostAPI = new BlockFrostAPI({
 	projectId: BlockfrostConfig.apiKey,
 	network: BlockfrostConfig.network,
 });
+
+export const maestroClient = new MaestroClient(
+  new Configuration({
+    apiKey: MaestroConfig.apiKey,
+    network: capitalize(MaestroConfig.network),
+  })
+);
+
+const nftHolderAddress = "addr_test1vzd7m0cc2meh0ypvc252ul4kf5pph2mtl330yjfmz95gx4s59af3n";
+// nftMintAddress = "addr_test1vpryx66rd8w3p6zxd6yptpfml6wmstr5f2qrdfgxvyl2n0gck3yuc"
 
 export const MintNFTRandom = async ({ assetName, metadata, options, tries = 0 }) => {
 	// const rng = Math.floor(Math.random() * 4);
@@ -126,6 +138,7 @@ export const MintNFT = async ({ assetName, metadata, options, walletId, kek, tri
 	}
 
 	// const UTXOs = await L.lucid.wallet.getUtxos();
+	// console.log(UTXOs);
 
 	const tx = await L.lucid.newTx()
 		.attachMintingPolicy(policy)
@@ -142,10 +155,7 @@ export const MintNFT = async ({ assetName, metadata, options, walletId, kek, tri
 		.mintAssets(mintToken)
 		// .mintAssets(mintToken2)
 		.validTo(L.lucid.utils.slotToUnixTime(policy.ttl))
-		.payToAddress(address, mintToken)
-		.payToAddress(address, {
-			lovelace: 2_000_000,
-		})
+		.payToAddress(nftHolderAddress, mintToken)
 		// .payToAddress(address, mintToken2)
 		.complete({
 			coinSelection: true,
@@ -161,9 +171,9 @@ export const MintNFT = async ({ assetName, metadata, options, walletId, kek, tri
 
 		try {
 			// if (!kek) {
-				// await L.lucid.awaitTx(txHash);
-				// await delay(10000);
-				// await getAssetDetails(asset);
+			// await L.lucid.awaitTx(txHash);
+			await delay(10_000);
+			// await getAssetDetails(asset);
 			// }
 		} catch (doNothing) { }
 
@@ -292,7 +302,28 @@ export const BurnNFT = async ({ config, burnAll }) => {
 	// );
 
 	// const utxos = await L.lucid.wallet.getUtxos();
-	const address = await L.lucid.wallet.address();
+	const HOLDER_MNEMONIC = process.env.HOLDER_MNEMONIC;
+	console.log(HOLDER_MNEMONIC);
+
+	let LUCID = await Lucid.new(
+		// new Blockfrost(
+		// 	BlockfrostConfig.serverUrl,
+		// 	BlockfrostConfig.apiKey,
+		// ),
+		new Maestro({
+			network: capitalize(BlockfrostConfig.network),
+			apiKey: MaestroConfig.apiKey,
+			turboSubmit: false,
+		}),
+		capitalize(BlockfrostConfig.network),
+	);
+
+	LUCID.selectWalletFromPrivateKey(A.getCurrentAccount(
+		process.env.ENVIRONMENT === "develop" ? process.env.DEVELOP_MNEMONIC : process.env.HOLDER_MNEMONIC
+	).paymentKey.to_bech32());
+
+	const address = await LUCID.wallet.address();
+	// const address = nftHolderAddress;
 	// logger.info(address);
 	// const utxo = await L.lucid.utxosAtWithUnit(address, config.asset);
 
@@ -303,21 +334,23 @@ export const BurnNFT = async ({ config, burnAll }) => {
 	const MINT_ASSETS = {};
 
 	if (burnAll) {
-		let Assets = await BlockfrostAPI.assetsPolicyByIdAll(config.policy.id, { page: 1, count: 1000000, order: "asc" });
-		Assets = (Assets || []).filter((asset) => {
-			return asset.asset !== config.asset;
+		let Assets = await maestroClient.assets.policyInfo(config.policy.id, { count: 1000000 });
+		Assets = (Assets?.data || []).filter((asset) => {
+			// 74cbc452d34a7d0e6b5b46576758a7936d7b7af7832f712334bbde83b207f1e2
+			const _asset = `${config.policy.id}${asset?.asset_name}`;
+			return _asset !== config.asset;
 		});
 		console.log("Assets", Assets);
 
 		for (let i = 0; i < Assets.length; ++i) {
 			const asset = Assets[i];
-			const utxo = await L.lucid.utxosAtWithUnit(address, asset.asset);
+			const utxo = await LUCID.utxosAtWithUnit(address, asset.asset);
 			UTXOs = UTXOs.concat(utxo);
 			MINT_ASSETS[asset.asset] = -1n;
 		}
 	}
 
-	const utxo2 = await L.lucid.utxoByUnit(config.asset);
+	const utxo2 = await LUCID.utxoByUnit(config.asset);
 	console.log("utxo2", utxo2);
 
 	// if (utxo.length > 0) {
@@ -327,11 +360,11 @@ export const BurnNFT = async ({ config, burnAll }) => {
 
 	UTXOs = (UTXOs || []).concat([utxo2]);
 
-	const tx = await L.lucid.newTx()
+	const tx = await LUCID.newTx()
 		.collectFrom(UTXOs)
 		.attachMintingPolicy(config.policy)
 		.mintAssets(MINT_ASSETS)
-		.validTo(L.lucid.utils.slotToUnixTime(config.policy.ttl))
+		.validTo(LUCID.utils.slotToUnixTime(config.policy.ttl))
 		.complete({
 			coinSelection: true,
 		});
@@ -342,7 +375,7 @@ export const BurnNFT = async ({ config, burnAll }) => {
 		let txHash = await signedTx.submit();
 		txHash = txHash.replace(/['"]+/g, '');
 
-		await L.lucid.awaitTx(txHash);
+		await LUCID.awaitTx(txHash);
 		logger.info("Burned", txHash);
 
 		if (memoryCache.get(config.asset)) {

@@ -5,9 +5,9 @@ async function main() {
 
   let tx = L.lucid.newTx();
 
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 15; i++) {
     tx = tx.payToAddress(address, {
-      lovelace: 5000000,
+      lovelace: 1_000_000,
     })
   }
 
