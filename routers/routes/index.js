@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get("/", C.HelloWorld);
 
-router.post("/hash", [AUTH.ensureAuthenticated], C.StoreHash);
+router.post("/hash", C.StoreHash);
 router.put("/hash", [AUTH.ensureAuthenticated], C.UpdateHash);
 router.delete("/hash", [AUTH.ensureAuthenticated], C.RevokeHash);
 

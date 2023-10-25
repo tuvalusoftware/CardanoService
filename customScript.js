@@ -3,6 +3,11 @@ import * as L from "./core/lucid";
 async function main() {
   const address = await L.lucid.wallet.address();
 
+  console.log(address);
+
+  // const UTXOs = await L.lucid.wallet.getUtxos();
+  // console.log(UTXOs);
+
   let tx = L.lucid.newTx();
 
   for (let i = 0; i < 15; i++) {

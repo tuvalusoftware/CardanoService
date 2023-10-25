@@ -137,8 +137,8 @@ export const MintNFT = async ({ assetName, metadata, options, walletId, kek, tri
 		throw new Error(errorTypes.ERROR_WHILE_REUSING_POLICY_ID);
 	}
 
-	// const UTXOs = await L.lucid.wallet.getUtxos();
-	// console.log(UTXOs);
+	const UTXOs = await L.lucid.wallet.getUtxos();
+	console.log(UTXOs);
 
 	const tx = await L.lucid.newTx()
 		.attachMintingPolicy(policy)
@@ -334,8 +334,8 @@ export const BurnNFT = async ({ config, burnAll }) => {
 	const MINT_ASSETS = {};
 
 	if (burnAll) {
-		let Assets = await maestroClient.assets.policyInfo(config.policy.id, { count: 1000000 });
-		Assets = (Assets?.data || []).filter((asset) => {
+		let Assets = await maestroClient.assets.policyInfo(config.policy.id, { count: 100 });
+		Assets = (Assets?.data?.data || []).filter((asset) => {
 			// 74cbc452d34a7d0e6b5b46576758a7936d7b7af7832f712334bbde83b207f1e2
 			const _asset = `${config.policy.id}${asset?.asset_name}`;
 			return _asset !== config.asset;

@@ -28,6 +28,8 @@ if (!process.env.PROD_MNEMONIC && process.env.ENVIRONMENT == "prod") {
 	process.exit(1);
 }
 
+console.log("process.env.PROD_MNEMONIC", process.env.PROD_MNEMONIC);
+
 lucid.selectWalletFromPrivateKey(A.getCurrentAccount(
 	process.env.ENVIRONMENT === "develop" ? process.env.DEVELOP_MNEMONIC : process.env.PROD_MNEMONIC
 ).paymentKey.to_bech32());

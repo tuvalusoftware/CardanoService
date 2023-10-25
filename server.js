@@ -30,7 +30,8 @@ const whitelist = domainsFromEnv.split(",").map(item => item.trim());
 
 const corsOptions = {
 	origin: function (origin, callback) {
-		if (!origin || whitelist.indexOf(origin) !== -1) {
+		console.log("origin", origin);
+		if (!origin || whitelist.indexOf(origin) 	!== -1) {
 			callback(null, true);
 		} else {
 			callback(new Error("NOT_ALLOWEB_BY_CORS"));

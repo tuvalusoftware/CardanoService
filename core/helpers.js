@@ -1,4 +1,5 @@
 import * as L from "./lucid";
+import * as A from "./account";
 
 import { BlockfrostServerError } from "@blockfrost/blockfrost-js";
 import { BlockfrostAPI, maestroClient } from "./transaction";
@@ -7,21 +8,23 @@ import { memoryCache } from "./cache";
 import { errorTypes } from "./error.types";
 
 import logger from "../Logger";
-import { Lucid } from "lucid-cardano";
+import { Lucid, Maestro } from "lucid-cardano";
+import { BlockfrostConfig, MaestroConfig, capitalize } from "./blockfrost";
 
-export const getMintedAssets = async (policyId, { page = 1, count = 100000, order = "asc" }) => {
+export const getMintedAssets = async (policyId, { page = 1, count = 100, order = "asc" }) => {
     logger.info(`policyId ${policyId}`);
     try {
         const response = await maestroClient.assets.policyInfo(policyId, { page, count, order });
-        console.log(response);
-        let newValue = (response?.data || []).filter((asset) => parseInt(asset?.total_supply) === 1)
-            .map((asset) => asset.asset);
+        console.log("xxxx", response?.data);
+        let newValue = (response?.data?.data || []).filter((asset) => parseInt(asset?.total_supply) === 1)
+            .map((asset) => `${policyId}${asset.asset_name}`);
         newValue = await Promise.all(newValue.map(async (asset) => await getAssetDetails(asset)));
         return newValue;
     } catch (error) {
-        if (error instanceof BlockfrostServerError && error.status_code === 404) {
-            return [];
-        }
+        // if (error instanceof BlockfrostServerError && error.status_code === 404) {
+        //     return [];
+        // }
+        console.log(error);
         throw new Error(errorTypes.COULD_NOT_FETCH_MINTED_ASSETS);
     }
 };
@@ -58,7 +61,8 @@ export const getAssetDetails = async (asset) => {
             if (memoryCache.get(`${asset}`) !== undefined) {
                 return memoryCache.get(`${asset}`);
             }
-            const response = await maestroClient.assets.assetInfo(asset)?.data || {};
+            console.log((await maestroClient.assets.assetInfo(asset))?.data);
+            const response = (await maestroClient.assets.assetInfo(asset))?.data?.data || {};
             console.log("helpers - response", response);
             if (parseInt(response.total_supply) === 1 && !isEmpty(response?.asset_standards?.cip25_metadata)) {
                 // let rawMetadata = renameObjectKey(
