@@ -72,12 +72,17 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
       // }
       case "mint-token":
         channel[CardanoService].ack(msg);
+        let options = {};
+        if (request?.options) {
+          options = request?.options;
+        }
         const response: any = await mint({
           assets: [
             {
               assetName: request?.data?.hash,
-            }
+            },
           ],
+          options,
         });
         sender.sendToQueue(queue[ResolverService], Buffer.from(
           JSON.stringify(parseResult({
