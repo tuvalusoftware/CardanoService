@@ -14,6 +14,8 @@ import { holder, holderAddress, wallet, walletAddress, wallets } from "./wallet"
 import { MAX_NFT_PER_TX, TEN_MINUTES, TIME_TO_EXPIRE } from "./config";
 import { ERROR } from "./error";
 import { assertEqual, waitForTransaction } from "./utils";
+import { getSender } from ".";
+import { ResolverService } from "./config/rabbit";
 
 const log: Logger<ILogObj> = new Logger();
 
@@ -56,11 +58,11 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
     assets: {},
   };
 
-  const keyHash = resolvePaymentKeyHash(walletAddress);
-  const tx = new Transaction({ initiator: wallet });
+  const keyHash: string = resolvePaymentKeyHash(walletAddress);
+  const tx: Transaction = new Transaction({ initiator: wallet });
 
   for (const asset of assets) {
-    const nativeScript = await generateNativeScript(keyHash);
+    const nativeScript: NativeScript = await generateNativeScript(keyHash);
     const forgingScript: ForgeScript = asset?.forgingScript ?? ForgeScript.fromNativeScript(nativeScript);
     const assetMetadata: AssetMetadata = asset?.metadata ?? {};
 
@@ -85,13 +87,26 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
 
   tx.setTimeToExpire(TIME_TO_EXPIRE);
 
-  const unsignedTx = await tx.build();
-  const signedTx = await wallet.signTx(unsignedTx);
-  const txHash = await wallet.submitTx(signedTx);
+  const unsignedTx: string = await tx.build();
+  const signedTx: string = await wallet.signTx(unsignedTx);
+  const txHash: string = await wallet.submitTx(signedTx);
   log.info("🐳 Transaction submitted", txHash);
 
   if (!options?.skipWait) {
     await waitForTransaction(txHash);
+  }
+
+  for (const asset of assets) {
+    const { sender, queue } = getSender({ service: ResolverService });
+    const buff: Buffer = Buffer.from(JSON.stringify({
+      id: options?.id,
+      type: options?.type,
+      data: result.assets[asset?.assetName],
+    }));
+    sender.sendToQueue(queue, buff, {
+      persistent: true,
+      expiration: TEN_MINUTES,
+    });
   }
 
   result.txHash = txHash;
@@ -109,7 +124,7 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
     txHash: ""
   };
 
-  const tx = new Transaction({ initiator: holder });
+  const tx: Transaction = new Transaction({ initiator: holder });
 
   for (const asset of assets) {
     if (asset?.removeCollection) {
@@ -133,13 +148,13 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
   }
   tx.setRequiredSigners(requiredSigners);
 
-  const unsignedTx = await tx.build();
-  let signedTx = await holder.signTx(unsignedTx, true);
+  const unsignedTx: string = await tx.build();
+  let signedTx: string = await holder.signTx(unsignedTx, true);
   for (const w of wallets) {
     signedTx = await w.signTx(signedTx, true);
   }
 
-  const txHash = await wallet.submitTx(signedTx);
+  const txHash: string = await wallet.submitTx(signedTx);
   log.info("🐳 Transaction submitted", txHash);
 
   if (!options?.skipWait) {

@@ -44,4 +44,6 @@ export interface BurnResult {
 
 export interface Options {
   skipWait?: boolean;
+  id?: string;
+  type?: string;
 };

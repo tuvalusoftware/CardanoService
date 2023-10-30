@@ -14,7 +14,7 @@ export const waitForTransaction = async (txHash: string): Promise<void> => {
 
 /* -----------------[ Others ]----------------- */
 
-export const assertEqual = (a: any, b: any, message: any): void => {
+export const assertEqual = (a: Boolean, b: Boolean, message: any): void => {
   if (a !== b) {
     log.error("🚨", message);
     throw message;

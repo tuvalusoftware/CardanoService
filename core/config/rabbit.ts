@@ -9,7 +9,7 @@ let rabbitMQ: Connection;
 try {
   rabbitMQ = await amqplib.connect("amqp://localhost");
   log.debug("Connected to RabbitMQ", rabbitMQ!.connection!.serverProperties!.cluster_name);
-} catch (error) {
+} catch (error: any) {
   log.error("Error connecting to RabbitMQ", error);
 }
 
@@ -49,18 +49,13 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
     const request: any = JSON.parse(msg.content.toString());
     log.debug("[CardanoService] 🔈", request);
     const options: any = request?.options || {};
+    options.id = request?.id;
+    options.type = request?.type;
     try {
       switch (request?.type) {
-        // {
-        //   "type": "mint-token",
-        //   "data": {
-        //     "hash": "e4c7d948c1c57e9239128997eb8e003cce0aba7c56957e90c2ee1c768308a0ef"
-        //   },
-        //   "_id": "_id_43Xwe1"
-        // }
         case "mint-token":
           channel[CardanoService].ack(msg);
-          const response: any = await mint({
+          await mint({
             assets: [
               {
                 assetName: request?.data?.hash,
@@ -68,16 +63,13 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
             ],
             options,
           });
-          sender.sendToQueue(queue[ResolverService], Buffer.from(
-            JSON.stringify(parseResult({ ...response, _id: request?._id, type: request?.type }))
-          ));
           break;
         default:
           sender.sendToQueue(queue[ResolverService], Buffer.from(
             JSON.stringify(parseError({
               statusCode: 501,
               message: "Not Implemented",
-              data: { type: request?.type, _id: request?._id }
+              data: { type: request?.type, id: request?.id }
             })),
           ));
           break;

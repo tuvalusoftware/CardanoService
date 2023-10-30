@@ -1,4 +1,4 @@
-import { AppWallet, BlockfrostProvider, ForgeScript, NativeScript, Transaction, resolvePaymentKeyHash, resolveSlotNo } from "@meshsdk/core";
+import { AppWallet, BlockfrostProvider, ForgeScript, Mint, NativeScript, Transaction, resolvePaymentKeyHash, resolveSlotNo } from "@meshsdk/core";
 import { TIME_TO_EXPIRE } from "../core/config";
 
 const holderAddress: string = "addr1q9s7eaxg56h9kl3aw64yqfyvq3jp77plgsze4w97h0y7hxj4hppqshxzednjs4cflxv9jpuz73q00lxsygcyekdwhlqq45aram";
@@ -24,9 +24,9 @@ const jsonMetadata: any = (no: number) => {
   };
 };
 
-const blockchainProvider = new BlockfrostProvider("mainnetTMQM1bL457rJf11VlDBExuYOqyCHBAcA");
+const blockchainProvider: BlockfrostProvider = new BlockfrostProvider("mainnetTMQM1bL457rJf11VlDBExuYOqyCHBAcA");
 
-export const mint = new AppWallet({
+export const mint: AppWallet = new AppWallet({
   networkId: 1, // 0 for testnet, 1 for mainnet
   fetcher: blockchainProvider,
   submitter: blockchainProvider,
@@ -60,9 +60,8 @@ const generateNativeScript = async (keyHash: string): Promise<NativeScript> => {
   return nativeScript;
 }
 
-const mintAddress = mint.getPaymentAddress();
-
-const keyHash = resolvePaymentKeyHash(mintAddress);
+const mintAddress: string = mint.getPaymentAddress();
+const keyHash: string = resolvePaymentKeyHash(mintAddress);
 
 // const nativeScript = await generateNativeScript(keyHash);
 // const forgeScript = ForgeScript.fromNativeScript(nativeScript);
@@ -70,12 +69,12 @@ const keyHash = resolvePaymentKeyHash(mintAddress);
 
 const forgeScript: ForgeScript = "82018282051b000000033c587f978200581c4b3230ba5b12fffd92edd7aea44b6bebbcdf57ef7fe262760a3722ee";
 
-const tx = new Transaction({ initiator: mint });
+const tx: Transaction = new Transaction({ initiator: mint });
 
 for (let i = 31; i <= 50; ++i) {
   const assetMetadata: any = jsonMetadata(i);
 
-  const info = {
+  const info: Mint = {
     assetName: `${prefixAssetName}${i.toString().padStart(3, "0")}`,
     assetQuantity: "1",
     metadata: assetMetadata,
@@ -88,7 +87,7 @@ for (let i = 31; i <= 50; ++i) {
 
 tx.setTimeToExpire(TIME_TO_EXPIRE);
 
-const unsignedTx = await tx.build();
-const signedTx = await mint.signTx(unsignedTx);
-const txHash = await mint.submitTx(signedTx);
+const unsignedTx: string = await tx.build();
+const signedTx: string = await mint.signTx(unsignedTx);
+const txHash: string = await mint.submitTx(signedTx);
 console.log(txHash);
