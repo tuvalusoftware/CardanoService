@@ -1,6 +1,6 @@
 import amqplib, { Channel, Connection } from "amqplib";
 import { Logger, ILogObj } from "tslog";
-import { parseError } from "../error";
+import { parseError, parseResult } from "../error";
 import { mint } from "..";
 
 const log: Logger<ILogObj> = new Logger();
@@ -15,12 +15,14 @@ try {
 
 export const CardanoService: string = "CardanoService";
 export const TaskQueue: string = "TaskQueue";
+export const ResolverQueue: string = "ResolverQueue";
 
 const queue: {
   [key: string]: string,
 } = {
   CardanoService: CardanoService,
   TaskQueue: TaskQueue,
+  ResolverQueue: ResolverQueue,
 };
 
 const cardanoChannel: Channel = await rabbitMQ!.createChannel();
@@ -29,11 +31,15 @@ await cardanoChannel.assertQueue(queue[CardanoService], { durable: true });
 const taskChannel: Channel = await rabbitMQ!.createChannel();
 await taskChannel.assertQueue(queue[TaskQueue], { durable: true });
 
+const resolverChannel: Channel = await rabbitMQ!.createChannel();
+await resolverChannel.assertQueue(queue[ResolverQueue], { durable: true });
+
 const channel: {
   [key: string]: Channel,
 } = {
   CardanoService: cardanoChannel,
   TaskQueue: taskChannel,
+  ResolverQueue: resolverChannel,
 };
 
 export function getSender({ service }: { service: string }): { sender: Channel, queue: string } {
@@ -54,16 +60,16 @@ channel[TaskQueue].consume(queue[TaskQueue], async (msg) => {
 channel[CardanoService].consume(queue[CardanoService], async (msg) => {
   if (msg !== null) {
     log.debug("[CardanoService] 🔈", msg.content.toString());
-    // {
-    //   "type": "mint-token",
-    //   "data": {
-    //     "hash": "e4c7d948c1c57e9239128997eb8e003cce0aba7c56957e90c2ee1c768308a0ef"
-    //   },
-    //   "_id": "_id_43Xwe1"
-    // }
-    const { sender } = getSender({ service: TaskQueue });
+    const { sender } = getSender({ service: ResolverQueue });
     const request: any = JSON.parse(msg.content.toString());
     switch (request?.type) {
+      // {
+      //   "type": "mint-token",
+      //   "data": {
+      //     "hash": "e4c7d948c1c57e9239128997eb8e003cce0aba7c56957e90c2ee1c768308a0ef"
+      //   },
+      //   "_id": "_id_43Xwe1"
+      // }
       case "mint-token":
         const response: any = await mint({
           assets: [
@@ -72,12 +78,12 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
             }
           ],
         });
-        sender.sendToQueue(queue[TaskQueue], Buffer.from(
-          JSON.stringify(response)
+        sender.sendToQueue(queue[ResolverQueue], Buffer.from(
+          JSON.stringify(parseResult(response))
         ));
         break;
       default:
-        sender.sendToQueue(queue[TaskQueue], Buffer.from(
+        sender.sendToQueue(queue[ResolverQueue], Buffer.from(
           JSON.stringify(parseError({
             statusCode: 501,
             message: "Not Implemented",

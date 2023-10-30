@@ -64,7 +64,6 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
   for (const asset of assets) {
     const nativeScript = await generateNativeScript(keyHash);
     const forgingScript: ForgeScript = asset?.forgingScript ?? ForgeScript.fromNativeScript(nativeScript);
-    console.log("forgingScript", forgingScript);
     const assetMetadata: AssetMetadata = asset?.metadata ?? {};
 
     const info: Mint = {
@@ -122,7 +121,6 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
   for (const asset of assets) {
     if (asset?.removeCollection) {
       const collection: { assets: Asset[] } & {} = await blockchainProvider.fetchCollectionAssets(asset?.policyId!);
-      console.log("collection", collection);
       for (const a of collection?.assets) {
         tx.burnAsset(asset?.forgingScript!, a);
       }

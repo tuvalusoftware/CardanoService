@@ -25,7 +25,6 @@ const jsonMetadata: any = (no: number) => {
 };
 
 const blockchainProvider = new BlockfrostProvider("mainnetTMQM1bL457rJf11VlDBExuYOqyCHBAcA");
-console.log(await blockchainProvider.fetchBlockInfo("latest"));
 
 export const mint = new AppWallet({
   networkId: 1, // 0 for testnet, 1 for mainnet
@@ -62,7 +61,6 @@ const generateNativeScript = async (keyHash: string): Promise<NativeScript> => {
 }
 
 const mintAddress = mint.getPaymentAddress();
-console.log(mintAddress);
 
 const keyHash = resolvePaymentKeyHash(mintAddress);
 
@@ -75,8 +73,6 @@ const forgeScript: ForgeScript = "82018282051b000000033c587f978200581c4b3230ba5b
 const tx = new Transaction({ initiator: mint });
 
 for (let i = 31; i <= 50; ++i) {
-  console.log(`${prefixAssetName}${i.toString().padStart(3, "0")}`);
-
   const assetMetadata: any = jsonMetadata(i);
 
   const info = {
