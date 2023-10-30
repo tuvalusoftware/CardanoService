@@ -92,6 +92,8 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
   const txHash = await wallet.submitTx(signedTx);
   log.info("🐳 Transaction submitted", txHash);
 
+  await waitForTransaction(txHash);
+
   for (const asset of assets) {
     const { sender, queue } = getSender({ service: TaskQueue });
     const buff: Buffer = Buffer.from(JSON.stringify(result.assets[asset?.assetName]));
@@ -148,6 +150,8 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
 
   const txHash = await wallet.submitTx(signedTx);
   log.info("🐳 Transaction submitted", txHash);
+
+  await waitForTransaction(txHash);
 
   result.txHash = txHash;
   return result;

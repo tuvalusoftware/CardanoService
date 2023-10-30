@@ -71,6 +71,7 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
       //   "_id": "_id_43Xwe1"
       // }
       case "mint-token":
+        channel[CardanoService].ack(msg);
         const response: any = await mint({
           assets: [
             {
@@ -99,6 +100,5 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
         ));
         break;
     }
-    channel[CardanoService].ack(msg);
   }
 });
