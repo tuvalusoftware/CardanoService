@@ -32,7 +32,7 @@ export const mint: AppWallet = new AppWallet({
   submitter: blockchainProvider,
   key: {
     type: "mnemonic",
-    words: "panel bubble denial portion rely tumble visual tube country immense clock install".split(" "),
+    words: "".split(" "),
   },
 });
 

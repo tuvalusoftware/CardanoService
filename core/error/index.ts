@@ -12,7 +12,7 @@ export const parseError = (error: any) => {
   if (error?.data) {
     response.data = error?.data;
   }
-  return
+  return response;
 }
 
 export const parseResult = (result: any) => {

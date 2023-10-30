@@ -5,7 +5,7 @@ module.exports = {
       script: "bun",
       args: "index.ts",
       exec_mode: "fork",
-      instances: 1,
+      instances: 5,
       watch: true,
       increment_var: "PORT",
       env: {

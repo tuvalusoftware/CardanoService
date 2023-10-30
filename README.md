@@ -6,6 +6,20 @@ To install dependencies:
 bun install
 ```
 
+Pre-requisites:
+
+1. Generate a mnemonic phrase
+  
+```bash
+bun scripts/generateMnemonics.ts
+```
+
+2. Send ADA to the address generated in the previous step
+
+```bash
+bun scripts/sendAda.ts
+```
+
 To run:
 
 ```bash
