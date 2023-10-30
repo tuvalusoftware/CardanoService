@@ -48,7 +48,6 @@ const generateNativeScript = async (keyHash: string): Promise<NativeScript> => {
 
 export const mint = async ({ assets, options }: { assets: MintParams[], options?: Options }): Promise<MintResult> => {
   {
-    console.log(assets.length);
     assertEqual(assets.length <= MAX_NFT_PER_TX, true, ERROR.TOO_MANY_ASSETS);
   }
 

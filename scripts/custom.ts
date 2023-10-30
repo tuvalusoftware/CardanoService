@@ -1,11 +1,11 @@
 import { AppWallet, BlockfrostProvider, ForgeScript, NativeScript, Transaction, resolvePaymentKeyHash, resolveSlotNo } from "@meshsdk/core";
 import { TIME_TO_EXPIRE } from "../core/config";
 
-// const holderAddress: string = "addr1q9s7eaxg56h9kl3aw64yqfyvq3jp77plgsze4w97h0y7hxj4hppqshxzednjs4cflxv9jpuz73q00lxsygcyekdwhlqq45aram";
+const holderAddress: string = "addr1q9s7eaxg56h9kl3aw64yqfyvq3jp77plgsze4w97h0y7hxj4hppqshxzednjs4cflxv9jpuz73q00lxsygcyekdwhlqq45aram";
 
-const holderAddress: string = "addr1qxdzx4u4c276eh42jvcdaqmqr8h7xtlt06xspmtnyn07g3x0zcqe86v8je93vzqkdcnj2800dtp0tqa37xr9d3elzjfset3lgd";
+// const holderAddress: string = "addr1q99nyv96tvf0llvjaht6afztd04meh6haal7ycnkpgmj9mh96a3xxvphdgl2ga829f9aaax7lfq5hn92d52aevy0knfqdfyfk9";
 
-const prefixAssetName: string = "DigitalTransformationandJobopportunities";
+const prefixAssetName: string = "DigitalTransformationJobs";
 const ipfsImage: string = "ipfs://QmaV7x1jpinT4wE3zEEiFRYTi45xX9fWSSq6phEwqnhwgZ";
 
 const jsonMetadata: any = (no: number) => {
@@ -24,7 +24,8 @@ const jsonMetadata: any = (no: number) => {
   };
 };
 
-const blockchainProvider = new BlockfrostProvider("mainnetUxZ1oGgRnSRbrsR0DUuyNY2hCL5tGqBy");
+const blockchainProvider = new BlockfrostProvider("mainnetTMQM1bL457rJf11VlDBExuYOqyCHBAcA");
+console.log(await blockchainProvider.fetchBlockInfo("latest"));
 
 export const mint = new AppWallet({
   networkId: 1, // 0 for testnet, 1 for mainnet
@@ -61,6 +62,8 @@ const generateNativeScript = async (keyHash: string): Promise<NativeScript> => {
 }
 
 const mintAddress = mint.getPaymentAddress();
+console.log(mintAddress);
+
 const keyHash = resolvePaymentKeyHash(mintAddress);
 
 // const nativeScript = await generateNativeScript(keyHash);
@@ -71,7 +74,9 @@ const forgeScript: ForgeScript = "82018282051b000000033c587f978200581c4b3230ba5b
 
 const tx = new Transaction({ initiator: mint });
 
-for (let i = 0; i < 1; ++i) {
+for (let i = 31; i <= 50; ++i) {
+  console.log(`${prefixAssetName}${i.toString().padStart(3, "0")}`);
+
   const assetMetadata: any = jsonMetadata(i);
 
   const info = {
@@ -89,3 +94,5 @@ tx.setTimeToExpire(TIME_TO_EXPIRE);
 
 const unsignedTx = await tx.build();
 const signedTx = await mint.signTx(unsignedTx);
+const txHash = await mint.submitTx(signedTx);
+console.log(txHash);
