@@ -12,7 +12,7 @@ import { BurnParams, BurnResult, MintParams, MintResult, Options } from "./type"
 import { blockchainProvider } from "./provider";
 import { holder, holderAddress, wallet, walletAddress, wallets } from "./wallet";
 import { MAX_NFT_PER_TX, TEN_MINUTES, TIME_TO_EXPIRE } from "./config";
-import { ERROR } from "./error";
+import { ERROR, parseResult } from "./error";
 import { assertEqual, waitForTransaction } from "./utils";
 import { getSender } from ".";
 import { ResolverService } from "./config/rabbit";
@@ -98,11 +98,11 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
 
   for (const asset of assets) {
     const { sender, queue } = getSender({ service: ResolverService });
-    const buff: Buffer = Buffer.from(JSON.stringify({
+    const buff: Buffer = Buffer.from(JSON.stringify(parseResult({
       id: options?.id,
       type: options?.type,
       data: result.assets[asset?.assetName],
-    }));
+    })));
     sender.sendToQueue(queue, buff, {
       persistent: true,
       expiration: TEN_MINUTES,
