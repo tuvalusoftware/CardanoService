@@ -79,7 +79,11 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
           ],
         });
         sender.sendToQueue(queue[ResolverService], Buffer.from(
-          JSON.stringify(parseResult(response))
+          JSON.stringify(parseResult({
+            ...response,
+            _id: request?._id,
+            type: request?.type,
+          }))
         ));
         break;
       default:
@@ -87,6 +91,10 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
           JSON.stringify(parseError({
             statusCode: 501,
             message: "Not Implemented",
+            data: {
+              type: request?.type,
+              _id: request?._id,
+            }
           })),
         ));
         break;
