@@ -14,8 +14,6 @@ import { holder, holderAddress, wallet, walletAddress, wallets } from "./wallet"
 import { MAX_NFT_PER_TX, TEN_MINUTES, TIME_TO_EXPIRE } from "./config";
 import { ERROR } from "./error";
 import { assertEqual, waitForTransaction } from "./utils";
-import { getSender } from ".";
-import { TaskQueue } from "./config/rabbit";
 
 const log: Logger<ILogObj> = new Logger();
 
@@ -94,15 +92,6 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
 
   if (!options?.skipWait) {
     await waitForTransaction(txHash);
-  }
-
-  for (const asset of assets) {
-    const { sender, queue } = getSender({ service: TaskQueue });
-    const buff: Buffer = Buffer.from(JSON.stringify(result.assets[asset?.assetName]));
-    sender.sendToQueue(queue, buff, {
-      expiration: TEN_MINUTES,
-      persistent: true,
-    });
   }
 
   result.txHash = txHash;

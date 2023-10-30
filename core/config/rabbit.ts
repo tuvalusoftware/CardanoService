@@ -14,22 +14,17 @@ try {
 }
 
 export const CardanoService: string = "CardanoService";
-export const TaskQueue: string = "TaskQueue";
 export const ResolverService: string = "ResolverService";
 
 const queue: {
   [key: string]: string,
 } = {
   CardanoService: CardanoService,
-  TaskQueue: TaskQueue,
   ResolverService: ResolverService,
 };
 
 const cardanoChannel: Channel = await rabbitMQ!.createChannel();
 await cardanoChannel.assertQueue(queue[CardanoService], { durable: true });
-
-const taskChannel: Channel = await rabbitMQ!.createChannel();
-await taskChannel.assertQueue(queue[TaskQueue], { durable: true });
 
 const resolverChannel: Channel = await rabbitMQ!.createChannel();
 await resolverChannel.assertQueue(queue[ResolverService], { durable: true });
@@ -38,7 +33,6 @@ const channel: {
   [key: string]: Channel,
 } = {
   CardanoService: cardanoChannel,
-  TaskQueue: taskChannel,
   ResolverService: resolverChannel,
 };
 
@@ -49,61 +43,50 @@ export function getSender({ service }: { service: string }): { sender: Channel, 
   };
 }
 
-channel[TaskQueue].consume(queue[TaskQueue], async (msg) => {
-  if (msg !== null) {
-    log.debug("[TaskQueue] 🔈", msg.content.toString());
-    await Bun.sleep(10_000);
-    channel[TaskQueue].ack(msg);
-  }
-});
-
 channel[CardanoService].consume(queue[CardanoService], async (msg) => {
   if (msg !== null) {
-    log.debug("[CardanoService] 🔈", msg.content.toString());
     const { sender } = getSender({ service: ResolverService });
     const request: any = JSON.parse(msg.content.toString());
-    switch (request?.type) {
-      // {
-      //   "type": "mint-token",
-      //   "data": {
-      //     "hash": "e4c7d948c1c57e9239128997eb8e003cce0aba7c56957e90c2ee1c768308a0ef"
-      //   },
-      //   "_id": "_id_43Xwe1"
-      // }
-      case "mint-token":
-        channel[CardanoService].ack(msg);
-        let options = {};
-        if (request?.options) {
-          options = request?.options;
-        }
-        const response: any = await mint({
-          assets: [
-            {
-              assetName: request?.data?.hash,
-            },
-          ],
-          options,
-        });
-        sender.sendToQueue(queue[ResolverService], Buffer.from(
-          JSON.stringify(parseResult({
-            ...response,
-            _id: request?._id,
-            type: request?.type,
-          }))
-        ));
-        break;
-      default:
-        sender.sendToQueue(queue[ResolverService], Buffer.from(
-          JSON.stringify(parseError({
-            statusCode: 501,
-            message: "Not Implemented",
-            data: {
-              type: request?.type,
-              _id: request?._id,
-            }
-          })),
-        ));
-        break;
+    log.debug("[CardanoService] 🔈", request);
+    const options: any = request?.options || {};
+    try {
+      switch (request?.type) {
+        // {
+        //   "type": "mint-token",
+        //   "data": {
+        //     "hash": "e4c7d948c1c57e9239128997eb8e003cce0aba7c56957e90c2ee1c768308a0ef"
+        //   },
+        //   "_id": "_id_43Xwe1"
+        // }
+        case "mint-token":
+          channel[CardanoService].ack(msg);
+          const response: any = await mint({
+            assets: [
+              {
+                assetName: request?.data?.hash,
+              },
+            ],
+            options,
+          });
+          sender.sendToQueue(queue[ResolverService], Buffer.from(
+            JSON.stringify(parseResult({ ...response, _id: request?._id, type: request?.type }))
+          ));
+          break;
+        default:
+          sender.sendToQueue(queue[ResolverService], Buffer.from(
+            JSON.stringify(parseError({
+              statusCode: 501,
+              message: "Not Implemented",
+              data: { type: request?.type, _id: request?._id }
+            })),
+          ));
+          break;
+      }
+    } catch (error: any) {
+      log.error(error);
+      sender.sendToQueue(queue[ResolverService], Buffer.from(
+        JSON.stringify(parseError({})),
+      ));
     }
   }
 });
