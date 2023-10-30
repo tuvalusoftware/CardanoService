@@ -15,14 +15,14 @@ try {
 
 export const CardanoService: string = "CardanoService";
 export const TaskQueue: string = "TaskQueue";
-export const ResolverQueue: string = "ResolverQueue";
+export const ResolverService: string = "ResolverService";
 
 const queue: {
   [key: string]: string,
 } = {
   CardanoService: CardanoService,
   TaskQueue: TaskQueue,
-  ResolverQueue: ResolverQueue,
+  ResolverService: ResolverService,
 };
 
 const cardanoChannel: Channel = await rabbitMQ!.createChannel();
@@ -32,14 +32,14 @@ const taskChannel: Channel = await rabbitMQ!.createChannel();
 await taskChannel.assertQueue(queue[TaskQueue], { durable: true });
 
 const resolverChannel: Channel = await rabbitMQ!.createChannel();
-await resolverChannel.assertQueue(queue[ResolverQueue], { durable: true });
+await resolverChannel.assertQueue(queue[ResolverService], { durable: true });
 
 const channel: {
   [key: string]: Channel,
 } = {
   CardanoService: cardanoChannel,
   TaskQueue: taskChannel,
-  ResolverQueue: resolverChannel,
+  ResolverService: resolverChannel,
 };
 
 export function getSender({ service }: { service: string }): { sender: Channel, queue: string } {
@@ -60,7 +60,7 @@ channel[TaskQueue].consume(queue[TaskQueue], async (msg) => {
 channel[CardanoService].consume(queue[CardanoService], async (msg) => {
   if (msg !== null) {
     log.debug("[CardanoService] 🔈", msg.content.toString());
-    const { sender } = getSender({ service: ResolverQueue });
+    const { sender } = getSender({ service: ResolverService });
     const request: any = JSON.parse(msg.content.toString());
     switch (request?.type) {
       // {
@@ -78,12 +78,12 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
             }
           ],
         });
-        sender.sendToQueue(queue[ResolverQueue], Buffer.from(
+        sender.sendToQueue(queue[ResolverService], Buffer.from(
           JSON.stringify(parseResult(response))
         ));
         break;
       default:
-        sender.sendToQueue(queue[ResolverQueue], Buffer.from(
+        sender.sendToQueue(queue[ResolverService], Buffer.from(
           JSON.stringify(parseError({
             statusCode: 501,
             message: "Not Implemented",
