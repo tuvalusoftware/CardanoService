@@ -96,17 +96,19 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
     await waitForTransaction(txHash);
   }
 
-  for (const asset of assets) {
-    const { sender, queue } = getSender({ service: ResolverService });
-    const buff: Buffer = Buffer.from(JSON.stringify({
-      id: options?.id,
-      type: options?.type,
-      data: result.assets[asset?.assetName],
-    }));
-    sender.sendToQueue(queue, buff, {
-      persistent: true,
-      expiration: TEN_MINUTES,
-    });
+  if (options?.publish) {
+    for (const asset of assets) {
+      const { sender, queue } = getSender({ service: ResolverService });
+      const buff: Buffer = Buffer.from(JSON.stringify({
+        id: options?.id,
+        type: options?.type,
+        data: result.assets[asset?.assetName],
+      }));
+      sender.sendToQueue(queue, buff, {
+        persistent: true,
+        expiration: TEN_MINUTES,
+      });
+    }
   }
 
   result.txHash = txHash;
@@ -128,10 +130,11 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
 
   for (const asset of assets) {
     if (asset?.removeCollection) {
-      const collection: { assets: Asset[] } & {} = await blockchainProvider.fetchCollectionAssets(asset?.policyId!);
-      for (const a of collection?.assets) {
-        tx.burnAsset(asset?.forgingScript!, a);
-      }
+      // const collection: { assets: Asset[] } & {} = await blockchainProvider.fetchCollectionAssets(asset?.policyId!);
+      // for (const a of collection?.assets) {
+      //   tx.burnAsset(asset?.forgingScript!, a);
+      // }
+      log.warn("🔥 Removing collection is not supported yet");
     }
     const info: Asset = {
       unit: asset?.unit,
@@ -159,6 +162,21 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
 
   if (!options?.skipWait) {
     await waitForTransaction(txHash);
+  }
+
+  if (options?.publish) {
+    for (const asset of assets) {
+      const { sender, queue } = getSender({ service: ResolverService });
+      const buff: Buffer = Buffer.from(JSON.stringify({
+        id: options?.id,
+        type: options?.type,
+        data: { message: "Asset burned successfully" },
+      }));
+      sender.sendToQueue(queue, buff, {
+        persistent: true,
+        expiration: TEN_MINUTES,
+      });
+    }
   }
 
   result.txHash = txHash;

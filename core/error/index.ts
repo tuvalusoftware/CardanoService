@@ -3,10 +3,8 @@ export * from "./error";
 export const parseError = (error: any) => {
   const defaultError: string = "There are some issues with the server, please try again later";
   const response: any = {
-    statusText: "FAIL",
-    statusCode: error?.statusCode || 500,
-    error_code: error?.statusCode || 500,
-    message: error?.message || defaultError,
+    status_text: "FAIL",
+    error_code: error?.error_code || 500,
     error_message: error?.message || defaultError,
   };
   if (error?.data) {
@@ -17,8 +15,7 @@ export const parseError = (error: any) => {
 
 export const parseResult = (result: any) => {
   const response: any = {
-    statusText: "OK",
-    statusCode: 200,
+    status_text: "OK",
   };
   if (result) {
     response.data = result;

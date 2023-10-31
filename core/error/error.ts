@@ -1,6 +1,6 @@
 export const ERROR = {
   TOO_MANY_ASSETS: {
-    statusCode: 1000,
-    message: "Number of NFTs per transaction exceeded",
+    error_code: 1000,
+    error_message: "Number of NFTs per transaction exceeded",
   },
 };

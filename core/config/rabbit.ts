@@ -1,7 +1,7 @@
 import amqplib, { Channel, Connection } from "amqplib";
 import { Logger, ILogObj } from "tslog";
 import { parseError, parseResult } from "../error";
-import { mint } from "..";
+import { burn, mint } from "..";
 
 const log: Logger<ILogObj> = new Logger();
 
@@ -48,9 +48,11 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
     const { sender } = getSender({ service: ResolverService });
     const request: any = JSON.parse(msg.content.toString());
     log.debug("[CardanoService] 🔈", request);
+    const data: any = request?.data || {};
     const options: any = request?.options || {};
     options.id = request?.id;
     options.type = request?.type;
+    options.publish = true;
     try {
       switch (request?.type) {
         case "mint-token":
@@ -58,7 +60,28 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
           await mint({
             assets: [
               {
-                assetName: request?.data?.hash,
+                assetName: data?.hash,
+                metadata: {
+                  attach: data?.hash,
+                  type: data?.type,
+                  did: data?.did,
+                  version: 0,
+                },
+              },
+            ],
+            options,
+          });
+          break;
+        case "burn-token":
+          channel[CardanoService].ack(msg);
+          await burn({
+            assets: [
+              {
+                unit: data?.unit,
+                assetName: data?.assetName,
+                forgingScript: data?.forgingScript,
+                policyId: data?.policyId,
+                removeCollection: data?.removeCollection,
               },
             ],
             options,
@@ -67,8 +90,8 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
         default:
           sender.sendToQueue(queue[ResolverService], Buffer.from(
             JSON.stringify(parseError({
-              statusCode: 501,
-              message: "Not Implemented",
+              error_code: 501,
+              error_message: "Not Implemented",
               data: { type: request?.type, id: request?.id }
             })),
           ));
@@ -77,7 +100,9 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
     } catch (error: any) {
       log.error(error);
       sender.sendToQueue(queue[ResolverService], Buffer.from(
-        JSON.stringify(parseError({})),
+        JSON.stringify(parseError({
+          data: { type: request?.type, id: request?.id },
+        })),
       ));
     }
   }

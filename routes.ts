@@ -10,14 +10,8 @@ const router = express.Router();
 /* -----------------[ V3 ]----------------- */
 
 router.post("/api/v3/mint", async (req, res) => {
-  // const { assets } = req.body;
+  const { assets } = req.body;
   try {
-    const assets = [];
-    for (let i = 20; i < 30; i++) {
-      assets.push({
-        assetName: `asset${i}`,
-      });
-    }
     const result = await mint({ assets });
     return res.status(200).send(parseResult(result));
   } catch (error: any) {

@@ -10,7 +10,9 @@ const senderWallet: AppWallet = initAppWallet(senderMnemonic);
 const tx: Transaction = new Transaction({ initiator: senderWallet });
 
 for (const wallet of wallets) {
-  tx.sendLovelace(wallet.getPaymentAddress(), toLovelace(2)?.toString());
+  for (let it = 0; it < 20; ++it) {
+    tx.sendLovelace(wallet.getPaymentAddress(), toLovelace(1.5)?.toString());
+  }
 }
 
 tx.setTimeToExpire(TIME_TO_EXPIRE);
