@@ -87,14 +87,19 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
 
   tx.setTimeToExpire(TIME_TO_EXPIRE);
 
+  const requiredSigners: string[] = [holderAddress];
+  for (const w of wallets) {
+    requiredSigners.push(w.getPaymentAddress());
+  }
+  tx.setRequiredSigners(requiredSigners);
+
   const unsignedTx: string = await tx.build();
-  const signedTx: string = await wallet.signTx(unsignedTx);
+  let signedTx: string = await holder.signTx(unsignedTx, true);
+  for (const w of wallets) {
+    signedTx = await w.signTx(signedTx, true);
+  }
   const txHash: string = await wallet.submitTx(signedTx);
   log.info("🐳 Transaction submitted", txHash);
-
-  if (!options?.skipWait) {
-    await waitForTransaction(txHash);
-  }
 
   if (options?.publish) {
     for (const asset of assets) {
@@ -102,13 +107,24 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
       const buff: Buffer = Buffer.from(JSON.stringify({
         id: options?.id,
         type: options?.type,
-        data: result.assets[asset?.assetName],
+        data: {
+          ...result.assets[asset?.assetName],
+          txHash,
+        },
       }));
       sender.sendToQueue(queue, buff, {
         persistent: true,
         expiration: TEN_MINUTES,
       });
     }
+  }
+
+  if (!options?.skipWait) {
+    await waitForTransaction(txHash);
+  }
+
+  if (options?.channel) {
+    options!.channel!.ack(options!.msg);
   }
 
   result.txHash = txHash;
@@ -160,23 +176,30 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
   const txHash: string = await wallet.submitTx(signedTx);
   log.info("🐳 Transaction submitted", txHash);
 
-  if (!options?.skipWait) {
-    await waitForTransaction(txHash);
-  }
-
   if (options?.publish) {
     for (const asset of assets) {
       const { sender, queue } = getSender({ service: ResolverService });
       const buff: Buffer = Buffer.from(JSON.stringify({
         id: options?.id,
         type: options?.type,
-        data: { message: "Asset burned successfully" },
+        data: {
+          ...asset,
+          message: "Asset burned successfully" 
+        },
       }));
       sender.sendToQueue(queue, buff, {
         persistent: true,
         expiration: TEN_MINUTES,
       });
     }
+  }
+
+  if (!options?.skipWait) {
+    await waitForTransaction(txHash);
+  }
+
+  if (options?.channel) {
+    options!.channel!.ack(options!.msg);
   }
 
   result.txHash = txHash;

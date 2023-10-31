@@ -9,7 +9,7 @@ module.exports = {
       watch: true,
       increment_var: "PORT",
       env: {
-        "PORT": 8095,
+        "PORT": 3050,
         "NODE_ENV": "development"
       }
     }

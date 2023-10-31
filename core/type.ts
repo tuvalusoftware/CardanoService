@@ -11,6 +11,7 @@ import {
   keepRelevant,
 } from "@meshsdk/core";
 import type { Mint, AssetMetadata, Asset, NativeScript, UTxO, PlutusScript } from "@meshsdk/core";
+import { Channel } from "amqplib";
 
 export interface MintParams {
   assetName: string;
@@ -24,6 +25,7 @@ export interface BurnParams {
   policyId?: string;
   assetName?: string;
   removeCollection?: boolean;
+  txHash?: string;
 }
 
 export interface MintResult {
@@ -33,7 +35,7 @@ export interface MintResult {
       unit: string,
       forgingScript: ForgeScript,
       policyId?: string,
-      assetName?: string,
+      assetName?: string
     };
   }
 }
@@ -47,4 +49,6 @@ export interface Options {
   publish?: boolean;
   id?: string;
   type?: string;
+  channel?: Channel;
+  msg?: any;
 };

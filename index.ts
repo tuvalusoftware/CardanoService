@@ -19,7 +19,7 @@ app.get("*", (req, res) => {
   return res.status(200).send();
 });
 
-const port: number = Number(process?.env?.PORT || 8099);
+const port: number = Number(process?.env?.PORT || 3050);
 log.info(`Starting server on port ${port}`);
 
 app.listen(port, () => {
