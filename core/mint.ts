@@ -124,6 +124,7 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
   }
 
   if (options?.channel) {
+    await Bun.sleep(5_000);
     options!.channel!.ack(options!.msg);
   }
 
@@ -184,7 +185,7 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
         type: options?.type,
         data: {
           ...asset,
-          message: "Asset burned successfully" 
+          message: "Asset burned successfully"
         },
       }));
       sender.sendToQueue(queue, buff, {
@@ -199,6 +200,7 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
   }
 
   if (options?.channel) {
+    await Bun.sleep(5_000);
     options!.channel!.ack(options!.msg);
   }
 

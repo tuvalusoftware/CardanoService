@@ -3,11 +3,13 @@ import express, { Application, Request, Response } from "express";
 import figlet from "figlet";
 import bodyParser from "body-parser";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 import Router from "./routes";
 
 const app: Application = express();
 
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(morgan("tiny"));
 app.use(express.static("public"));
 

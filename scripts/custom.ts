@@ -5,8 +5,8 @@ const holderAddress: string = "addr1q9s7eaxg56h9kl3aw64yqfyvq3jp77plgsze4w97h0y7
 
 // const holderAddress: string = "addr1q99nyv96tvf0llvjaht6afztd04meh6haal7ycnkpgmj9mh96a3xxvphdgl2ga829f9aaax7lfq5hn92d52aevy0knfqdfyfk9";
 
-const prefixAssetName: string = "DigitalTransformationJobs";
-const ipfsImage: string = "ipfs://QmaV7x1jpinT4wE3zEEiFRYTi45xX9fWSSq6phEwqnhwgZ";
+const prefixAssetName: string = "DigitalTransformationJobsCTU";
+const ipfsImage: string = "ipfs://QmXGMagShnRA8astQQYvwfsJwxteqEbXxZ7KByHLNvxfB7";
 
 const jsonMetadata: any = (no: number) => {
   return {
@@ -32,7 +32,7 @@ export const mint: AppWallet = new AppWallet({
   submitter: blockchainProvider,
   key: {
     type: "mnemonic",
-    words: "panel bubble denial portion rely tumble visual tube country immense clock install".split(" "),
+    words: "".split(" "),
   },
 });
 
@@ -60,18 +60,20 @@ const generateNativeScript = async (keyHash: string): Promise<NativeScript> => {
   return nativeScript;
 }
 
-const mintAddress: string = mint.getPaymentAddress();
-const keyHash: string = resolvePaymentKeyHash(mintAddress);
+// const mintAddress: string = mint.getPaymentAddress();
+// const keyHash: string = resolvePaymentKeyHash(mintAddress);
 
 // const nativeScript = await generateNativeScript(keyHash);
 // const forgeScript = ForgeScript.fromNativeScript(nativeScript);
 // console.log(forgeScript);
 
-const forgeScript: ForgeScript = "82018282051b000000033c587f978200581c4b3230ba5b12fffd92edd7aea44b6bebbcdf57ef7fe262760a3722ee";
+// const forgeScript: ForgeScript = "82018282051b000000033c587f978200581c4b3230ba5b12fffd92edd7aea44b6bebbcdf57ef7fe262760a3722ee";
+
+const forgeScript: ForgeScript = "82018282051b000000036d457f3e8200581c4b3230ba5b12fffd92edd7aea44b6bebbcdf57ef7fe262760a3722ee";
 
 const tx: Transaction = new Transaction({ initiator: mint });
 
-for (let i = 31; i <= 50; ++i) {
+for (let i = 29; i <= 55; ++i) {
   const assetMetadata: any = jsonMetadata(i);
 
   const info: Mint = {

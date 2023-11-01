@@ -1,7 +1,7 @@
 import amqplib, { Channel, Connection } from "amqplib";
 import { Logger, ILogObj } from "tslog";
-import { parseError, parseResult } from "../error";
-import { burn, mint } from "..";
+import { parseError, parseResult, ERROR } from "../error";
+import { burn, mint, getVersion } from "..";
 import { MintParams } from "../type";
 
 const log: Logger<ILogObj> = new Logger();
@@ -12,6 +12,7 @@ try {
   log.debug("Connected to RabbitMQ", rabbitMQ!.connection!.serverProperties!.cluster_name);
 } catch (error: any) {
   log.error("Error connecting to RabbitMQ", error);
+  throw error;
 }
 
 export const CardanoService: string = "CardanoService";
@@ -62,13 +63,14 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
 
     try {
       switch (request?.type) {
-        case "mint-token":
+        case "mint-token": {
+          log.debug("Minting token");
           await mint({
             assets: [
               {
                 assetName: data!.hash!,
                 metadata: {
-                  attach: data!.hash!,
+                  name: data!.hash!,
                   type: data!.type!,
                   version: 0,
                 },
@@ -76,15 +78,45 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
             ],
             options,
           });
+        }
           break;
-        case "mint-credential":
+        case "update-token": {
+          log.debug("Updating token");
+          const assets: MintParams[] = [];
+          const version: number = await getVersion({
+            unit: data!.config!.unit!,
+          });
+          const asset: MintParams = {
+            assetName: data!.newHash!,
+            metadata: {
+              name: data?.newHash!,
+              type: data!.type!,
+              version,
+              belongsTo: data!.config!.assetName!,
+            },
+          };
+          if (data?.reuse) {
+            asset.forgingScript = data!.config!.forgingScript!;
+          }
+          if (data?.burn) {
+            log.warn("Burning old token, not yet implemented");
+          }
+          assets.push(asset);
+          await mint({
+            assets,
+            options,
+          });
+        }
+          break;
+        case "mint-credential": {
+          log.debug("Minting credential");
           const assets: MintParams[] = [];
           for (const credential of data?.credentials) {
             assets.push({
               assetName: credential!,
               forgingScript: data!.config!.forgingScript!,
               metadata: {
-                attach: credential,
+                name: credential!,
                 type: data!.type!,
                 version: 0,
                 belongsTo: data!.config!.assetName!,
@@ -95,9 +127,10 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
             assets,
             options,
           });
+        }
           break;
-        case "burn-token":
-          channel[CardanoService].ack(msg);
+        case "burn-token": {
+          log.debug("Burning token");
           await burn({
             assets: [
               {
@@ -111,24 +144,25 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
             ],
             options,
           });
+        }
           break;
-        default:
+        default: {
           sender.sendToQueue(queue[ResolverService], Buffer.from(
             JSON.stringify(parseError({
-              error_code: 501,
-              error_message: "Not yet implemented",
+              ...ERROR.NOT_YET_IMPLEMENTED,
               data: { type: request?.type, id: request?.id }
             })),
           ));
           channel[CardanoService].ack(msg);
+        }
           break;
       }
     } catch (error: any) {
-      log.error(error);
+      log.error(JSON.stringify(error));
       sender.sendToQueue(queue[ResolverService], Buffer.from(
         JSON.stringify(parseError({
           data: { type: request?.type, id: request?.id },
-          error_message: "meomeow",
+          error_message: "Meomeow 🐰",
         })),
       ));
       channel[CardanoService].ack(msg);
