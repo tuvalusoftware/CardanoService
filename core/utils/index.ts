@@ -1,7 +1,16 @@
 import { blockchainProvider } from "../provider";
 import { Logger, ILogObj } from "tslog";
+export { parseError, parseResult, parseJson } from "./parse";
 
 const log: Logger<ILogObj> = new Logger();
+
+export const getOrDefault = <T>(value: T | undefined, defaultValue: T): T => {
+  try {
+    return value === undefined ? defaultValue : value;
+  } catch (error: any) {
+    return defaultValue;
+  }
+}
 
 export const waitForTransaction = async (txHash: string): Promise<void> => {
   return new Promise((resolve, reject) => {

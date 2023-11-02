@@ -1,14 +1,6 @@
 import {
-  AppWallet,
-  Transaction,
-  ForgeScript,
   MaestroProvider,
   BlockfrostProvider,
-  resolveTxHash,
-  resolvePaymentKeyHash,
-  resolveSlotNo,
-  parseAssetUnit,
-  keepRelevant,
 } from "@meshsdk/core";
 
 const maestroProvider: MaestroProvider = new MaestroProvider({
@@ -17,4 +9,4 @@ const maestroProvider: MaestroProvider = new MaestroProvider({
 
 const blockfrostProvider: BlockfrostProvider = new BlockfrostProvider("preprodeMB9jfka6qXsluxEhPLhKczRdaC5QKab");
 
-export const blockchainProvider: BlockfrostProvider | MaestroProvider = blockfrostProvider;
+export const blockchainProvider: BlockfrostProvider | MaestroProvider = maestroProvider;

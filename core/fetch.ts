@@ -2,7 +2,7 @@ import { Asset, AssetMetadata } from "@meshsdk/core";
 import { setCacheValue, getCacheValue } from ".";
 import { blockchainProvider } from "./provider";
 import { clearAllKeysFromCache, deleteCacheValue } from "./config/redis";
-import { parseStrToJson } from "./error";
+import { parseJson } from "./utils";
 
 export interface FetchOptions {
   policyId: string;
@@ -28,7 +28,7 @@ export const fetch = async ({ policyId }: FetchOptions) => {
       result[a!.unit!] = info;
       await setCacheValue({ key: `nft:metadata:${a!.unit!}`, value: JSON.stringify(info) });
     } else {
-      result[a!.unit!] = parseStrToJson(cached);
+      result[a!.unit!] = parseJson(cached);
     }
   }));
   return result;
@@ -48,7 +48,7 @@ export const getVersion = async ({ unit }: { unit: string }) => {
     result[unit!] = info;
     await setCacheValue({ key: `nft:metadata:${unit!}`, value: JSON.stringify(info), expiredTime: -1 });
   } else {
-    result[unit!] = parseStrToJson(cached);
+    result[unit!] = parseJson(cached);
   }
   return Number(result[unit!].version! || 0) + 1;
 };

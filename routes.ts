@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import { parseError, parseResult } from "./core/error";
+import { parseError, parseResult } from "./core/utils";
 import { Logger, ILogObj } from "tslog";
 import { burn, mint, fetch } from "./core";
 import { FetchOptions, getVersion } from "./core/fetch";

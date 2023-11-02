@@ -4,6 +4,9 @@ import cookieParser from "cookie-parser";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import figlet from "figlet";
 import { Logger, ILogObj } from "tslog";
+import { BASE_PORT } from "./core/config";
+
+const log: Logger<ILogObj> = new Logger();
 
 const app: Application = express();
 const router: Router = express.Router();
@@ -12,13 +15,15 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 const servers: any = [];
-for (let port = 3050; port <= 3054; port += 1) {
+for (let port = BASE_PORT; port < BASE_PORT + 5; port += 1) {
   servers.push({
     host: "localhost",
     port,
     weight: 1,
   });
 }
+
+log.info("Servers", servers);
 
 const proxy: any = {
   target: "",
@@ -40,8 +45,6 @@ router.all("*", (req, res, next) => {
 });
 
 app.use(router);
-
-const log: Logger<ILogObj> = new Logger();
 
 app.listen(3030, () => {
   const CardanoServiceBalancer = figlet.textSync("CardanoServiceBalancer");

@@ -1,8 +1,9 @@
 import amqplib, { Channel, Connection } from "amqplib";
 import { Logger, ILogObj } from "tslog";
-import { parseError, parseResult, ERROR } from "../error";
+import { ERROR } from "../error";
 import { burn, mint, getVersion } from "..";
 import { MintParams } from "../type";
+import { getOrDefault, parseError, waitForTransaction } from "../utils";
 
 const log: Logger<ILogObj> = new Logger();
 
@@ -50,8 +51,8 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
     const { sender } = getSender({ service: ResolverService });
     const request: any = JSON.parse(msg.content.toString());
 
-    const data: any = request?.data || {};
-    const options: any = request?.options || {};
+    const data: any = getOrDefault(request?.data, {});
+    const options: any = getOrDefault(request?.options, {});
 
     options.id = request?.id;
     options.type = request?.type;
@@ -64,7 +65,6 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
     try {
       switch (request?.type) {
         case "mint-token": {
-          log.debug("Minting token");
           await mint({
             assets: [
               {
@@ -81,7 +81,9 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
         }
           break;
         case "update-token": {
-          log.debug("Updating token");
+          if (data?.txHash) {
+            await waitForTransaction(data?.txHash);
+          }
           const assets: MintParams[] = [];
           const version: number = await getVersion({
             unit: data!.config!.unit!,
@@ -109,7 +111,6 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
         }
           break;
         case "mint-credential": {
-          log.debug("Minting credential");
           const assets: MintParams[] = [];
           for (const credential of data?.credentials) {
             assets.push({
@@ -129,8 +130,10 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
           });
         }
           break;
-        case "burn-token": {
-          log.debug("Burning token");
+        case "burn-token-kek": {
+          if (data?.txHash) {
+            await waitForTransaction(data?.txHash);
+          }
           await burn({
             assets: [
               {
@@ -150,7 +153,9 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
           sender.sendToQueue(queue[ResolverService], Buffer.from(
             JSON.stringify(parseError({
               ...ERROR.NOT_YET_IMPLEMENTED,
-              data: { type: request?.type, id: request?.id }
+              data,
+              id: options?.id,
+              type: options?.type,
             })),
           ));
           channel[CardanoService].ack(msg);
@@ -158,10 +163,12 @@ channel[CardanoService].consume(queue[CardanoService], async (msg) => {
           break;
       }
     } catch (error: any) {
-      log.error(JSON.stringify(error));
+      log.error(error);
       sender.sendToQueue(queue[ResolverService], Buffer.from(
         JSON.stringify(parseError({
-          data: { type: request?.type, id: request?.id },
+          data,
+          id: options?.id,
+          type: options?.type,
           error_message: "Meomeow 🐰",
         })),
       ));

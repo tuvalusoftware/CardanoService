@@ -1,4 +1,4 @@
-export const MAX_NFT_PER_TX: number = 20;
+export const MAX_NFT_PER_TX: number = 10;
 
 export const TIME_TO_EXPIRE: string = "3153600000";
 export const TEN_MINUTES: number = 10 * 60 * 1000;

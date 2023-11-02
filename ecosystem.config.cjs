@@ -6,8 +6,10 @@ module.exports = {
       args: "index.ts",
       exec_mode: "fork",
       instances: 5,
-      watch: true,
+      watch: false,
+      autorestart: true,
       increment_var: "PORT",
+      restart_delay: 10000,
       env: {
         "PORT": 3050,
         "NODE_ENV": "development"

@@ -35,7 +35,7 @@ export interface MintResult {
       unit: string,
       forgingScript: ForgeScript,
       policyId?: string,
-      assetName?: string
+      assetName?: string,
     };
   }
 }

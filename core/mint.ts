@@ -9,20 +9,20 @@ import type { Mint, AssetMetadata, Asset, NativeScript } from "@meshsdk/core";
 import { Logger, ILogObj } from "tslog";
 import { toAsset } from "./utils/converter";
 import { BurnParams, BurnResult, MintParams, MintResult, Options } from "./type";
-import { blockchainProvider } from "./provider";
 import { holder, holderAddress, wallet, walletAddress, wallets } from "./wallet";
 import { MAX_NFT_PER_TX, TEN_MINUTES, TIME_TO_EXPIRE } from "./config";
 import { ERROR } from "./error";
-import { assertEqual, waitForTransaction } from "./utils";
-import { getSender } from ".";
+import { assertEqual, getOrDefault, waitForTransaction } from "./utils";
+import { getCacheValue, getSender, setCacheValue } from ".";
 import { ResolverService } from "./config/rabbit";
+import { deleteCacheValue } from "./config/redis";
 
 const log: Logger<ILogObj> = new Logger();
 
 log.info("Wallet address:", walletAddress);
 log.info("Holder address:", holderAddress);
 
-const generateNativeScript = async (keyHash: string): Promise<NativeScript> => {
+const generateNativeScript = async ({ keyHash }: { keyHash: string }): Promise<NativeScript> => {
   let oneYearFromNow = new Date();
   oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + Math.floor(Math.random() * 1000) + 1);
 
@@ -47,9 +47,7 @@ const generateNativeScript = async (keyHash: string): Promise<NativeScript> => {
 }
 
 export const mint = async ({ assets, options }: { assets: MintParams[], options?: Options }): Promise<MintResult> => {
-  {
-    assertEqual(assets.length <= MAX_NFT_PER_TX, true, ERROR.TOO_MANY_ASSETS);
-  }
+  assertEqual(assets.length <= MAX_NFT_PER_TX, true, ERROR.TOO_MANY_ASSETS);
 
   log.debug("💰 Minting assets");
 
@@ -62,9 +60,17 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
   const tx: Transaction = new Transaction({ initiator: wallet });
 
   for (const asset of assets) {
-    const nativeScript: NativeScript = await generateNativeScript(keyHash);
-    const forgingScript: ForgeScript = asset?.forgingScript ?? ForgeScript.fromNativeScript(nativeScript);
-    const assetMetadata: AssetMetadata = asset?.metadata ?? {};
+    const nativeScript: NativeScript = await generateNativeScript({ keyHash });
+    const forgingScript: ForgeScript = getOrDefault(asset?.forgingScript, ForgeScript.fromNativeScript(nativeScript));
+    const assetMetadata: AssetMetadata = getOrDefault(asset?.metadata, {});
+
+    const cached = await getCacheValue({
+      key: `nft:config:${asset?.assetName!}`,
+    });
+
+    if (cached) {
+      throw ERROR.ASSET_ALREADY_EXISTS;
+    }
 
     const info: Mint = {
       assetName: asset?.assetName,
@@ -95,23 +101,33 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
 
   const unsignedTx: string = await tx.build();
   let signedTx: string = await holder.signTx(unsignedTx, true);
+
   for (const w of wallets) {
     signedTx = await w.signTx(signedTx, true);
   }
+
   const txHash: string = await wallet.submitTx(signedTx);
   log.info("🐳 Transaction submitted", txHash);
 
-  if (options?.publish) {
-    for (const asset of assets) {
+  for (const asset of assets) {
+    const dat: any = {
+      id: options?.id,
+      type: options?.type,
+      data: {
+        ...result.assets[asset?.assetName],
+        txHash,
+      },
+    };
+
+    await setCacheValue({
+      key: asset?.assetName!,
+      value: dat,
+      expiredTime: -1,
+    });
+
+    if (options?.publish) {
       const { sender, queue } = getSender({ service: ResolverService });
-      const buff: Buffer = Buffer.from(JSON.stringify({
-        id: options?.id,
-        type: options?.type,
-        data: {
-          ...result.assets[asset?.assetName],
-          txHash,
-        },
-      }));
+      const buff: Buffer = Buffer.from(JSON.stringify(dat));
       sender.sendToQueue(queue, buff, {
         persistent: true,
         expiration: TEN_MINUTES,
@@ -133,9 +149,7 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
 };
 
 export const burn = async ({ assets, options }: { assets: BurnParams[], options?: Options }): Promise<BurnResult> => {
-  {
-    assertEqual(assets.length <= MAX_NFT_PER_TX, true, ERROR.TOO_MANY_ASSETS);
-  }
+  assertEqual(assets.length <= MAX_NFT_PER_TX, true, ERROR.TOO_MANY_ASSETS);
 
   log.debug("🔥 Burning assets");
 
@@ -147,16 +161,15 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
 
   for (const asset of assets) {
     if (asset?.removeCollection) {
-      // const collection: { assets: Asset[] } & {} = await blockchainProvider.fetchCollectionAssets(asset?.policyId!);
-      // for (const a of collection?.assets) {
-      //   tx.burnAsset(asset?.forgingScript!, a);
-      // }
+      // ! TODO
       log.warn("🔥 Removing collection is not supported yet");
     }
+
     const info: Asset = {
       unit: asset?.unit,
       quantity: "1",
     };
+
     tx.burnAsset(asset?.forgingScript!, info);
   }
 
@@ -170,6 +183,7 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
 
   const unsignedTx: string = await tx.build();
   let signedTx: string = await holder.signTx(unsignedTx, true);
+
   for (const w of wallets) {
     signedTx = await w.signTx(signedTx, true);
   }
@@ -177,9 +191,14 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
   const txHash: string = await wallet.submitTx(signedTx);
   log.info("🐳 Transaction submitted", txHash);
 
-  if (options?.publish) {
-    for (const asset of assets) {
+  for (const asset of assets) {
+    await deleteCacheValue({
+      key: `nft:config:${asset?.assetName!}`,
+    });
+
+    if (options?.publish) {
       const { sender, queue } = getSender({ service: ResolverService });
+
       const buff: Buffer = Buffer.from(JSON.stringify({
         id: options?.id,
         type: options?.type,
@@ -188,6 +207,7 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
           message: "Asset burned successfully"
         },
       }));
+
       sender.sendToQueue(queue, buff, {
         persistent: true,
         expiration: TEN_MINUTES,
