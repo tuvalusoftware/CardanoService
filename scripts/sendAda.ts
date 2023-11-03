@@ -6,10 +6,9 @@ import { toLovelace } from "../core/utils/converter";
 const senderMnemonic: string = "";
 const senderWallet: AppWallet = initAppWallet(senderMnemonic);
 
-for (const wallet of [wallets[0]]) {
-  const tx: Transaction = new Transaction({ initiator: wallet });
-  
-  console.log(wallet.getPaymentAddress());
+for (const wallet of wallets) {
+  const tx: Transaction = new Transaction({ initiator: senderWallet });
+
   for (let it = 0; it < 0; ++it) {
     tx.sendLovelace(wallet.getPaymentAddress(), toLovelace(1.5)?.toString());
   }
@@ -17,8 +16,8 @@ for (const wallet of [wallets[0]]) {
   tx.setTimeToExpire(TIME_TO_EXPIRE);
 
   const unsignedTx: string = await tx.build();
-  const signedTx: string = await wallet.signTx(unsignedTx);
-  const txHash: string = await wallet.submitTx(signedTx);
+  const signedTx: string = await senderWallet.signTx(unsignedTx);
+  const txHash: string = await senderWallet.submitTx(signedTx);
 
   console.log(txHash);
 }

@@ -130,7 +130,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
           });
         }
           break;
-        case "burn-token-kek": {
+        case "burn-token": {
           if (data?.txHash) {
             await waitForTransaction(data?.txHash);
           }
