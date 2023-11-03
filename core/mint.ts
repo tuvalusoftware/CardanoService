@@ -9,8 +9,8 @@ import type { Mint, AssetMetadata, Asset, NativeScript } from "@meshsdk/core";
 import { Logger, ILogObj } from "tslog";
 import { toAsset } from "./utils/converter";
 import { BurnParams, BurnResult, MintParams, MintResult, Options } from "./type";
-import { holder, holderAddress, wallet, walletAddress, wallets } from "./wallet";
-import { MAX_NFT_PER_TX, NETWORK_NAME, TEN_MINUTES, TIME_TO_EXPIRE } from "./config";
+import { burnerAddress, holder, holderAddress, wallet, walletAddress, wallets } from "./wallet";
+import { FIVE_SECONDS, MAX_NFT_PER_TX, NETWORK_NAME, TEN_MINUTES, TIME_TO_EXPIRE } from "./config";
 import { ERROR } from "./error";
 import { assertEqual, getOrDefault, waitForTransaction } from "./utils";
 import { getCacheValue, getSender, setCacheValue } from ".";
@@ -21,6 +21,7 @@ const log: Logger<ILogObj> = new Logger();
 
 log.info("Wallet address:", walletAddress);
 log.info("Holder address:", holderAddress);
+log.info("Burner address:", burnerAddress);
 
 const generateNativeScript = async ({ keyHash }: { keyHash: string }): Promise<NativeScript> => {
   let oneYearFromNow = new Date();
@@ -73,7 +74,7 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
     }
 
     const info: Mint = {
-      assetName: asset?.assetName,
+      assetName: asset?.assetName!,
       assetQuantity: "1",
       metadata: assetMetadata!,
       label: "721",
@@ -101,6 +102,7 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
 
   const unsignedTx: string = await tx.build();
   let signedTx: string = await holder.signTx(unsignedTx, true);
+  signedTx = await wallet.signTx(signedTx, true);
 
   for (const w of wallets) {
     signedTx = await w.signTx(signedTx, true);
@@ -114,7 +116,7 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
       id: options?.id,
       type: options?.type,
       data: {
-        ...result.assets[asset?.assetName],
+        ...result.assets[asset?.assetName!],
         txHash,
       },
     };
@@ -140,7 +142,7 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
   }
 
   if (options?.channel) {
-    await Bun.sleep(5_000);
+    await Bun.sleep(FIVE_SECONDS);
     options!.channel!.ack(options!.msg);
   }
 
@@ -157,22 +159,28 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
     txHash: ""
   };
 
-  const tx: Transaction = new Transaction({ initiator: holder });
+  const burnAssets: Asset[] = [];
 
   for (const asset of assets) {
     if (asset?.removeCollection) {
-      // ! TODO
-      log.warn("🔥 Removing collection is not supported yet");
+      // const collection: { assets: Asset[] } & {} = await blockchainProvider.fetchCollectionAssets(asset?.policyId!);
+      // for (const a of collection?.assets) {
+      //   burnAssets.push(a);
+      // }
+      log.warn("🔥 Remove collection is not supported yet");
     }
 
-    const info: Asset = {
+    const a: Asset = {
       unit: asset?.unit,
       quantity: "1",
     };
 
-    tx.burnAsset(asset?.forgingScript!, info);
+    burnAssets.push(a);
   }
 
+  const tx: Transaction = new Transaction({ initiator: holder });
+
+  tx.sendAssets(burnerAddress, burnAssets);
   tx.setTimeToExpire(TIME_TO_EXPIRE);
 
   const requiredSigners: string[] = [holderAddress];
@@ -183,6 +191,7 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
 
   const unsignedTx: string = await tx.build();
   let signedTx: string = await holder.signTx(unsignedTx, true);
+  signedTx = await wallet.signTx(signedTx, true);
 
   for (const w of wallets) {
     signedTx = await w.signTx(signedTx, true);
@@ -220,7 +229,7 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
   }
 
   if (options?.channel) {
-    await Bun.sleep(5_000);
+    await Bun.sleep(FIVE_SECONDS);
     options!.channel!.ack(options!.msg);
   }
 

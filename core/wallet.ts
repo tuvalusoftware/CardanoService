@@ -1,6 +1,6 @@
 import { AppWallet } from "@meshsdk/core";
 import { blockchainProvider } from "./provider";
-import { BASE_PORT, HOLDER_MNEMONIC, MNEMONIC_FILE, NETWORK_ID, PORT } from "./config";
+import { BASE_PORT, BURNER_MNEMONIC, HOLDER_MNEMONIC, MNEMONIC_FILE, NETWORK_ID, PORT } from "./config";
 import { BunFile } from "bun";
 
 const F: BunFile = Bun.file(MNEMONIC_FILE);
@@ -33,5 +33,16 @@ export const holder: AppWallet = new AppWallet({
   },
 });
 
+export const burner: AppWallet = new AppWallet({
+  networkId: NETWORK_ID,
+  fetcher: blockchainProvider,
+  submitter: null,
+  key: {
+    type: "mnemonic",
+    words: BURNER_MNEMONIC.split(" "),
+  },
+});
+
+export const burnerAddress: string = burner.getPaymentAddress();
 export const holderAddress: string = holder.getPaymentAddress();
 export const walletAddress: string = wallet.getPaymentAddress();
