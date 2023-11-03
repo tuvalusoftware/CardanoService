@@ -1,4 +1,4 @@
-import type { Mint, AssetMetadata, Asset, NativeScript, UTxO, PlutusScript } from "@meshsdk/core";
+import type { Mint, Asset } from "@meshsdk/core";
 import csl from "@emurgo/cardano-serialization-lib-nodejs";
 
 /* -----------------[ UTF-8 ]----------------- */

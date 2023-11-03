@@ -1,9 +1,9 @@
 import { AppWallet } from "@meshsdk/core";
 import { blockchainProvider } from "./provider";
-import { BASE_PORT, NETWORK_ID, PORT } from "./config";
+import { BASE_PORT, HOLDER_MNEMONIC, MNEMONIC_FILE, NETWORK_ID, PORT } from "./config";
 import { BunFile } from "bun";
 
-const F: BunFile = Bun.file(`${process.cwd()}/core/config/mnemonics.json`);
+const F: BunFile = Bun.file(MNEMONIC_FILE);
 const M: any = await F.json();
 
 export const initAppWallet = (mnemonic: string) => {
@@ -21,7 +21,7 @@ export const initAppWallet = (mnemonic: string) => {
 const mnemonics: string[] = M?.mnemonics || [];
 
 export const wallets: AppWallet[] = mnemonics.map(initAppWallet);
-export const wallet: AppWallet = wallets[PORT % BASE_PORT % wallets.length];
+export const wallet: AppWallet = wallets[Number(PORT % BASE_PORT % wallets.length)];
 
 export const holder: AppWallet = new AppWallet({
   networkId: NETWORK_ID,
@@ -29,7 +29,7 @@ export const holder: AppWallet = new AppWallet({
   submitter: null,
   key: {
     type: "mnemonic",
-    words: "swear coil wheat wash glimpse ice warm kangaroo team green veteran science edge fresh vast".split(" "),
+    words: HOLDER_MNEMONIC.split(" "),
   },
 });
 

@@ -16,14 +16,14 @@ try {
   throw error;
 }
 
-export const CardanoService: string = "CardanoService";
+export const CardanoService: string = getOrDefault(process?.env?.CHANNEL_NAME, "CardanoService");
 export const ResolverService: string = "ResolverService";
 
 const queue: {
   [key: string]: string,
 } = {
-  CardanoService: CardanoService,
-  ResolverService: ResolverService,
+  [CardanoService]: CardanoService,
+  [ResolverService]: ResolverService,
 };
 
 const cardanoChannel: Channel = await rabbitMQ!.createChannel();
@@ -35,8 +35,8 @@ await resolverChannel.assertQueue(queue[ResolverService], { durable: true });
 const channel: {
   [key: string]: Channel,
 } = {
-  CardanoService: cardanoChannel,
-  ResolverService: resolverChannel,
+  [CardanoService]: cardanoChannel,
+  [ResolverService]: resolverChannel,
 };
 
 export function getSender({ service }: { service: string }): { sender: Channel, queue: string } {
@@ -46,7 +46,7 @@ export function getSender({ service }: { service: string }): { sender: Channel, 
   };
 }
 
-channel[CardanoService].consume(queue[CardanoService], async (msg) => {
+channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
   if (msg !== null) {
     const { sender } = getSender({ service: ResolverService });
     const request: any = JSON.parse(msg.content.toString());

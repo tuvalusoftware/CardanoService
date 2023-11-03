@@ -1,5 +1,8 @@
 import { Logger, ILogObj } from "tslog";
+
 const log: Logger<ILogObj> = new Logger();
+
+/* -----------------[ Handler ]----------------- */
 
 export const parseError = (error: any) => {
   log.error("🚨", JSON.stringify(error));
@@ -25,9 +28,15 @@ export const parseResult = (result: any) => {
   return response;
 }
 
+/* -----------------[ Others ]----------------- */
+
 export const parseJson = (dummy: any) => {
   if (typeof dummy === "string") {
     return JSON.parse(dummy);
   }
   return dummy;
+}
+
+export const parseCapitalize = (str: string) => {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }

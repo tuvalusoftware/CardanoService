@@ -3,17 +3,9 @@ import { setCacheValue, getCacheValue } from ".";
 import { blockchainProvider } from "./provider";
 import { clearAllKeysFromCache, deleteCacheValue } from "./config/redis";
 import { parseJson } from "./utils";
-
-export interface FetchOptions {
-  policyId: string;
-}
-
-interface FetchResult {
-  [key: string]: any;
-}
+import { FetchOptions, FetchResult } from "./type";
 
 export const fetch = async ({ policyId }: FetchOptions) => {
-  await clearAllKeysFromCache();
   const collection: { assets: Asset[] } & {} = await blockchainProvider.fetchCollectionAssets(policyId!);
   const result: FetchResult = {};
   await Promise.all(collection?.assets?.map(async (a) => {
@@ -35,7 +27,6 @@ export const fetch = async ({ policyId }: FetchOptions) => {
 };
 
 export const getVersion = async ({ unit }: { unit: string }) => {
-  await clearAllKeysFromCache();
   const result: FetchResult = {};
   const cached = await getCacheValue({ key: `nft:metadata:${unit!}` });
   if (!cached) {

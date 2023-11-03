@@ -10,7 +10,7 @@ import { Logger, ILogObj } from "tslog";
 import { toAsset } from "./utils/converter";
 import { BurnParams, BurnResult, MintParams, MintResult, Options } from "./type";
 import { holder, holderAddress, wallet, walletAddress, wallets } from "./wallet";
-import { MAX_NFT_PER_TX, TEN_MINUTES, TIME_TO_EXPIRE } from "./config";
+import { MAX_NFT_PER_TX, NETWORK_NAME, TEN_MINUTES, TIME_TO_EXPIRE } from "./config";
 import { ERROR } from "./error";
 import { assertEqual, getOrDefault, waitForTransaction } from "./utils";
 import { getCacheValue, getSender, setCacheValue } from ".";
@@ -27,7 +27,7 @@ const generateNativeScript = async ({ keyHash }: { keyHash: string }): Promise<N
   oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + Math.floor(Math.random() * 1000) + 1);
 
   await Bun.sleep(5);
-  const ttl = resolveSlotNo("preprod", oneYearFromNow.getTime());
+  const ttl = resolveSlotNo(NETWORK_NAME, oneYearFromNow.getTime());
 
   const nativeScript: NativeScript = {
     type: "all",

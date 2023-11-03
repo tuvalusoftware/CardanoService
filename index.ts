@@ -24,8 +24,8 @@ app.get("*", (req, res) => {
 const port: number = Number(process?.env?.PORT || 3050);
 log.info(`Starting server on port ${port}`);
 
-app.listen(port, () => {
-  const CardanoService = figlet.textSync("CardanoServiceV3");
+const server = app.listen(port, () => {
+  const CardanoService = figlet.textSync(`${process?.env?.CHANNEL_NAME}V3`);
   console.log(CardanoService);
   log.info(`Listening on http://localhost:${port}`);
 });

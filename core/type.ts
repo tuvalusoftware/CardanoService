@@ -1,16 +1,7 @@
 import {
-  AppWallet,
-  Transaction,
   ForgeScript,
-  MaestroProvider,
-  BlockfrostProvider,
-  resolveTxHash,
-  resolvePaymentKeyHash,
-  resolveSlotNo,
-  parseAssetUnit,
-  keepRelevant,
 } from "@meshsdk/core";
-import type { Mint, AssetMetadata, Asset, NativeScript, UTxO, PlutusScript } from "@meshsdk/core";
+import type { AssetMetadata } from "@meshsdk/core";
 import { Channel } from "amqplib";
 
 export interface MintParams {
@@ -52,3 +43,11 @@ export interface Options {
   channel?: Channel;
   msg?: any;
 };
+
+export interface FetchOptions {
+  policyId: string;
+}
+
+export interface FetchResult {
+  [key: string]: any;
+}

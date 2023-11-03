@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 const servers: any = [];
-for (let port = BASE_PORT; port < BASE_PORT + 5; port += 1) {
+for (let port = BASE_PORT; port < BASE_PORT + 5; ++port) {
   servers.push({
     host: "localhost",
     port,
@@ -46,7 +46,7 @@ router.all("*", (req, res, next) => {
 
 app.use(router);
 
-app.listen(3030, () => {
+app.listen(process.env?.PORT || 3030, () => {
   const CardanoServiceBalancer = figlet.textSync("CardanoServiceBalancer");
   console.log(CardanoServiceBalancer);
 });
