@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import figlet from "figlet";
 import { Logger, ILogObj } from "tslog";
-import { BASE_PORT } from "./core/config";
+import { BASE_PORT, MAX_PORT } from "./core/config";
 
 const log: Logger<ILogObj> = new Logger();
 
@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 const servers: any = [];
-for (let port = BASE_PORT; port < BASE_PORT + 5; ++port) {
+for (let port = BASE_PORT; port <= MAX_PORT; ++port) {
   servers.push({
     host: "localhost",
     port,

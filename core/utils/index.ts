@@ -1,3 +1,4 @@
+import { FIVE_SECONDS, ONE_MINUTE } from "../config";
 import { blockchainProvider } from "../provider";
 import { Logger, ILogObj } from "tslog";
 export { parseError, parseResult, parseJson } from "./parse";
@@ -9,6 +10,28 @@ export const getOrDefault = <T>(value: T | undefined, defaultValue: T): T => {
     return value === undefined ? defaultValue : value;
   } catch (error: any) {
     return defaultValue;
+  }
+}
+
+export const getDateNow = (): number => {
+  return new Date().getTime();
+}
+
+export const wait = async (condition: () => boolean, timeout: number = ONE_MINUTE, interval: number = FIVE_SECONDS): Promise<void> => {
+  const startTime: number = getDateNow();
+  while (getDateNow() - startTime < timeout) {
+    if (condition()) {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, interval));
+  }
+  throw new Error("Timeout");
+}
+
+export const waitUntil = async (to: number): Promise<void> => {
+  const now: number = getDateNow();
+  if (now < to) {
+    await wait(() => getDateNow() >= to);
   }
 }
 

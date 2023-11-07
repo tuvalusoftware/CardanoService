@@ -41,9 +41,9 @@ module.exports = {
       }
     },
     {
-      name: "cardanobalancer",
+      name: "cardanocontractservice",
       script: "bun",
-      args: "balancer.ts",
+      args: "index.ts",
       exec_mode: "fork",
       instances: 1,
       watch: false,
@@ -51,9 +51,30 @@ module.exports = {
       increment_var: "PORT",
       restart_delay: 10000,
       env: {
-        "PORT": 3030,
+        "PORT": 3055,
         "NODE_ENV": "development",
+        "NETWORD_NAME": "preprod",
+        "NETWORK_ID": 0,
+        "HOLDER_MNEMONIC": "",
+        "BURNER_MNEMONIC": "",
+        "CHANNEL_NAME": "CardanoContractService"
       }
-    }
+    },
+    // {
+    //   name: "cardanobalancer",
+    //   script: "bun",
+    //   args: "balancer.ts",
+    //   exec_mode: "fork",
+    //   instances: 1,
+    //   watch: false,
+    //   autorestart: true,
+    //   increment_var: "PORT",
+    //   restart_delay: 10000,
+    //   env: {
+    //     "PORT": 3030,
+    //     "MAX_PORT": "",
+    //     "NODE_ENV": "development",
+    //   }
+    // }
   ]
 }

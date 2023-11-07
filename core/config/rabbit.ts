@@ -3,7 +3,8 @@ import { Logger, ILogObj } from "tslog";
 import { ERROR } from "../error";
 import { burn, mint, getVersion } from "..";
 import { MintParams } from "../type";
-import { getOrDefault, parseError, waitForTransaction } from "../utils";
+import { assertEqual, getDateNow, getOrDefault, parseError, waitForTransaction, waitUntil } from "../utils";
+import { MAX_ATTEMPTS, HALF_MINUTE } from ".";
 
 const log: Logger<ILogObj> = new Logger();
 
@@ -62,7 +63,14 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
     options.channel = channel[CardanoService];
     options.msg = msg;
 
+    const retryCount: number = getOrDefault(request?.retryCount, 0);
+    const retryAfter: number = getOrDefault(request?.retryAfter, 0);
+
     try {
+      if (retryAfter > getDateNow()) {
+        await waitUntil(retryAfter);
+      }
+
       switch (request?.type) {
         case "mint-token": {
           await mint({
@@ -150,29 +158,41 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
         }
           break;
         default: {
-          sender.sendToQueue(queue[ResolverService], Buffer.from(
-            JSON.stringify(parseError({
-              ...ERROR.NOT_YET_IMPLEMENTED,
-              data,
-              id: options?.id,
-              type: options?.type,
-            })),
-          ));
           channel[CardanoService].ack(msg);
+          if (retryCount < MAX_ATTEMPTS) {
+            sender.sendToQueue(queue[ResolverService], Buffer.from(
+              JSON.stringify(parseError({
+                ...ERROR.NOT_YET_IMPLEMENTED,
+                data: {
+                  id: options?.id,
+                  type: options?.type,
+                  data: { ...request?.data },
+                  retryCount: retryCount + 1,
+                  retryAfter: getDateNow() + HALF_MINUTE,
+                },
+              })),
+            ));
+          }
         }
           break;
       }
     } catch (error: any) {
       log.error(error);
-      sender.sendToQueue(queue[ResolverService], Buffer.from(
-        JSON.stringify(parseError({
-          data,
-          id: options?.id,
-          type: options?.type,
-          error_message: "Meomeow 🐰",
-        })),
-      ));
       channel[CardanoService].ack(msg);
+      if (retryCount < MAX_ATTEMPTS) {
+        sender.sendToQueue(queue[ResolverService], Buffer.from(
+          JSON.stringify(parseError({
+            data: {
+              data: { ...request?.data },
+              id: options?.id,
+              type: options?.type,
+              retryCount: retryCount + 1,
+              retryAfter: getDateNow() + HALF_MINUTE,
+            },
+            error_message: "Meomeow 🐰",
+          })),
+        ));
+      }
     }
   }
 });
