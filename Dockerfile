@@ -1,6 +1,8 @@
 FROM oven/bun:1 as base
 WORKDIR /usr/src/app
 
+LABEL maintainer="Quoc-Khang Tran <tqkhang@fuixlabs.com>"
+
 FROM base AS install
 RUN mkdir -p /temp/dev
 COPY package.json bun.lockb /temp/dev/

@@ -4,13 +4,19 @@ import { ERROR } from "../error";
 import { burn, mint, getVersion } from "..";
 import { MintParams } from "../type";
 import { assertEqual, getDateNow, getOrDefault, parseError, waitForTransaction, waitUntil } from "../utils";
-import { FIVE_SECONDS, HALF_MINUTE, MAX_ATTEMPTS, ONE_HOUR } from ".";
+import { FIVE_SECONDS, HALF_MINUTE, MAX_ATTEMPTS, ONE_HOUR, RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT } from ".";
 
 const log: Logger<ILogObj> = new Logger();
 
 let rabbitMQ: Connection;
 try {
-  rabbitMQ = await amqplib.connect("amqp://localhost");
+  rabbitMQ = await amqplib.connect({
+    protocol: "amqp",
+    hostname: RABBITMQ_DEFAULT_VHOST,
+    port: RABBITMQ_DEFAULT_PORT,
+    username: RABBITMQ_DEFAULT_USER,
+    password: RABBITMQ_DEFAULT_PASS,
+  });
   log.debug("Connected to RabbitMQ", rabbitMQ!.connection!.serverProperties!.cluster_name);
 } catch (error: any) {
   log.error("Error connecting to RabbitMQ", error);

@@ -1,5 +1,5 @@
 import { createClient } from "redis";
-import { REDIS_PASSWORD, REDIS_PORT } from ".";
+import { REDIS_PASSWORD, REDIS_PORT, REDIS_HOST } from ".";
 import { Logger, ILogObj } from "tslog";
 
 const log: Logger<ILogObj> = new Logger();
@@ -11,8 +11,10 @@ interface ICacheValue {
 }
 
 const redisClient = createClient({
-  url: `redis://default:${REDIS_PASSWORD}@localhost:${REDIS_PORT}`,
+  url: `redis://default:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}`,
 });
+
+log.debug(redisClient);
 
 const constructRedisKey = ({ key }: ICacheValue) => {
   return process.env.NODE_ENV !== "test" ? key : `__test:${key}`;
