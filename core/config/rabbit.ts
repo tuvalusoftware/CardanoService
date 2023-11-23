@@ -4,7 +4,7 @@ import { ERROR } from "../error";
 import { burn, mint, getVersion } from "..";
 import { MintParams } from "../type";
 import { assertEqual, getDateNow, getOrDefault, parseError, waitForTransaction, waitUntil } from "../utils";
-import { MAX_ATTEMPTS, HALF_MINUTE } from ".";
+import { FIVE_SECONDS, HALF_MINUTE, MAX_ATTEMPTS, ONE_HOUR } from ".";
 
 const log: Logger<ILogObj> = new Logger();
 
@@ -80,6 +80,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
                 metadata: {
                   name: data!.hash!,
                   type: data!.type!,
+                  timestamp: getDateNow(),
                   version: 0,
                 },
               },
@@ -102,6 +103,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
               name: data?.newHash!,
               type: data!.type!,
               version,
+              timestamp: getDateNow(),
               belongsTo: data!.config!.assetName!,
             },
           };
@@ -128,6 +130,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
                 name: credential!,
                 type: data!.type!,
                 version: 0,
+                timestamp: getDateNow(),
                 belongsTo: data!.config!.assetName!,
               },
             });
