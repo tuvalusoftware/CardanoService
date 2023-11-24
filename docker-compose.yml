@@ -50,6 +50,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: ${PORT}
+      MAX_PORT: ${MAX_PORT}
       CHANNEL_NAME: ${CHANNEL_NAME}
       NETWORD_NAME: ${NETWORD_NAME}
       SENDER_ADA: ${SENDER_ADA}

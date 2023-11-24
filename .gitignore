@@ -1,5 +1,8 @@
 /core/config/mnemonics*
 ecosystem.config.cjs
+pm2.config.cjs
+start.sh
+docker.sh
 
 # Logs
 logs
