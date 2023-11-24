@@ -3,8 +3,8 @@ import { Logger, ILogObj } from "tslog";
 import { ERROR } from "../error";
 import { burn, mint, getVersion } from "..";
 import { MintParams } from "../type";
-import { assertEqual, getDateNow, getOrDefault, parseError, waitForTransaction, waitUntil } from "../utils";
-import { FIVE_SECONDS, HALF_MINUTE, MAX_ATTEMPTS, ONE_HOUR, RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT } from ".";
+import { getDateNow, getOrDefault, parseError, waitForTransaction, waitUntil } from "../utils";
+import { HALF_MINUTE, MAX_ATTEMPTS, RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT } from ".";
 
 const log: Logger<ILogObj> = new Logger();
 
