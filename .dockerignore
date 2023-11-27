@@ -13,7 +13,8 @@ helm-charts
 .editorconfig
 .idea
 coverage*
-start.sh
-docker.sh
 ecosystem.config.cjs
 pm2.config.cjs
+start.sh
+docker.sh
+backup

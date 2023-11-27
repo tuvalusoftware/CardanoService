@@ -8,7 +8,7 @@ export const HALF_MINUTE: number = 30 * 1000;
 export const FIVE_SECONDS: number = 5 * 1000;
 
 export const PORT: number = Number(process.env?.PORT) || 3050;
-export const BASE_PORT: number = 3050;
+export const BASE_PORT: number = Number(process.env?.BASE_PORT) || 3050;
 export const MAX_PORT: number = Number(process.env?.MAX_PORT) || 3050;
 
 export const NETWORK_ID: number = Number(process.env?.NETWORK_ID || 0); // 0 for testnet, 1 for mainnet
@@ -23,7 +23,8 @@ export const RABBITMQ_DEFAULT_USER: string = process.env?.RABBITMQ_DEFAULT_USER 
 export const RABBITMQ_DEFAULT_PASS: string = process.env?.RABBITMQ_DEFAULT_PASS || "guest";
 export const RABBITMQ_DEFAULT_PORT: number = Number(process.env?.RABBITMQ_DEFAULT_PORT || 5672);
 
-export const MNEMONIC_FILE: string = `${process.cwd()}/core/config/mnemonics.json`;
+export const MNEMONIC_FILENAME: string = process.env?.MNEMONIC_FILENAME || "mnemonic";
+export const MNEMONIC_FILE: string = `${process.cwd()}/core/config/${MNEMONIC_FILENAME}.json`;
 export const HOLDER_MNEMONIC: string = process.env?.HOLDER_MNEMONIC || "";
 export const BURNER_MNEMONIC: string = process.env?.BURNER_MNEMONIC || "";
 

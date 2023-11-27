@@ -10,12 +10,10 @@ console.log(senderWallet.getPaymentAddress());
 const tx: Transaction = new Transaction({ initiator: senderWallet });
 
 for (const wallet of wallets) {
+  console.log("Sending ADA to: ", wallet.getPaymentAddress());
   for (let it = 0; it < 1; ++it) {
-    tx.sendLovelace(wallet.getPaymentAddress(), toLovelace(20)?.toString());
+    tx.sendLovelace(wallet.getPaymentAddress(), toLovelace(1.5)?.toString());
   }
-  // for (let it = 0; it < 100; ++it) {
-  //   tx.sendLovelace("addr_test1vp0gjulv2dl46d8mfdldfdpckk3lsncdhy0a65h34j0240qzrfy0g", toLovelace(1.5)?.toString());
-  // }
 }
 
 tx.setTimeToExpire(TIME_TO_EXPIRE);

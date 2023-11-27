@@ -14,8 +14,6 @@ const redisClient = createClient({
   url: `redis://default:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}`,
 });
 
-log.debug(redisClient);
-
 const constructRedisKey = ({ key }: ICacheValue) => {
   return process.env.NODE_ENV !== "test" ? key : `__test:${key}`;
 };

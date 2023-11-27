@@ -4,7 +4,7 @@ import { ERROR } from "../error";
 import { burn, mint, getVersion } from "..";
 import { MintParams } from "../type";
 import { getDateNow, getOrDefault, parseError, waitForTransaction, waitUntil } from "../utils";
-import { HALF_MINUTE, MAX_ATTEMPTS, RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT } from ".";
+import { HALF_MINUTE, MAX_ATTEMPTS, RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT, ONE_HOUR } from ".";
 
 const log: Logger<ILogObj> = new Logger();
 
@@ -16,12 +16,20 @@ try {
     port: RABBITMQ_DEFAULT_PORT,
     username: RABBITMQ_DEFAULT_USER,
     password: RABBITMQ_DEFAULT_PASS,
+    heartbeat: ONE_HOUR,
   });
   log.debug("Connected to RabbitMQ", rabbitMQ!.connection!.serverProperties!.cluster_name);
+
+  rabbitMQ.setMaxListeners(0);
 } catch (error: any) {
   log.error("Error connecting to RabbitMQ", error);
   throw error;
 }
+
+rabbitMQ?.on("error", (error: any) => {
+  log.error("Error connecting to RabbitMQ", error);
+  throw error;
+});
 
 export const CardanoService: string = getOrDefault(process?.env?.CHANNEL_NAME, "CardanoService");
 export const ResolverService: string = "ResolverService";

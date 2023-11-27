@@ -3,6 +3,7 @@ ecosystem.config.cjs
 pm2.config.cjs
 start.sh
 docker.sh
+/backup
 
 # Logs
 logs

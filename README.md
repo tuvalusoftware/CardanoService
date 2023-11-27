@@ -3,10 +3,12 @@
 Environment variables:
 
 ```
-PORT=3050
-MAX_PORT=3050
-NODE_ENV=development
-CHANNEL_NAME=CardanoService
+# PORT=3050
+# BASE_PORT=3050
+# MAX_PORT=3050
+# NODE_ENV=development
+# CHANNEL_NAME=CardanoService
+
 NETWORD_NAME=preprod
 
 SENDER_ADA=""
@@ -24,34 +26,16 @@ RABBITMQ_DEFAULT_VHOST="cardanorabbitmq"
 RABBITMQ_DEFAULT_PORT="5672"
 ```
 
-To install dependencies:
-
-```bash
-bun install
-```
-
 Pre-requisites:
+- Redis
+- RabbitMQ
+- Docker
+- Bun
 
-1. Generate a mnemonic phrase
-  
-```bash
-bun scripts/generateMnemonics.ts
-```
+**Make sure `SENDER_ADA` has enough ADA to send to the user**
 
-Ensure that `MNEMONIC_FILE` in `core/config.ts` is matching the file generated in the script above.
-
-1. Send ADA to the address generated in the previous step
-
-Please make sure `SENDER_ADA` has enough ADA to send to the address generated in the previous step.
-
-```bash
-bun scripts/sendAda.ts
-```
-
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.0.2. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+Step 0. Install docker and docker-compose
+Step 1. Run `build.sh`
+Step 2. Run `docker-compose up -d`
+Step 2.1. Run `send-ada.sh` to send ADA to each container
+Step 3. Run `docker-compose logs -f` to see logs

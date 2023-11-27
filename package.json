@@ -3,7 +3,9 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun --watch run balancer.ts"
+    "dev": "bun --watch run balancer.ts",
+    "get-address": "bun run ./scripts/getAddress.ts",
+    "send-ada": "bun run ./scripts/sendAda.ts"
   },
   "devDependencies": {
     "bun-types": "latest"
