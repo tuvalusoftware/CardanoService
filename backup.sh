@@ -7,6 +7,14 @@ if [ ! -d "./backup" ]; then
   mkdir ./backup
 fi
 
-for i in {1..1} ; do
-  docker cp cardanoservice-cardanoservice-$i:/home/app/core/config/mnemonics-test.json ./backup/cardanoservice-$i-mnemonics-test.json
+for i in {1..5} ; do
+  docker cp cardanoservice_cardanoservice_$i:/home/app/core/config/mnemonics-dev.json ./backup/cardanoservice-$i-mnemonics-dev.json
+done
+
+for i in {1..5} ; do
+  docker cp cardanoservice_cardanocontractservice_$i:/home/app/core/config/mnemonics-dev.json ./backup/cardanocontractservice-$i-mnemonics-dev.json
+done
+
+for i in {1..5} ; do
+  docker cp cardanoservice_cardanoerrorservice_$i:/home/app/core/config/mnemonics-dev.json ./backup/cardanoerrorservice-$i-mnemonics-dev.json
 done

@@ -6,6 +6,7 @@ export const ONE_HOUR: number = 60 * 60 * 1000;
 export const ONE_MINUTE: number = 60 * 1000;
 export const HALF_MINUTE: number = 30 * 1000;
 export const FIVE_SECONDS: number = 5 * 1000;
+export const TWO_SECONDS: number = 2 * 1000;
 
 export const PORT: number = Number(process.env?.PORT) || 3050;
 export const BASE_PORT: number = Number(process.env?.BASE_PORT) || 3050;

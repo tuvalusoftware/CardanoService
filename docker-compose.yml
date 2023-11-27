@@ -12,8 +12,8 @@ services:
     command: redis-server --requirepass ${REDIS_PASSWORD}
     healthcheck:
       test: redis-cli ping
-      interval: 10s
-      timeout: 10s
+      interval: 5s
+      timeout: 5s
       retries: 3
     volumes:
       - redis-data:/data
@@ -35,8 +35,8 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     healthcheck:
       test: rabbitmq-diagnostics -q ping
-      interval: 15s
-      timeout: 15s
+      interval: 10s
+      timeout: 10s
       retries: 3
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
@@ -50,7 +50,7 @@ services:
     image: cardanoservice
     # container_name: cardanoservice
     restart: always
-    deploy: 
+    deploy:
       mode: replicated
       replicas: 1
     build:
@@ -93,7 +93,7 @@ services:
     image: cardanoservice
     # container_name: cardanoerrorservice
     restart: always
-    deploy: 
+    deploy:
       mode: replicated
       replicas: 1
     build:
@@ -136,7 +136,7 @@ services:
     image: cardanoservice
     # container_name: cardanocontractservice
     restart: always
-    deploy: 
+    deploy:
       mode: replicated
       replicas: 1
     build:

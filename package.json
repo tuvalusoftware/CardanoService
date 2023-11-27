@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "bun --watch run balancer.ts",
     "get-address": "bun run ./scripts/getAddress.ts",
-    "send-ada": "bun run ./scripts/sendAda.ts"
+    "send-ada": "bun run ./scripts/sendAda.ts",
+    "publisher": "bun run ./scripts/publisher.ts"
   },
   "devDependencies": {
     "bun-types": "latest"

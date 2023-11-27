@@ -1,10 +1,9 @@
 import amqplib, { Channel, Connection } from "amqplib";
 import { Logger, ILogObj } from "tslog";
-import { ERROR } from "../error";
 import { burn, mint, getVersion } from "..";
 import { MintParams } from "../type";
-import { getDateNow, getOrDefault, parseError, waitForTransaction, waitUntil } from "../utils";
-import { HALF_MINUTE, MAX_ATTEMPTS, RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT, ONE_HOUR } from ".";
+import { getDateNow, getOrDefault, waitForTransaction } from "../utils";
+import { RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT, ONE_HOUR } from ".";
 
 const log: Logger<ILogObj> = new Logger();
 
@@ -41,17 +40,25 @@ const queue: {
   [ResolverService]: ResolverService,
 };
 
-const cardanoChannel: Channel = await rabbitMQ!.createChannel();
-await cardanoChannel.assertQueue(queue[CardanoService], { durable: true });
+export const getCardanoChannel = async (): Promise<Channel> => {
+  let cardanoChannel: Channel = await rabbitMQ!.createChannel();
+  await cardanoChannel.assertQueue(queue[CardanoService], { durable: true });
+  cardanoChannel = cardanoChannel.setMaxListeners(0);
+  return cardanoChannel;
+};
 
-const resolverChannel: Channel = await rabbitMQ!.createChannel();
-await resolverChannel.assertQueue(queue[ResolverService], { durable: true });
+export const getResolverChannel = async (): Promise<Channel> => {
+  let resolverChannel: Channel = await rabbitMQ!.createChannel();
+  await resolverChannel.assertQueue(queue[ResolverService], { durable: true });
+  resolverChannel = resolverChannel.setMaxListeners(0);
+  return resolverChannel;
+};
 
 const channel: {
   [key: string]: Channel,
 } = {
-  [CardanoService]: cardanoChannel,
-  [ResolverService]: resolverChannel,
+  [CardanoService]: await getCardanoChannel(),
+  [ResolverService]: await getResolverChannel(),
 };
 
 export function getSender({ service }: { service: string }): { sender: Channel, queue: string } {
@@ -63,7 +70,6 @@ export function getSender({ service }: { service: string }): { sender: Channel, 
 
 channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
   if (msg !== null) {
-    const { sender } = getSender({ service: ResolverService });
     const request: any = JSON.parse(msg.content.toString());
 
     const data: any = getOrDefault(request?.data, {});
@@ -81,10 +87,6 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
     const retryAfter: number = getOrDefault(request?.retryAfter, 0);
 
     try {
-      if (retryAfter > getDateNow()) {
-        await waitUntil(retryAfter);
-      }
-
       switch (request?.type) {
         case "mint-token": {
           await mint({
@@ -176,40 +178,12 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
           break;
         default: {
           channel[CardanoService].ack(msg);
-          if (retryCount < MAX_ATTEMPTS) {
-            sender.sendToQueue(queue[ResolverService], Buffer.from(
-              JSON.stringify(parseError({
-                ...ERROR.NOT_YET_IMPLEMENTED,
-                data: {
-                  id: options?.id,
-                  type: options?.type,
-                  data: { ...request?.data },
-                  retryCount: retryCount + 1,
-                  retryAfter: getDateNow() + HALF_MINUTE,
-                },
-              })),
-            ));
-          }
         }
           break;
       }
     } catch (error: any) {
       log.error(error);
-      channel[CardanoService].ack(msg);
-      if (retryCount < MAX_ATTEMPTS) {
-        sender.sendToQueue(queue[ResolverService], Buffer.from(
-          JSON.stringify(parseError({
-            data: {
-              data: { ...request?.data },
-              id: options?.id,
-              type: options?.type,
-              retryCount: retryCount + 1,
-              retryAfter: getDateNow() + HALF_MINUTE,
-            },
-            error_message: "Meomeow 🐰",
-          })),
-        ));
-      }
+      channel[CardanoService].nack(msg);
     }
   }
 });
