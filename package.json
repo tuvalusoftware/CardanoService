@@ -6,6 +6,7 @@
     "dev": "bun --watch run balancer.ts",
     "get-address": "bun run ./scripts/getAddress.ts",
     "send-ada": "bun run ./scripts/sendAda.ts",
+    "merge-address": "bun run ./scripts/mergeAddresses.ts",
     "publisher": "bun run ./scripts/publisher.ts"
   },
   "devDependencies": {
