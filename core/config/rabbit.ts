@@ -25,8 +25,8 @@ try {
   throw error;
 }
 
-rabbitMQ?.on("error", (error: any) => {
-  log.error("Error connecting to RabbitMQ", error);
+rabbitMQ?.on("error", async (error: any) => {
+  log.error("Ocurred an error in RabbitMQ", error);
   throw error;
 });
 
@@ -42,8 +42,11 @@ const queue: {
 
 export const getCardanoChannel = async (): Promise<Channel> => {
   let cardanoChannel: Channel = await rabbitMQ!.createChannel();
-  await cardanoChannel.assertQueue(queue[CardanoService], { durable: true });
+  await cardanoChannel.assertQueue(queue[CardanoService], {
+    durable: true,
+  });
   cardanoChannel = cardanoChannel.setMaxListeners(0);
+  await cardanoChannel.prefetch(1);
   return cardanoChannel;
 };
 
