@@ -44,6 +44,7 @@ export const getCardanoChannel = async (): Promise<Channel> => {
   let cardanoChannel: Channel = await rabbitMQ!.createChannel();
   await cardanoChannel.assertQueue(queue[CardanoService], {
     durable: true,
+    expires: ONE_HOUR,
   });
   cardanoChannel = cardanoChannel.setMaxListeners(0);
   await cardanoChannel.prefetch(1);
