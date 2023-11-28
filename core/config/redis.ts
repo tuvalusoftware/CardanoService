@@ -67,6 +67,15 @@ async function removeKeysWithPrefix(prefix: string) {
   }
 }
 
+async function increaseCacheValue({ key, expiredTime = DEFAULT_EXPIRED_TIME }: ICacheValue) {
+  const cacheKey = constructRedisKey({ key });
+  const value = await redisClient.incr(cacheKey);
+  if (value === 1 || expiredTime !== -1) {
+    await redisClient.expire(cacheKey, expiredTime);
+  }
+  return value;
+}
+
 const connectRedis = async () => {
   try {
     log.debug("Connecting to redis ...");
@@ -91,4 +100,5 @@ export {
   getAllKeysFromCache,
   findKeysWithPrefix,
   removeKeysWithPrefix,
+  increaseCacheValue,
 };

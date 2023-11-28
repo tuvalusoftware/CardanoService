@@ -29,4 +29,4 @@ export const MNEMONIC_FILE: string = `${process.cwd()}/core/config/${MNEMONIC_FI
 export const HOLDER_MNEMONIC: string = process.env?.HOLDER_MNEMONIC || "";
 export const BURNER_MNEMONIC: string = process.env?.BURNER_MNEMONIC || "";
 
-export const MAX_ATTEMPTS: number = 20;
+export const MAX_ATTEMPTS: number = 200;

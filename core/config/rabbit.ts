@@ -1,9 +1,10 @@
 import amqplib, { Channel, Connection } from "amqplib";
 import { Logger, ILogObj } from "tslog";
-import { burn, mint, getVersion } from "..";
+import { burn, mint, getVersion, getCacheValue } from "..";
 import { MintParams } from "../type";
 import { getDateNow, getOrDefault, waitForTransaction } from "../utils";
-import { RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT, ONE_HOUR } from ".";
+import { RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT, ONE_HOUR, MAX_ATTEMPTS, TWO_SECONDS } from ".";
+import { increaseCacheValue, setCacheValue } from "./redis";
 
 const log: Logger<ILogObj> = new Logger();
 
@@ -79,6 +80,8 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
     const data: any = getOrDefault(request?.data, {});
     const options: any = getOrDefault(request?.options, {});
 
+    log.debug("[+] Received message", JSON.stringify(request?.data, null, 2));
+
     options.id = request?.id;
     options.type = request?.type;
     options.publish = true;
@@ -87,8 +90,24 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
     options.channel = channel[CardanoService];
     options.msg = msg;
 
-    const retryCount: number = getOrDefault(request?.retryCount, 0);
-    const retryAfter: number = getOrDefault(request?.retryAfter, 0);
+    let retryCount: number = await getCacheValue({
+      key: `retryCount-${request?.id?.toString()}`,
+    });
+
+    if (!retryCount) {
+      retryCount = 0;
+      await setCacheValue({
+        key: `retryCount-${request?.id?.toString()}`,
+        value: 0,
+        expiredTime: -1,
+      });
+    }
+
+    if (retryCount > MAX_ATTEMPTS) {
+      log.error("[!] Retry count exceeded", options?.id);
+      channel[CardanoService].ack(msg);
+      return;
+    }
 
     try {
       switch (request?.type) {
@@ -181,12 +200,19 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
         }
           break;
         default: {
+          log.error("[!] Invalid type", request?.type, request?.id);
           channel[CardanoService].ack(msg);
         }
           break;
       }
     } catch (error: any) {
+      log.error("[!] Error processing message");
       log.error(error);
+      await increaseCacheValue({
+        key: `retryCount-${request?.id?.toString()}`,
+        expiredTime: -1,
+      });
+      await Bun.sleep(TWO_SECONDS);
       channel[CardanoService].nack(msg);
     }
   }
