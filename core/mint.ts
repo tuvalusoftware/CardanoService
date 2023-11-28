@@ -10,9 +10,9 @@ import { Logger, ILogObj } from "tslog";
 import { toAsset } from "./utils/converter";
 import { BurnParams, BurnResult, MintParams, MintResult, Options } from "./type";
 import { burnerAddress, holder, holderAddress, wallet, walletAddress, wallets } from "./wallet";
-import { FIVE_SECONDS, MAX_NFT_PER_TX, NETWORK_NAME, TEN_MINUTES, TIME_TO_EXPIRE } from "./config";
+import { FIVE_SECONDS, MAX_NFT_PER_TX, NETWORK_NAME, ONE_HOUR, TEN_MINUTES, TIME_TO_EXPIRE } from "./config";
 import { ERROR } from "./error";
-import { assertEqual, getOrDefault, waitForTransaction } from "./utils";
+import { assertEqual, getOrDefault, parseJson, waitForTransaction } from "./utils";
 import { getCacheValue, getSender, setCacheValue } from ".";
 import { ResolverService } from "./config/rabbit";
 import { deleteCacheValue } from "./config/redis";
@@ -70,7 +70,17 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
     });
 
     if (cached) {
-      throw ERROR.ASSET_ALREADY_EXISTS;
+      log.warn("[?] Asset already exists", asset?.assetName!);
+      if (options?.publish) {
+        const { sender, queue } = getSender({ service: ResolverService });
+        const buff: Buffer = Buffer.from(JSON.stringify(parseJson(cached)));
+        sender.sendToQueue(queue, buff, {
+          persistent: true,
+          expiration: ONE_HOUR,
+        });
+      } else {
+        throw ERROR.ASSET_ALREADY_EXISTS;
+      }
     }
 
     const info: Mint = {
@@ -132,7 +142,7 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
       const buff: Buffer = Buffer.from(JSON.stringify(dat));
       sender.sendToQueue(queue, buff, {
         persistent: true,
-        expiration: TEN_MINUTES,
+        expiration: ONE_HOUR,
       });
     }
   }
@@ -219,7 +229,7 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
 
       sender.sendToQueue(queue, buff, {
         persistent: true,
-        expiration: TEN_MINUTES,
+        expiration: ONE_HOUR,
       });
     }
   }

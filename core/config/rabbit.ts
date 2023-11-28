@@ -47,7 +47,7 @@ export const getCardanoChannel = async (): Promise<Channel> => {
     durable: true,
   });
   cardanoChannel = cardanoChannel.setMaxListeners(0);
-  console.log("Prefetching 1 message");
+  log.debug("Prefetching [1] message");
   await cardanoChannel.prefetch(1);
   return cardanoChannel;
 };
@@ -206,7 +206,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
           break;
       }
     } catch (error: any) {
-      log.error("[!] Error processing message");
+      log.error("[!] Error processing message", request?.id);
       log.error(error);
       await increaseCacheValue({
         key: `retryCount-${request?.id?.toString()}`,
