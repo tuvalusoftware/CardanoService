@@ -2,7 +2,7 @@ import amqplib, { Channel, Connection } from "amqplib";
 import { Logger, ILogObj } from "tslog";
 import { burn, mint, getVersion, getCacheValue } from "..";
 import { MintParams } from "../type";
-import { getDateNow, getOrDefault, waitForTransaction } from "../utils";
+import { getDateNow, getOrDefault, parseError, waitForTransaction } from "../utils";
 import { RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT, ONE_HOUR, MAX_ATTEMPTS, TWO_SECONDS } from ".";
 import { increaseCacheValue, setCacheValue } from "./redis";
 
@@ -106,6 +106,17 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
     if (retryCount > MAX_ATTEMPTS) {
       log.error("[!] Retry count exceeded", options?.id);
       channel[CardanoService].ack(msg);
+      const { sender } = getSender({ service: ResolverService });
+      sender?.sendToQueue(queue?.[ResolverService], Buffer.from(
+        JSON.stringify(parseError({
+          data: {
+            data: { ...request?.data },
+            id: options?.id,
+            type: options?.type,
+          },
+          error_message: "Meomeow 🐰: Retry count exceeded",
+        })),
+      ));
       return;
     }
 
