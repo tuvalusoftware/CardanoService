@@ -42,6 +42,8 @@ export interface Options {
   type?: string;
   channel?: Channel;
   msg?: any;
+  replyTo?: string;
+  correlationId?: string;
 };
 
 export interface FetchOptions {

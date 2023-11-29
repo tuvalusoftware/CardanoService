@@ -23,7 +23,7 @@ try {
   rabbitMQ.setMaxListeners(0);
 } catch (error: any) {
   log.error("Error connecting to RabbitMQ", error);
-  throw error;
+  process.exit(1);
 }
 
 rabbitMQ?.on("error", async (error: any) => {
@@ -66,11 +66,40 @@ const channel: {
   [ResolverService]: await getResolverChannel(),
 };
 
-export function getSender({ service }: { service: string }): { sender: Channel, queue: string } {
+export function getSender(
+  { service }: { service: string }
+): { sender: Channel, queue: string, type?: string } {
   return {
     sender: channel[service],
     queue: queue[service],
+    type: "get",
   };
+}
+
+export async function createSender(
+  { queue }: { queue: string }
+): Promise<{ sender: Channel, queue: string, type?: string }> {
+  try {
+    let channel: Channel = await rabbitMQ!.createChannel();
+    await channel.assertQueue(queue, { durable: true });
+    return {
+      sender: channel,
+      queue,
+      type: "create",
+    };
+  } catch (error: any) {
+    log.error("Error creating sender", error);
+    return getSender({ service: ResolverService });
+  }
+}
+
+export async function getOrCreateSender(
+  { queue }: { queue: string }
+): Promise<{ sender: Channel, queue?: string, type?: string }> {
+  if (channel[queue]) {
+    return getSender({ service: queue });
+  }
+  return await createSender({ queue });
 }
 
 channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
@@ -80,12 +109,16 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
     const data: any = getOrDefault(request?.data, {});
     const options: any = getOrDefault(request?.options, {});
 
-    log.debug("[+] Received message", JSON.stringify(request?.data, null, 2));
+    log.debug("[+] Received message", JSON.stringify(data, null, 2));
+    log.debug(JSON.stringify(options, null, 2));
 
     options.id = request?.id;
     options.type = request?.type;
     options.publish = true;
     options.skipWait = false;
+
+    options.replyTo = msg?.properties?.replyTo;
+    options.correlationId = msg?.properties?.correlationId;
 
     options.channel = channel[CardanoService];
     options.msg = msg;
@@ -106,8 +139,10 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
     if (retryCount > MAX_ATTEMPTS) {
       log.error("[!] Retry count exceeded", options?.id);
       channel[CardanoService].ack(msg);
-      const { sender } = getSender({ service: ResolverService });
-      sender?.sendToQueue(queue?.[ResolverService], Buffer.from(
+      const { sender, queue: q } = await getOrCreateSender(
+        { queue: getOrDefault(options?.replyTo, ResolverService) }
+      );
+      sender?.sendToQueue(q!, Buffer.from(
         JSON.stringify(parseError({
           data: {
             data: { ...request?.data },
@@ -116,7 +151,9 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
           },
           error_message: "Meomeow 🐰: Retry count exceeded",
         })),
-      ));
+      ), {
+        correlationId: options?.correlationId,
+      });
       return;
     }
 
@@ -213,6 +250,21 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
         default: {
           log.error("[!] Invalid type", request?.type, request?.id);
           channel[CardanoService].ack(msg);
+          const { sender, queue: q } = await getOrCreateSender(
+            { queue: getOrDefault(options?.replyTo, ResolverService) }
+          );
+          sender?.sendToQueue(q!, Buffer.from(
+            JSON.stringify(parseError({
+              data: {
+                data: { ...request?.data },
+                id: options?.id,
+                type: options?.type,
+              },
+              error_message: "Meomeow 🐰: Invalid type",
+            })),
+          ), {
+            correlationId: options?.correlationId,
+          });
         }
           break;
       }

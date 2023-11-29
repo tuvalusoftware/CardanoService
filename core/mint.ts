@@ -14,7 +14,7 @@ import { FIVE_SECONDS, MAX_NFT_PER_TX, NETWORK_NAME, ONE_HOUR, TEN_MINUTES, TIME
 import { ERROR } from "./error";
 import { assertEqual, getOrDefault, parseJson, waitForTransaction } from "./utils";
 import { getCacheValue, getSender, setCacheValue } from ".";
-import { ResolverService } from "./config/rabbit";
+import { ResolverService, getOrCreateSender } from "./config/rabbit";
 import { deleteCacheValue } from "./config/redis";
 
 const log: Logger<ILogObj> = new Logger();
@@ -72,11 +72,14 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
     if (cached) {
       log.warn("[?] Asset already exists", asset?.assetName!);
       if (options?.publish) {
-        const { sender, queue } = getSender({ service: ResolverService });
+        const { sender, queue } = await getOrCreateSender({ queue: getOrDefault(options?.replyTo, ResolverService) });
+
         const buff: Buffer = Buffer.from(JSON.stringify(parseJson(cached)));
-        sender.sendToQueue(queue, buff, {
+
+        sender.sendToQueue(queue!, buff, {
           persistent: true,
           expiration: ONE_HOUR,
+          correlationId: options?.correlationId,
         });
       } else {
         throw ERROR.ASSET_ALREADY_EXISTS;
@@ -138,11 +141,12 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
     });
 
     if (options?.publish) {
-      const { sender, queue } = getSender({ service: ResolverService });
+      const { sender, queue } = await getOrCreateSender({ queue: getOrDefault(options?.replyTo, ResolverService) });
       const buff: Buffer = Buffer.from(JSON.stringify(dat));
-      sender.sendToQueue(queue, buff, {
+      sender.sendToQueue(queue!, buff, {
         persistent: true,
         expiration: ONE_HOUR,
+        correlationId: options?.correlationId,
       });
     }
   }
@@ -216,7 +220,7 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
     });
 
     if (options?.publish) {
-      const { sender, queue } = getSender({ service: ResolverService });
+      const { sender, queue } = await getOrCreateSender({ queue: getOrDefault(options?.replyTo, ResolverService) });
 
       const buff: Buffer = Buffer.from(JSON.stringify({
         id: options?.id,
@@ -227,9 +231,10 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
         },
       }));
 
-      sender.sendToQueue(queue, buff, {
+      sender.sendToQueue(queue!, buff, {
         persistent: true,
         expiration: ONE_HOUR,
+        correlationId: options?.correlationId,
       });
     }
   }

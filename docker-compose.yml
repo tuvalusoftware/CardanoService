@@ -52,7 +52,9 @@ services:
     restart: always
     deploy:
       mode: replicated
-      replicas: 1
+      replicas: 3
+      restart_policy:
+        condition: on-failure
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -96,6 +98,8 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+      restart_policy:
+        condition: on-failure
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -138,7 +142,9 @@ services:
     restart: always
     deploy:
       mode: replicated
-      replicas: 1
+      replicas: 3
+      restart_policy:
+        condition: on-failure
     build:
       context: .
       dockerfile: ./Dockerfile
