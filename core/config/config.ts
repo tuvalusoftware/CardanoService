@@ -5,6 +5,8 @@ export const TEN_MINUTES: number = 10 * 60 * 1000;
 export const ONE_HOUR: number = 60 * 60 * 1000;
 export const ONE_MINUTE: number = 60 * 1000;
 export const HALF_MINUTE: number = 30 * 1000;
+export const FIFTEEN_SECONDS: number = 15 * 1000;
+export const TEN_SECONDS: number = 10 * 1000;
 export const FIVE_SECONDS: number = 5 * 1000;
 export const TWO_SECONDS: number = 2 * 1000;
 
@@ -29,4 +31,4 @@ export const MNEMONIC_FILE: string = `${process.cwd()}/core/config/${MNEMONIC_FI
 export const HOLDER_MNEMONIC: string = process.env?.HOLDER_MNEMONIC || "";
 export const BURNER_MNEMONIC: string = process.env?.BURNER_MNEMONIC || "";
 
-export const MAX_ATTEMPTS: number = 200;
+export const MAX_ATTEMPTS: number = Number(process.env?.MAX_ATTEMPTS || 10);

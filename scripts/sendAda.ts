@@ -11,7 +11,7 @@ const tx: Transaction = new Transaction({ initiator: senderWallet });
 
 for (const wallet of wallets) {
   console.log("Sending ADA to: ", wallet.getPaymentAddress());
-  for (let it = 0; it < 1; ++it) {
+  for (let it = 0; it < 50; ++it) {
     tx.sendLovelace(wallet.getPaymentAddress(), toLovelace(1.5)?.toString());
   }
 }

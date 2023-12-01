@@ -10,10 +10,10 @@ import { Logger, ILogObj } from "tslog";
 import { toAsset } from "./utils/converter";
 import { BurnParams, BurnResult, MintParams, MintResult, Options } from "./type";
 import { burnerAddress, holder, holderAddress, wallet, walletAddress, wallets } from "./wallet";
-import { FIVE_SECONDS, MAX_NFT_PER_TX, NETWORK_NAME, ONE_HOUR, TEN_MINUTES, TIME_TO_EXPIRE } from "./config";
+import { MAX_NFT_PER_TX, NETWORK_NAME, ONE_HOUR, TEN_SECONDS, TIME_TO_EXPIRE } from "./config";
 import { ERROR } from "./error";
 import { assertEqual, getOrDefault, parseJson, waitForTransaction } from "./utils";
-import { getCacheValue, getSender, setCacheValue } from ".";
+import { getCacheValue, setCacheValue } from ".";
 import { ResolverService, getOrCreateSender } from "./config/rabbit";
 import { deleteCacheValue } from "./config/redis";
 
@@ -156,7 +156,7 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
   }
 
   if (options?.channel) {
-    await Bun.sleep(FIVE_SECONDS);
+    await Bun.sleep(TEN_SECONDS);
     options!.channel!.ack(options!.msg);
   }
 
@@ -244,7 +244,7 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
   }
 
   if (options?.channel) {
-    await Bun.sleep(FIVE_SECONDS);
+    await Bun.sleep(TEN_SECONDS);
     options!.channel!.ack(options!.msg);
   }
 

@@ -8,13 +8,13 @@ if [ ! -d "./backup" ]; then
 fi
 
 for i in {1..5} ; do
-  docker cp ./backup/cardanoservice-$i-mnemonics-dev.json cardanoservice_cardanoservice_$i:/home/app/core/config/mnemonics-dev.json
+  docker cp ./backup/cardanoservice-$i-mnemonics-test.json cardanoservice-cardanoservice-$i:/home/app/core/config/mnemonics-test.json
 done
 
 for i in {1..5} ; do
-  docker cp ./backup/cardanocontractservice-$i-mnemonics-dev.json cardanoservice_cardanocontractservice_$i:/home/app/core/config/mnemonics-dev.json
+  docker cp ./backup/cardanocontractservice-$i-mnemonics-test.json cardanoservice-cardanocontractservice-$i:/home/app/core/config/mnemonics-test.json
 done
 
 for i in {1..5} ; do
-  docker cp ./backup/cardanoerrorservice-$i-mnemonics-dev.json cardanoservice_cardanoerrorservice_$i:/home/app/core/config/mnemonics-dev.json
+  docker cp ./backup/cardanoerrorservice-$i-mnemonics-test.json cardanoservice-cardanoerrorservice-$i:/home/app/core/config/mnemonics-test.json
 done

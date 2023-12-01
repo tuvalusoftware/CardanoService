@@ -9,7 +9,7 @@ import { parseCapitalize } from "./utils/parse";
 const maestroProvider: MaestroProvider = new MaestroProvider({
   network: parseCapitalize(NETWORK_NAME) as MaestroSupportedNetworks,
   apiKey: "jiJEVf0LfHXqmXRhh6kR8gFVXWGIPHk4",
-  turboSubmit: false
+  turboSubmit: true
 });
 
 const blockfrostProvider: BlockfrostProvider = new BlockfrostProvider("preprodeMB9jfka6qXsluxEhPLhKczRdaC5QKab");

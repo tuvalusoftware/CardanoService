@@ -3,7 +3,7 @@ import { Logger, ILogObj } from "tslog";
 import { burn, mint, getVersion, getCacheValue } from "..";
 import { MintParams } from "../type";
 import { getDateNow, getOrDefault, parseError, waitForTransaction } from "../utils";
-import { RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT, ONE_HOUR, MAX_ATTEMPTS, TWO_SECONDS } from ".";
+import { RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT, ONE_HOUR, MAX_ATTEMPTS, TWO_SECONDS, FIVE_SECONDS } from ".";
 import { increaseCacheValue, setCacheValue } from "./redis";
 
 const log: Logger<ILogObj> = new Logger();
@@ -43,19 +43,43 @@ const queue: {
 
 export const getCardanoChannel = async (): Promise<Channel> => {
   let cardanoChannel: Channel = await rabbitMQ!.createChannel();
+
   await cardanoChannel.assertQueue(queue[CardanoService], {
     durable: true,
   });
   cardanoChannel = cardanoChannel.setMaxListeners(0);
-  log.debug("Prefetching [1] message");
+  log.silly("Prefetching [1] message");
   await cardanoChannel.prefetch(1);
+
+  cardanoChannel.on("error", async (error: any) => {
+    log.error("Ocurred an error in Cardano channel", error);
+    process.exit(1);
+  });
+
+  cardanoChannel.on("close", async () => {
+    log.warn("Cardano channel closed");
+    process.exit(1);
+  });
+
   return cardanoChannel;
 };
 
 export const getResolverChannel = async (): Promise<Channel> => {
   let resolverChannel: Channel = await rabbitMQ!.createChannel();
+
   await resolverChannel.assertQueue(queue[ResolverService], { durable: true });
   resolverChannel = resolverChannel.setMaxListeners(0);
+
+  resolverChannel.on("error", async (error: any) => {
+    log.error("Ocurred an error in Resolver channel", error);
+    process.exit(1);
+  });
+
+  resolverChannel.on("close", async () => {
+    log.warn("Resolver channel closed");
+    process.exit(1);
+  });
+
   return resolverChannel;
 };
 
@@ -110,7 +134,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
     const options: any = getOrDefault(request?.options, {});
 
     log.debug("[+] Received message", JSON.stringify(data, null, 2));
-    log.debug(JSON.stringify(options, null, 2));
+    log.debug("[+] Received options", JSON.stringify(options, null, 2));
 
     options.id = request?.id;
     options.type = request?.type;
@@ -119,6 +143,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
 
     options.replyTo = msg?.properties?.replyTo;
     options.correlationId = msg?.properties?.correlationId;
+    log.debug("[v] Reply to", options?.replyTo);
 
     options.channel = channel[CardanoService];
     options.msg = msg;
@@ -179,6 +204,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
         case "update-token": {
           if (data?.txHash) {
             await waitForTransaction(data?.txHash);
+            await Bun.sleep(FIVE_SECONDS);
           }
           const assets: MintParams[] = [];
           const version: number = await getVersion({
@@ -231,6 +257,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
         case "burn-token": {
           if (data?.txHash) {
             await waitForTransaction(data?.txHash);
+            await Bun.sleep(FIVE_SECONDS);
           }
           await burn({
             assets: [
