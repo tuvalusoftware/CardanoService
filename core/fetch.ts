@@ -1,7 +1,6 @@
 import { Asset, AssetMetadata } from "@meshsdk/core";
 import { setCacheValue, getCacheValue } from ".";
 import { blockchainProvider } from "./provider";
-import { clearAllKeysFromCache, deleteCacheValue } from "./config/redis";
 import { parseJson } from "./utils";
 import { FetchOptions, FetchResult } from "./type";
 

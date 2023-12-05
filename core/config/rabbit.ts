@@ -26,7 +26,7 @@ try {
   process.exit(1);
 }
 
-rabbitMQ?.on("error", async (error: any) => {
+rabbitMQ?.on("error", (error: any) => {
   log.error("Ocurred an error in RabbitMQ", error);
   throw error;
 });
@@ -51,12 +51,12 @@ export const getCardanoChannel = async (): Promise<Channel> => {
   log.silly("Prefetching [1] message");
   await cardanoChannel.prefetch(1);
 
-  cardanoChannel.on("error", async (error: any) => {
+  cardanoChannel.on("error", (error: any) => {
     log.error("Ocurred an error in Cardano channel", error);
     process.exit(1);
   });
 
-  cardanoChannel.on("close", async () => {
+  cardanoChannel.on("close", () => {
     log.warn("Cardano channel closed");
     process.exit(1);
   });
@@ -70,12 +70,12 @@ export const getResolverChannel = async (): Promise<Channel> => {
   await resolverChannel.assertQueue(queue[ResolverService], { durable: true });
   resolverChannel = resolverChannel.setMaxListeners(0);
 
-  resolverChannel.on("error", async (error: any) => {
+  resolverChannel.on("error", (error: any) => {
     log.error("Ocurred an error in Resolver channel", error);
     process.exit(1);
   });
 
-  resolverChannel.on("close", async () => {
+  resolverChannel.on("close", () => {
     log.warn("Resolver channel closed");
     process.exit(1);
   });

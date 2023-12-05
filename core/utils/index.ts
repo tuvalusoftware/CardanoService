@@ -7,7 +7,7 @@ const log: Logger<ILogObj> = new Logger();
 
 export const getOrDefault = <T>(value: T | undefined, defaultValue: T): T => {
   try {
-    return value === undefined ? defaultValue : value;
+    return value ?? defaultValue;
   } catch (error: any) {
     return defaultValue;
   }
