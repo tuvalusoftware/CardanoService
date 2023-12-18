@@ -149,13 +149,13 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
     options.msg = msg;
 
     let retryCount: number = await getCacheValue({
-      key: `retryCount-${request?.id?.toString()}`,
+      key: `retryCount:${request?.id?.toString()}`,
     });
 
     if (!retryCount) {
       retryCount = 0;
       await setCacheValue({
-        key: `retryCount-${request?.id?.toString()}`,
+        key: `retryCount:${request?.id?.toString()}`,
         value: 0,
         expiredTime: -1,
       });
@@ -178,6 +178,11 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
         })),
       ), {
         correlationId: options?.correlationId,
+      });
+      await setCacheValue({
+        key: `retryCount:${request?.id?.toString()}`,
+        value: 0,
+        expiredTime: -1,
       });
       return;
     }
@@ -299,7 +304,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
       log.error("[!] Error processing message", request?.id);
       log.error(error);
       await increaseCacheValue({
-        key: `retryCount-${request?.id?.toString()}`,
+        key: `retryCount:${request?.id?.toString()}`,
         expiredTime: -1,
       });
       await Bun.sleep(TWO_SECONDS);
