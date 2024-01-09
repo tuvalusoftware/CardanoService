@@ -1,5 +1,6 @@
 import { AppWallet, BlockfrostProvider, ForgeScript, Mint, NativeScript, Transaction, resolvePaymentKeyHash, resolveSlotNo } from "@meshsdk/core";
 import { TIME_TO_EXPIRE } from "../core/config";
+import { delay } from "../core/utils";
 
 const holderAddress: string = "addr1q9s7eaxg56h9kl3aw64yqfyvq3jp77plgsze4w97h0y7hxj4hppqshxzednjs4cflxv9jpuz73q00lxsygcyekdwhlqq45aram";
 
@@ -40,7 +41,7 @@ const generateNativeScript = async (keyHash: string): Promise<NativeScript> => {
   let oneYearFromNow = new Date();
   oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + Math.floor(Math.random() * 1000) + 1);
 
-  await Bun.sleep(5);
+  await delay(5);
   const ttl = resolveSlotNo("mainnet", oneYearFromNow.getTime());
 
   const nativeScript: NativeScript = {

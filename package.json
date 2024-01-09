@@ -1,9 +1,8 @@
 {
   "name": "cardanoservice",
   "module": "index.ts",
-  "type": "module",
   "scripts": {
-    "dev": "bun --watch run balancer.ts",
+    "dev": "bun --watch run index.ts",
     "get-address": "bun run ./scripts/getAddress.ts",
     "send-ada": "bun run ./scripts/sendAda.ts",
     "merge-address": "bun run ./scripts/mergeAddresses.ts",
@@ -18,6 +17,7 @@
   "dependencies": {
     "@ethersproject/keccak256": "^5.7.0",
     "@meshsdk/core": "^1.5.7",
+    "@pm2/io": "^5.0.2",
     "@types/amqplib": "^0.10.3",
     "@types/cookie-parser": "^1.4.5",
     "@types/express": "^4.17.20",
@@ -34,6 +34,7 @@
     "figlet": "^1.7.0",
     "http-proxy-middleware": "^2.0.6",
     "morgan": "^1.10.0",
+    "prom-client": "^15.1.0",
     "redis": "^4.6.10",
     "swagger-ui-express": "^5.0.0",
     "tslog": "^4.9.2",

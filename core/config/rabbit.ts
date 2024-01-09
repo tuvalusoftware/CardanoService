@@ -2,7 +2,7 @@ import amqplib, { Channel, Connection } from "amqplib";
 import { Logger, ILogObj } from "tslog";
 import { burn, mint, getVersion, getCacheValue } from "..";
 import { MintParams } from "../type";
-import { getDateNow, getOrDefault, parseError, waitForTransaction } from "../utils";
+import { delay, getDateNow, getOrDefault, parseError, waitForTransaction } from "../utils";
 import { RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT, ONE_HOUR, MAX_ATTEMPTS, TWO_SECONDS, FIVE_SECONDS } from ".";
 import { increaseCacheValue, setCacheValue } from "./redis";
 
@@ -34,7 +34,7 @@ rabbitMQ?.on("error", (error: any) => {
 export const CardanoService: string = getOrDefault(process?.env?.CHANNEL_NAME, "CardanoService");
 export const ResolverService: string = "ResolverService";
 
-const queue: {
+export const queue: {
   [key: string]: string,
 } = {
   [CardanoService]: CardanoService,
@@ -134,12 +134,11 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
     const options: any = getOrDefault(request?.options, {});
 
     log.debug("[+] Received message", JSON.stringify(data, null, 2));
-    log.debug("[+] Received options", JSON.stringify(options, null, 2));
 
     options.id = request?.id;
     options.type = request?.type;
     options.publish = true;
-    options.skipWait = false;
+    options.skipWait = true;
 
     options.replyTo = msg?.properties?.replyTo;
     options.correlationId = msg?.properties?.correlationId;
@@ -160,6 +159,8 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
         expiredTime: -1,
       });
     }
+
+    log.debug("[R] Retry count", retryCount);
 
     if (retryCount > MAX_ATTEMPTS) {
       log.error("[!] Retry count exceeded", options?.id);
@@ -190,93 +191,116 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
     try {
       switch (request?.type) {
         case "mint-token": {
-          await mint({
-            assets: [
-              {
-                assetName: data!.hash!,
-                metadata: {
-                  name: data!.hash!,
-                  type: data!.type!,
-                  timestamp: getDateNow(),
-                  version: 0,
+          if (!data?.hash) {
+            channel[CardanoService].reject(msg);
+          } else {
+            await mint({
+              assets: [
+                {
+                  assetName: data!.hash!,
+                  metadata: data?.metadata ?? {
+                    name: data!.hash!,
+                    type: data!.type!,
+                    timestamp: getDateNow(),
+                    version: 0,
+                  },
                 },
-              },
-            ],
-            options,
-          });
+              ],
+              options,
+            });
+          }
         }
           break;
         case "update-token": {
-          if (data?.txHash) {
-            await waitForTransaction(data?.txHash);
-            await Bun.sleep(FIVE_SECONDS);
-          }
-          const assets: MintParams[] = [];
-          const version: number = await getVersion({
-            unit: data!.config!.unit!,
-          });
-          const asset: MintParams = {
-            assetName: data!.newHash!,
-            metadata: {
-              name: data?.newHash!,
-              type: data!.type!,
-              version,
-              timestamp: getDateNow(),
-              belongsTo: data!.config!.assetName!,
-            },
-          };
-          if (data?.reuse) {
-            asset.forgingScript = data!.config!.forgingScript!;
-          }
-          if (data?.burn) {
-            log.warn("Burning old token, not yet implemented");
-          }
-          assets.push(asset);
-          await mint({
-            assets,
-            options,
-          });
-        }
-          break;
-        case "mint-credential": {
-          const assets: MintParams[] = [];
-          for (const credential of data?.credentials) {
-            assets.push({
-              assetName: credential!,
-              forgingScript: data!.config!.forgingScript!,
+          if (!data?.newHash || !data?.type || !data?.config?.assetName) {
+            channel[CardanoService].reject(msg);
+          } else {
+            if (data?.txHash) {
+              await waitForTransaction(data?.txHash);
+              await delay(FIVE_SECONDS);
+            }
+            const assets: MintParams[] = [];
+            const version: number = await getVersion({
+              unit: data!.config!.unit!,
+            });
+            const asset: MintParams = {
+              assetName: data!.newHash!,
               metadata: {
-                name: credential!,
+                name: data?.newHash!,
                 type: data!.type!,
-                version: 0,
+                version,
                 timestamp: getDateNow(),
                 belongsTo: data!.config!.assetName!,
               },
+            };
+            if (data?.reuse) {
+              asset.forgingScript = data!.config!.forgingScript!;
+            }
+            if (data?.burn) {
+              log.warn("Burning old token, not yet implemented");
+            }
+            assets.push(asset);
+            await mint({
+              assets,
+              options,
             });
           }
-          await mint({
-            assets,
-            options,
-          });
+        }
+          break;
+        case "mint-credential": {
+          if (!data?.config?.assetName || !data?.config?.forgingScript) {
+            channel[CardanoService].reject(msg);
+          } else {
+            const assets: MintParams[] = [];
+            for (const credential of data?.credentials) {
+              if (!credential) {
+                continue;
+              }
+              assets.push({
+                assetName: credential!,
+                forgingScript: data!.config!.forgingScript!,
+                metadata: {
+                  name: credential!,
+                  type: data!.type!,
+                  version: 0,
+                  timestamp: getDateNow(),
+                  belongsTo: data!.config!.assetName!,
+                },
+              });
+            }
+            if (assets.length > 0) {
+              await mint({
+                assets,
+                options,
+              });
+            } else {
+              channel[CardanoService].reject(msg);
+            }
+          }
         }
           break;
         case "burn-token": {
-          if (data?.txHash) {
-            await waitForTransaction(data?.txHash);
-            await Bun.sleep(FIVE_SECONDS);
+          if (!data?.assetName || !data?.forgingScript || !data?.unit) {
+            channel[CardanoService].reject(msg);
+          } else {
+            if (data?.txHash) {
+              await waitForTransaction(data?.txHash);
+              await delay(FIVE_SECONDS);
+            }
+            await burn({
+              assets: [
+                {
+                  txHash: data?.txHash,
+                  unit: data!.unit,
+                  assetName: data?.assetName,
+                  forgingScript: data!.forgingScript,
+                  policyId: data?.policyId,
+                  removeCollection: data?.removeCollection,
+                },
+              ],
+              options,
+            });
           }
-          await burn({
-            assets: [
-              {
-                txHash: data?.txHash,
-                unit: data!.unit,
-                assetName: data?.assetName,
-                forgingScript: data!.forgingScript,
-                policyId: data?.policyId,
-                removeCollection: data?.removeCollection,
-              },
-            ],
-            options,
-          });
         }
           break;
         default: {
@@ -307,8 +331,10 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
         key: `retryCount:${request?.id?.toString()}`,
         expiredTime: -1,
       });
-      await Bun.sleep(TWO_SECONDS);
+      await delay(TWO_SECONDS);
       channel[CardanoService].nack(msg);
     }
   }
 });
+
+export default rabbitMQ;

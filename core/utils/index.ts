@@ -44,6 +44,10 @@ export const waitForTransaction = async (txHash: string): Promise<void> => {
   });
 }
 
+export const delay = async (ms: number): Promise<void> => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /* -----------------[ Others ]----------------- */
 
 export const assertEqual = (a: Boolean, b: Boolean, message: any): void => {

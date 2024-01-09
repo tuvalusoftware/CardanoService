@@ -40,5 +40,6 @@ export const getVersion = async ({ unit }: { unit: string }) => {
   } else {
     result[unit!] = parseJson(cached);
   }
+  console.log(result);
   return Number(result[unit!].version! || 0) + 1;
 };

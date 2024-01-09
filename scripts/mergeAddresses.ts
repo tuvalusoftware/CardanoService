@@ -1,5 +1,5 @@
 import fs from "fs";
-import { assertEqual } from "../core/utils";
+import { assertEqual, delay } from "../core/utils";
 
 const readFile = async (path: string) => {
   const file = Bun.file(path);
@@ -31,7 +31,7 @@ fs.readdirSync(`${process.cwd()}/backup/`).forEach(async fileName => {
 });
 
 console.log("Waiting 5 seconds...");
-await Bun.sleep(5000);
+await delay(5000);
 
 console.log("Mnemonics:");
 console.log(listMnemonics);

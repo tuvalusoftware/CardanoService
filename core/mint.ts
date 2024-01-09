@@ -12,7 +12,7 @@ import { BurnParams, BurnResult, MintParams, MintResult, Options } from "./type"
 import { burnerAddress, holder, holderAddress, wallet, walletAddress, wallets } from "./wallet";
 import { MAX_NFT_PER_TX, NETWORK_NAME, ONE_HOUR, TEN_SECONDS, TIME_TO_EXPIRE } from "./config";
 import { ERROR } from "./error";
-import { assertEqual, getOrDefault, parseJson, waitForTransaction } from "./utils";
+import { assertEqual, delay, getOrDefault, parseJson, waitForTransaction } from "./utils";
 import { getCacheValue, setCacheValue } from ".";
 import { ResolverService, getOrCreateSender } from "./config/rabbit";
 import { deleteCacheValue } from "./config/redis";
@@ -27,7 +27,7 @@ const generateNativeScript = async ({ keyHash }: { keyHash: string }): Promise<N
   let oneYearFromNow = new Date();
   oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + Math.floor(Math.random() * 1000) + 1);
 
-  await Bun.sleep(5);
+  await delay(5);
   const ttl = resolveSlotNo(NETWORK_NAME, oneYearFromNow.getTime());
 
   const nativeScript: NativeScript = {
@@ -60,6 +60,8 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
   const keyHash: string = resolvePaymentKeyHash(walletAddress);
   const tx: Transaction = new Transaction({ initiator: wallet });
 
+  let numOfAssets: number = 0;
+
   for (const asset of assets) {
     const nativeScript: NativeScript = await generateNativeScript({ keyHash });
     const forgingScript: ForgeScript = getOrDefault(asset?.forgingScript, ForgeScript.fromNativeScript(nativeScript));
@@ -81,6 +83,8 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
           expiration: ONE_HOUR,
           correlationId: options?.correlationId,
         });
+
+        continue;
       } else {
         throw ERROR.ASSET_ALREADY_EXISTS;
       }
@@ -96,6 +100,8 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
 
     tx.mintAsset(forgingScript!, info);
 
+    numOfAssets++;
+
     const { unit, policyId } = toAsset(forgingScript as string, info);
     result.assets[asset?.assetName] = {
       unit,
@@ -105,62 +111,64 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
     };
   }
 
-  tx.setTimeToExpire(TIME_TO_EXPIRE);
+  if (numOfAssets > 0) {
+    tx.setTimeToExpire(TIME_TO_EXPIRE);
 
-  const requiredSigners: string[] = [holderAddress];
-  for (const w of wallets) {
-    requiredSigners.push(w.getPaymentAddress());
-  }
-  tx.setRequiredSigners(requiredSigners);
-
-  const unsignedTx: string = await tx.build();
-  let signedTx: string = await holder.signTx(unsignedTx, true);
-  signedTx = await wallet.signTx(signedTx, true);
-
-  for (const w of wallets) {
-    signedTx = await w.signTx(signedTx, true);
-  }
-
-  const txHash: string = await wallet.submitTx(signedTx);
-  log.info("🐳 Transaction submitted", txHash);
-
-  for (const asset of assets) {
-    const dat: any = {
-      id: options?.id,
-      type: options?.type,
-      data: {
-        ...result.assets[asset?.assetName!],
-        txHash,
-      },
-    };
-
-    await setCacheValue({
-      key: asset?.assetName!,
-      value: dat,
-      expiredTime: -1,
-    });
-
-    if (options?.publish) {
-      const { sender, queue } = await getOrCreateSender({ queue: getOrDefault(options?.replyTo, ResolverService) });
-      const buff: Buffer = Buffer.from(JSON.stringify(dat));
-      sender.sendToQueue(queue!, buff, {
-        persistent: true,
-        expiration: ONE_HOUR,
-        correlationId: options?.correlationId,
-      });
+    const requiredSigners: string[] = [holderAddress];
+    for (const w of wallets) {
+      requiredSigners.push(w.getPaymentAddress());
     }
-  }
+    tx.setRequiredSigners(requiredSigners);
 
-  if (!options?.skipWait) {
-    await waitForTransaction(txHash);
-  }
+    const unsignedTx: string = await tx.build();
+    let signedTx: string = await holder.signTx(unsignedTx, true);
+    signedTx = await wallet.signTx(signedTx, true);
 
-  if (options?.channel) {
-    await Bun.sleep(TEN_SECONDS);
-    options!.channel!.ack(options!.msg);
-  }
+    for (const w of wallets) {
+      signedTx = await w.signTx(signedTx, true);
+    }
 
-  result.txHash = txHash;
+    const txHash: string = await wallet.submitTx(signedTx);
+    log.info("🐳 Transaction submitted", txHash);
+
+    for (const asset of assets) {
+      const dat: any = {
+        id: options?.id,
+        type: options?.type,
+        data: {
+          ...result.assets[asset?.assetName!],
+          txHash,
+        },
+      };
+
+      await setCacheValue({
+        key: `nft:config:${asset?.assetName!}`,
+        value: dat,
+        expiredTime: -1,
+      });
+
+      if (options?.publish) {
+        const { sender, queue } = await getOrCreateSender({ queue: getOrDefault(options?.replyTo, ResolverService) });
+        const buff: Buffer = Buffer.from(JSON.stringify(dat));
+        sender.sendToQueue(queue!, buff, {
+          persistent: true,
+          expiration: ONE_HOUR,
+          correlationId: options?.correlationId,
+        });
+      }
+    }
+
+    if (!options?.skipWait) {
+      await waitForTransaction(txHash);
+    }
+
+    if (options?.channel) {
+      await delay(TEN_SECONDS);
+      options!.channel!.ack(options!.msg);
+    }
+
+    result.txHash = txHash;
+  }
   return result;
 };
 
@@ -244,7 +252,7 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
   }
 
   if (options?.channel) {
-    await Bun.sleep(TEN_SECONDS);
+    await delay(TEN_SECONDS);
     options!.channel!.ack(options!.msg);
   }
 
