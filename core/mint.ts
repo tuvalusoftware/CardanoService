@@ -10,7 +10,7 @@ import { Logger, ILogObj } from "tslog";
 import { toAsset } from "./utils/converter";
 import { BurnParams, BurnResult, MintParams, MintResult, Options } from "./type";
 import { burnerAddress, holder, holderAddress, wallet, walletAddress, wallets } from "./wallet";
-import { MAX_NFT_PER_TX, NETWORK_NAME, ONE_HOUR, TEN_SECONDS, TIME_TO_EXPIRE } from "./config";
+import { FIFTEEN_SECONDS, MAX_NFT_PER_TX, NETWORK_NAME, ONE_HOUR, TEN_SECONDS, TIME_TO_EXPIRE } from "./config";
 import { ERROR } from "./error";
 import { assertEqual, delay, getOrDefault, parseJson, waitForTransaction } from "./utils";
 import { getCacheValue, setCacheValue } from ".";
@@ -160,6 +160,8 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
 
     if (!options?.skipWait) {
       await waitForTransaction(txHash);
+    } else {
+      await delay(FIFTEEN_SECONDS);
     }
 
     if (options?.channel) {
@@ -249,6 +251,8 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
 
   if (!options?.skipWait) {
     await waitForTransaction(txHash);
+  } else {
+    await delay(FIFTEEN_SECONDS);
   }
 
   if (options?.channel) {
