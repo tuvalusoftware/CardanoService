@@ -84,6 +84,7 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
           correlationId: options?.correlationId,
         });
 
+        options!.channel!.ack(options!.msg);
         continue;
       } else {
         throw ERROR.ASSET_ALREADY_EXISTS;
