@@ -46,6 +46,7 @@ router.post("/api/v3/mint", async (req, res) => {
         options: {
           skipWait: true,
         },
+        id: correlationId,
         type: "mint-token",
       }), "utf-8"), {
         replyTo,
