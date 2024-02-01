@@ -3,7 +3,7 @@ import { Logger, ILogObj } from "tslog";
 import { burn, mint, getVersion, getCacheValue } from "..";
 import { MintParams } from "../type";
 import { delay, getDateNow, getOrDefault, parseError, waitForTransaction } from "../utils";
-import { RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT, ONE_HOUR, MAX_ATTEMPTS, TWO_SECONDS, FIVE_SECONDS } from ".";
+import { RABBITMQ_DEFAULT_PASS, RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_VHOST, RABBITMQ_DEFAULT_PORT, ONE_HOUR, MAX_ATTEMPTS, TWO_SECONDS, FIVE_SECONDS, TEN_SECONDS } from ".";
 import { increaseCacheValue, setCacheValue } from "./redis";
 
 const log: Logger<ILogObj> = new Logger();
@@ -331,7 +331,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
         key: `retryCount:${request?.id?.toString()}`,
         expiredTime: -1,
       });
-      await delay(TWO_SECONDS);
+      await delay(TEN_SECONDS);
       channel[CardanoService].nack(msg);
     }
   }
