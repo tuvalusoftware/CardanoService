@@ -27,6 +27,9 @@ async function getCacheValue({ key }: ICacheValue): Promise<any> {
   const cacheKey: string = constructRedisKey({ key });
   try {
     const data = await pullFromCache({ key: cacheKey });
+    if (typeof data === "string" && data === "{}") {
+      return undefined;
+    }
     return data;
   } catch (error: any) {
     return undefined;

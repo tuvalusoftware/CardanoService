@@ -35,3 +35,4 @@ export const MAESTRO_API_KEY: string = process.env?.MAESTRO_API_KEY ?? "";
 export const BLOCKFORST_API_KEY: string = process.env?.BLOCKFORST_API_KEY ?? "";
 
 export const MAX_ATTEMPTS: number = Number(process.env?.MAX_ATTEMPTS ?? 10);
+export const CARDANO_NFT_LABEL: string = process.env?.CARDANO_NFT_LABEL ?? "721";

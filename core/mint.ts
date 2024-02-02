@@ -10,12 +10,13 @@ import { Logger, ILogObj } from "tslog";
 import { toAsset } from "./utils/converter";
 import { BurnParams, BurnResult, MintParams, MintResult, Options } from "./type";
 import { burnerAddress, holder, holderAddress, wallet, walletAddress, wallets } from "./wallet";
-import { FIFTEEN_SECONDS, MAX_NFT_PER_TX, NETWORK_NAME, ONE_HOUR, TEN_SECONDS, TIME_TO_EXPIRE } from "./config";
+import { CARDANO_NFT_LABEL, FIFTEEN_SECONDS, MAESTRO_API_KEY, MAX_NFT_PER_TX, NETWORK_NAME, ONE_HOUR, TEN_SECONDS, TIME_TO_EXPIRE } from "./config";
 import { ERROR } from "./error";
 import { assertEqual, delay, getOrDefault, parseJson, waitForTransaction } from "./utils";
 import { getCacheValue, setCacheValue } from ".";
 import { ResolverService, getOrCreateSender } from "./config/rabbit";
 import { deleteCacheValue } from "./config/redis";
+import { Lucid, Maestro } from "lucid-cardano";
 
 const log: Logger<ILogObj> = new Logger();
 
@@ -95,9 +96,11 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
       assetName: asset?.assetName!,
       assetQuantity: "1",
       metadata: assetMetadata!,
-      label: "721",
+      label: `${Number(CARDANO_NFT_LABEL)}`,
       recipient: holderAddress,
     };
+
+    console.log("[I]nfo", info);
 
     tx.mintAsset(forgingScript!, info);
 
