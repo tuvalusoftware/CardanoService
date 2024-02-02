@@ -192,7 +192,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
       switch (request?.type) {
         case "mint-token": {
           if (!data?.hash) {
-            channel[CardanoService].reject(msg);
+            channel[CardanoService].ack(msg);
           } else {
             await mint({
               assets: [
@@ -213,7 +213,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
           break;
         case "update-token": {
           if (!data?.newHash || !data?.type || !data?.config?.assetName) {
-            channel[CardanoService].reject(msg);
+            channel[CardanoService].ack(msg);
           } else {
             if (data?.txHash) {
               await waitForTransaction(data?.txHash);
@@ -249,7 +249,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
           break;
         case "mint-credential": {
           if (!data?.config?.assetName || !data?.config?.forgingScript) {
-            channel[CardanoService].reject(msg);
+            channel[CardanoService].ack(msg);
           } else {
             const assets: MintParams[] = [];
             for (const credential of data?.credentials) {
@@ -274,14 +274,14 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
                 options,
               });
             } else {
-              channel[CardanoService].reject(msg);
+              channel[CardanoService].ack(msg);
             }
           }
         }
           break;
         case "burn-token": {
           if (!data?.assetName || !data?.forgingScript || !data?.unit) {
-            channel[CardanoService].reject(msg);
+            channel[CardanoService].ack(msg);
           } else {
             if (data?.txHash) {
               await waitForTransaction(data?.txHash);
