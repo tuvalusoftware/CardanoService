@@ -3,6 +3,7 @@
   "module": "index.ts",
   "scripts": {
     "dev": "bun --watch run index.ts",
+    "start": "bun run build.ts && bun dist/index.js",
     "get-address": "bun run ./scripts/getAddress.ts",
     "send-ada": "bun run ./scripts/sendAda.ts",
     "merge-address": "bun run ./scripts/mergeAddresses.ts",
