@@ -58,5 +58,5 @@ export async function sendAda() {
   }
 }
 
-log.info("Sending ADA...");
-await sendAda();
+// log.info("Sending ADA...");
+// await sendAda();
