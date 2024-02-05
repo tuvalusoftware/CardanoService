@@ -6,7 +6,8 @@ const log: Logger<ILogObj> = new Logger();
 
 export const parseError = (error: any) => {
   log.error("🚨", JSON.stringify(error));
-  const defaultError: string = "There are some issues with the server, please try again later";
+  const defaultError: string =
+    "There are some issues with the server, please try again later";
   const response: any = {
     status_text: "Failed",
     error_code: error?.error_code || 500,
@@ -16,7 +17,7 @@ export const parseError = (error: any) => {
     response.data = error?.data;
   }
   return response;
-}
+};
 
 export const parseResult = (result: any) => {
   const response: any = {
@@ -26,7 +27,7 @@ export const parseResult = (result: any) => {
     response.data = result;
   }
   return response;
-}
+};
 
 /* -----------------[ Others ]----------------- */
 
@@ -35,8 +36,8 @@ export const parseJson = (dummy: any) => {
     return JSON.parse(dummy);
   }
   return dummy;
-}
+};
 
 export const parseCapitalize = (str: string) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
-}
+};

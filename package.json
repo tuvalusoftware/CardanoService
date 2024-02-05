@@ -7,7 +7,9 @@
     "get-address": "bun run ./scripts/getAddress.ts",
     "send-ada": "bun run ./scripts/sendAda.ts",
     "merge-address": "bun run ./scripts/mergeAddresses.ts",
-    "publisher": "bun run ./scripts/publisher.ts"
+    "publisher": "bun run ./scripts/publisher.ts",
+    "format": "prettier --write .",
+    "prepare": "husky"
   },
   "devDependencies": {
     "bun-types": "latest"
@@ -35,12 +37,18 @@
     "express": "^4.18.2",
     "figlet": "^1.7.0",
     "http-proxy-middleware": "^2.0.6",
+    "husky": "^9.0.10",
+    "lint-staged": "^15.2.1",
     "lucid-cardano": "^0.10.7",
     "morgan": "^1.10.0",
+    "prettier": "^3.2.5",
     "prom-client": "^15.1.0",
     "redis": "^4.6.10",
     "swagger-ui-express": "^5.0.0",
     "tslog": "^4.9.2",
     "uuid": "^9.0.1"
+  },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
   }
 }

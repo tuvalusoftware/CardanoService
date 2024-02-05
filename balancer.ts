@@ -28,9 +28,9 @@ log.info("Servers", servers);
 const proxy: any = {
   target: "",
   changeOrigin: true,
-  onProxyReq: (proxyReq: any, req: any) => { },
-  onProxyRes: (proxyRes: any, req: any, res: any) => { },
-  logLevel: "debug"
+  onProxyReq: (proxyReq: any, req: any) => {},
+  onProxyRes: (proxyRes: any, req: any, res: any) => {},
+  logLevel: "debug",
 };
 
 const getServer = () => {

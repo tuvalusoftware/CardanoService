@@ -1,6 +1,12 @@
 import express, { Router } from "express";
 import fs from "fs";
-import { assertEqual, delay, parseError, parseResult, wait } from "./core/utils";
+import {
+  assertEqual,
+  delay,
+  parseError,
+  parseResult,
+  wait,
+} from "./core/utils";
 import { Logger, ILogObj } from "tslog";
 import { burn, fetch } from "./core";
 import { FetchOptions } from "./core/type";
@@ -38,20 +44,27 @@ router.post("/api/v3/mint", async (req, res) => {
           resolve(response);
         }
       });
-      channel.sendToQueue(queue[CardanoService], Buffer.from(JSON.stringify({
-        data: {
-          hash: assets[0].assetName,
-          metadata: assets[0].metadata,
-        },
-        options: {
-          skipWait: true,
-        },
-        id: correlationId,
-        type: "mint-token",
-      }), "utf-8"), {
-        replyTo,
-        correlationId,
-      });
+      channel.sendToQueue(
+        queue[CardanoService],
+        Buffer.from(
+          JSON.stringify({
+            data: {
+              hash: assets[0].assetName,
+              metadata: assets[0].metadata,
+            },
+            options: {
+              skipWait: true,
+            },
+            id: correlationId,
+            type: "mint-token",
+          }),
+          "utf-8"
+        ),
+        {
+          replyTo,
+          correlationId,
+        }
+      );
       delay(TEN_MINUTES).then(async () => {
         await channel.close();
         reject(ERROR.TIMEOUT);
@@ -80,7 +93,7 @@ router.post("/api/v3/burn", async (req, res) => {
 router.get("/api/v3/fetch", async (req, res) => {
   const { policyId } = req.query;
   const fetchOptions: FetchOptions = {
-    policyId: policyId as string
+    policyId: policyId as string,
   };
   try {
     const result = await fetch(fetchOptions);
@@ -92,7 +105,9 @@ router.get("/api/v3/fetch", async (req, res) => {
 });
 
 router.get("/api/health", (req, res) => {
-  return res.status(200).send(parseResult({ error_message: "Server is running" }));
+  return res
+    .status(200)
+    .send(parseResult({ error_message: "Server is running" }));
 });
 
 export default router;

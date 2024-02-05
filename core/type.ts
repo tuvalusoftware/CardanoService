@@ -1,6 +1,4 @@
-import {
-  ForgeScript,
-} from "@meshsdk/core";
+import { ForgeScript } from "@meshsdk/core";
 import type { AssetMetadata } from "@meshsdk/core";
 import { Channel } from "amqplib";
 
@@ -23,12 +21,12 @@ export interface MintResult {
   txHash: string;
   assets: {
     [key: string]: {
-      unit: string,
-      forgingScript: ForgeScript,
-      policyId?: string,
-      assetName?: string,
+      unit: string;
+      forgingScript: ForgeScript;
+      policyId?: string;
+      assetName?: string;
     };
-  }
+  };
 }
 
 export interface BurnResult {
@@ -44,7 +42,7 @@ export interface Options {
   msg?: any;
   replyTo?: string;
   correlationId?: string;
-};
+}
 
 export interface FetchOptions {
   policyId: string;

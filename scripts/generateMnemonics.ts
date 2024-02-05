@@ -7,4 +7,7 @@ for (let i = 0; i < 1; ++i) {
   mnemonics.push(AppWallet.brew().join(" "));
 }
 
-await Bun.write(`${process.cwd()}/core/config/${MNEMONIC_FILENAME}.json`, JSON.stringify({ mnemonics }, null, 2));
+await Bun.write(
+  `${process.cwd()}/core/config/${MNEMONIC_FILENAME}.json`,
+  JSON.stringify({ mnemonics }, null, 2)
+);

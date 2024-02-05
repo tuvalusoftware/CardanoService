@@ -8,11 +8,39 @@ import {
 import type { Mint, AssetMetadata, Asset, NativeScript } from "@meshsdk/core";
 import { Logger, ILogObj } from "tslog";
 import { toAsset } from "./utils/converter";
-import { BurnParams, BurnResult, MintParams, MintResult, Options } from "./type";
-import { burnerAddress, holder, holderAddress, wallet, walletAddress, wallets } from "./wallet";
-import { CARDANO_NFT_LABEL, FIFTEEN_SECONDS, MAESTRO_API_KEY, MAX_NFT_PER_TX, NETWORK_NAME, ONE_HOUR, TEN_SECONDS, TIME_TO_EXPIRE } from "./config";
+import {
+  BurnParams,
+  BurnResult,
+  MintParams,
+  MintResult,
+  Options,
+} from "./type";
+import {
+  burnerAddress,
+  holder,
+  holderAddress,
+  wallet,
+  walletAddress,
+  wallets,
+} from "./wallet";
+import {
+  CARDANO_NFT_LABEL,
+  FIFTEEN_SECONDS,
+  MAESTRO_API_KEY,
+  MAX_NFT_PER_TX,
+  NETWORK_NAME,
+  ONE_HOUR,
+  TEN_SECONDS,
+  TIME_TO_EXPIRE,
+} from "./config";
 import { ERROR } from "./error";
-import { assertEqual, delay, getOrDefault, parseJson, waitForTransaction } from "./utils";
+import {
+  assertEqual,
+  delay,
+  getOrDefault,
+  parseJson,
+  waitForTransaction,
+} from "./utils";
 import { getCacheValue, setCacheValue } from ".";
 import { ResolverService, getOrCreateSender } from "./config/rabbit";
 import { deleteCacheValue } from "./config/redis";
@@ -24,9 +52,15 @@ log.info("Wallet address:", walletAddress);
 log.info("Holder address:", holderAddress);
 log.info("Burner address:", burnerAddress);
 
-const generateNativeScript = async ({ keyHash }: { keyHash: string }): Promise<NativeScript> => {
+const generateNativeScript = async ({
+  keyHash,
+}: {
+  keyHash: string;
+}): Promise<NativeScript> => {
   let oneYearFromNow = new Date();
-  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + Math.floor(Math.random() * 1000) + 1);
+  oneYearFromNow.setFullYear(
+    oneYearFromNow.getFullYear() + Math.floor(Math.random() * 1000) + 1
+  );
 
   await delay(5);
   const ttl = resolveSlotNo(NETWORK_NAME, oneYearFromNow.getTime());
@@ -46,9 +80,15 @@ const generateNativeScript = async ({ keyHash }: { keyHash: string }): Promise<N
   };
 
   return nativeScript;
-}
+};
 
-export const mint = async ({ assets, options }: { assets: MintParams[], options?: Options }): Promise<MintResult> => {
+export const mint = async ({
+  assets,
+  options,
+}: {
+  assets: MintParams[];
+  options?: Options;
+}): Promise<MintResult> => {
   assertEqual(assets.length <= MAX_NFT_PER_TX, true, ERROR.TOO_MANY_ASSETS);
 
   log.debug("💰 Minting assets");
@@ -65,7 +105,10 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
 
   for (const asset of assets) {
     const nativeScript: NativeScript = await generateNativeScript({ keyHash });
-    const forgingScript: ForgeScript = getOrDefault(asset?.forgingScript, ForgeScript.fromNativeScript(nativeScript));
+    const forgingScript: ForgeScript = getOrDefault(
+      asset?.forgingScript,
+      ForgeScript.fromNativeScript(nativeScript)
+    );
     const assetMetadata: AssetMetadata = getOrDefault(asset?.metadata, {});
 
     const cached = await getCacheValue({
@@ -75,7 +118,9 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
     if (cached) {
       log.warn("[?] Asset already exists", asset?.assetName!);
       if (options?.publish) {
-        const { sender, queue } = await getOrCreateSender({ queue: getOrDefault(options?.replyTo, ResolverService) });
+        const { sender, queue } = await getOrCreateSender({
+          queue: getOrDefault(options?.replyTo, ResolverService),
+        });
 
         const buff: Buffer = Buffer.from(JSON.stringify(parseJson(cached)));
 
@@ -152,7 +197,9 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
       });
 
       if (options?.publish) {
-        const { sender, queue } = await getOrCreateSender({ queue: getOrDefault(options?.replyTo, ResolverService) });
+        const { sender, queue } = await getOrCreateSender({
+          queue: getOrDefault(options?.replyTo, ResolverService),
+        });
         const buff: Buffer = Buffer.from(JSON.stringify(dat));
         sender.sendToQueue(queue!, buff, {
           persistent: true,
@@ -178,13 +225,19 @@ export const mint = async ({ assets, options }: { assets: MintParams[], options?
   return result;
 };
 
-export const burn = async ({ assets, options }: { assets: BurnParams[], options?: Options }): Promise<BurnResult> => {
+export const burn = async ({
+  assets,
+  options,
+}: {
+  assets: BurnParams[];
+  options?: Options;
+}): Promise<BurnResult> => {
   assertEqual(assets.length <= MAX_NFT_PER_TX, true, ERROR.TOO_MANY_ASSETS);
 
   log.debug("🔥 Burning assets");
 
   const result: BurnResult = {
-    txHash: ""
+    txHash: "",
   };
 
   const burnAssets: Asset[] = [];
@@ -234,16 +287,20 @@ export const burn = async ({ assets, options }: { assets: BurnParams[], options?
     });
 
     if (options?.publish) {
-      const { sender, queue } = await getOrCreateSender({ queue: getOrDefault(options?.replyTo, ResolverService) });
+      const { sender, queue } = await getOrCreateSender({
+        queue: getOrDefault(options?.replyTo, ResolverService),
+      });
 
-      const buff: Buffer = Buffer.from(JSON.stringify({
-        id: options?.id,
-        type: options?.type,
-        data: {
-          ...asset,
-          message: "Asset burned successfully"
-        },
-      }));
+      const buff: Buffer = Buffer.from(
+        JSON.stringify({
+          id: options?.id,
+          type: options?.type,
+          data: {
+            ...asset,
+            message: "Asset burned successfully",
+          },
+        })
+      );
 
       sender.sendToQueue(queue!, buff, {
         persistent: true,

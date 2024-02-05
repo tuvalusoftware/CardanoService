@@ -9,9 +9,12 @@ import { parseCapitalize } from "./utils/parse";
 const maestroProvider: MaestroProvider = new MaestroProvider({
   network: parseCapitalize(NETWORK_NAME) as MaestroSupportedNetworks,
   apiKey: MAESTRO_API_KEY,
-  turboSubmit: true
+  turboSubmit: true,
 });
 
-const blockfrostProvider: BlockfrostProvider = new BlockfrostProvider(BLOCKFORST_API_KEY);
+const blockfrostProvider: BlockfrostProvider = new BlockfrostProvider(
+  BLOCKFORST_API_KEY
+);
 
-export const blockchainProvider: BlockfrostProvider | MaestroProvider = maestroProvider;
+export const blockchainProvider: BlockfrostProvider | MaestroProvider =
+  maestroProvider;

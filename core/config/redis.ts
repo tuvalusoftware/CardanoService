@@ -38,7 +38,11 @@ async function getCacheValue({ key }: ICacheValue): Promise<any> {
 
 const DEFAULT_EXPIRED_TIME: number = 60;
 
-async function setCacheValue({ key, value, expiredTime = DEFAULT_EXPIRED_TIME }: ICacheValue) {
+async function setCacheValue({
+  key,
+  value,
+  expiredTime = DEFAULT_EXPIRED_TIME,
+}: ICacheValue) {
   const cacheKey = constructRedisKey({ key });
   await redisClient.set(cacheKey, JSON.stringify(value));
   if (expiredTime! > 0) {
@@ -70,7 +74,10 @@ async function removeKeysWithPrefix(prefix: string) {
   }
 }
 
-async function increaseCacheValue({ key, expiredTime = DEFAULT_EXPIRED_TIME }: ICacheValue) {
+async function increaseCacheValue({
+  key,
+  expiredTime = DEFAULT_EXPIRED_TIME,
+}: ICacheValue) {
   const cacheKey = constructRedisKey({ key });
   const value = await redisClient.incr(cacheKey);
   if (expiredTime !== -1) {

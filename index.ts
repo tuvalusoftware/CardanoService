@@ -29,3 +29,17 @@ const server = app.listen(port, () => {
   console.log(CardanoService);
   log.info(`Listening on http://localhost:${port}`);
 });
+
+app.closeServer = () => {
+  server.close();
+};
+
+process.on("SIGINT", () => {
+  app.closeServer();
+});
+
+process.on("SIGTERM", () => {
+  app.closeServer();
+});
+
+export default app;

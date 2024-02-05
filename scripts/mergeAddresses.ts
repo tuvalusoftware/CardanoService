@@ -5,20 +5,20 @@ const readFile = async (path: string) => {
   const file = Bun.file(path);
   const contents = await file.json();
   return contents;
-}
+};
 
 const checkExists = async (path: string) => {
   const file = Bun.file(path);
   return await file.exists();
-}
+};
 
 const writeFile = async (path: string, contents: any) => {
   await Bun.write(Bun.file(path), JSON.stringify(contents, null, 2));
-}
+};
 
 const listMnemonics = new Set<string>();
 
-fs.readdirSync(`${process.cwd()}/backup/`).forEach(async fileName => {
+fs.readdirSync(`${process.cwd()}/backup/`).forEach(async (fileName) => {
   const path = `${process.cwd()}/backup/${fileName}`;
   const exists = await checkExists(path);
   assertEqual(exists, true, `File ${path} does not exist`);
@@ -36,13 +36,15 @@ await delay(5000);
 console.log("Mnemonics:");
 console.log(listMnemonics);
 
-fs.readdirSync(`${process.cwd()}/backup/`).forEach(async fileName => {
+fs.readdirSync(`${process.cwd()}/backup/`).forEach(async (fileName) => {
   const path = `${process.cwd()}/backup/${fileName}`;
   const exists = await checkExists(path);
   assertEqual(exists, true, `File ${path} does not exist`);
   const contents = await readFile(path);
   const mnemonics = contents!.mnemonics!;
-  mnemonics!.push(...[...listMnemonics].filter(mnemonic => !mnemonics!.includes(mnemonic)));
+  mnemonics!.push(
+    ...[...listMnemonics].filter((mnemonic) => !mnemonics!.includes(mnemonic))
+  );
   await writeFile(path, contents);
 });
 

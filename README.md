@@ -27,6 +27,7 @@ RABBITMQ_DEFAULT_PORT="5672"
 ```
 
 Pre-requisites:
+
 - Redis
 - RabbitMQ
 - Docker
