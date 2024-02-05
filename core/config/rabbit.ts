@@ -369,8 +369,14 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
           }
           break;
       }
+      log.info("✅ Message processed", request?.id?.toString());
+      await setCacheValue({
+        key: `retryCount:${request?.id?.toString()}`,
+        value: 0,
+        expiredTime: -1,
+      });
     } catch (error: any) {
-      log.error("[!] Error processing message", request?.id);
+      log.error("🚨 Error processing message", request?.id);
       log.error(error);
       await increaseCacheValue({
         key: `retryCount:${request?.id?.toString()}`,
@@ -380,6 +386,14 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
       channel[CardanoService].nack(msg);
     }
   }
+});
+
+process.on("SIGINT", async () => {
+  await rabbitMQ?.close();
+});
+
+process.on("SIGTERM", async () => {
+  await rabbitMQ?.close();
 });
 
 export default rabbitMQ;

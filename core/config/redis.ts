@@ -101,6 +101,14 @@ const connectRedis = async () => {
 
 await connectRedis();
 
+process.on("SIGINT", () => {
+  redisClient.quit();
+});
+
+process.on("SIGTERM", () => {
+  redisClient.quit();
+});
+
 export {
   connectRedis,
   getCacheValue,
