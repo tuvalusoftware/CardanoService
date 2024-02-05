@@ -6,15 +6,15 @@ import { fuixlabsProvider } from "../core/fetch";
 import { ILogObj, Logger } from "tslog";
 import { appendFileSync } from "fs";
 
+const log: Logger<ILogObj> = new Logger();
+
+log.attachTransport((logObj) => {
+  appendFileSync("sendAda.log", JSON.stringify(logObj) + "\n");
+});
+
 export async function sendAda() {
   const senderMnemonic: string = process.env?.SENDER_ADA as string;
   const senderWallet: AppWallet = initAppWallet(senderMnemonic);
-
-  const log: Logger<ILogObj> = new Logger();
-
-  log.attachTransport((logObj) => {
-    appendFileSync("sendAda.log", JSON.stringify(logObj) + "\n");
-  });
 
   log.info("Sender address: " + senderWallet.getPaymentAddress());
 
@@ -57,3 +57,6 @@ export async function sendAda() {
     log.info("Tx hash: " + txHash);
   }
 }
+
+log.info("Sending ADA...");
+await sendAda();

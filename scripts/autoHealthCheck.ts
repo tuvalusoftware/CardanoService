@@ -56,6 +56,7 @@ async function autoHealthCheck() {
 // const CronString: string = "0 * * * *"; // Every hour
 const CronString: string = "0 0 0 * * 2"; // Every Tuesday at 00:00:00
 
+log.info("Auto health check is running");
 const job = new Cron(CronString, async () => {
   log.info("Running a health check every hour");
   await autoHealthCheck();
