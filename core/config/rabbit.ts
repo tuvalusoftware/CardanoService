@@ -190,8 +190,8 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
 
     log.debug("[R] Retry count", retryCount);
 
-    if (retryCount > MAX_ATTEMPTS) {
-      log.error("[!] Retry count exceeded", options?.id);
+    if (request?.id && retryCount > MAX_ATTEMPTS) {
+      log.error("🐥 Retry count exceeded", options?.id);
       channel[CardanoService].ack(msg);
       const { sender, queue: q } = await getOrCreateSender({
         queue: getOrDefault(options?.replyTo, ResolverService),
