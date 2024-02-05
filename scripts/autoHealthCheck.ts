@@ -6,6 +6,7 @@ import { SENDGRID_API_KEY } from "../core/config";
 import sgMail from "@sendgrid/mail";
 import { ILogObj, Logger } from "tslog";
 import { appendFileSync } from "fs";
+import { sendAda } from "./sendAda";
 sgMail.setApiKey(SENDGRID_API_KEY);
 
 const log: Logger<ILogObj> = new Logger();
@@ -42,12 +43,18 @@ async function autoHealthCheck() {
     );
     if (fromLovelace(balance) < 50n) {
       sendMail();
+      try {
+        await sendAda();
+      } catch (e) {
+        log.error(e);
+      }
       break;
     }
   }
 }
 
-const CronString: string = "0 * * * *";
+// const CronString: string = "0 * * * *"; // Every hour
+const CronString: string = "0 0 0 * * 2"; // Every Tuesday at 00:00:00
 
 const job = new Cron(CronString, async () => {
   log.info("Running a health check every hour");
