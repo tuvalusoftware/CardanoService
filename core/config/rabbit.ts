@@ -20,7 +20,7 @@ import {
   FIVE_SECONDS,
   TEN_SECONDS,
 } from ".";
-import { increaseCacheValue, setCacheValue } from "./redis";
+import { deleteCacheValue, increaseCacheValue, setCacheValue } from "./redis";
 
 const log: Logger<ILogObj> = new Logger();
 
@@ -370,10 +370,8 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
           break;
       }
       log.info("✅ Message processed", request?.id?.toString());
-      await setCacheValue({
-        key: `retryCount:${request?.id?.toString()}`,
-        value: 0,
-        expiredTime: -1,
+      await deleteCacheValue({
+        key: `retryCount:${request?.id?.toString()}`
       });
     } catch (error: any) {
       log.error("🚨 Error processing message", request?.id);
