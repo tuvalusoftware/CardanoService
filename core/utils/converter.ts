@@ -26,7 +26,12 @@ export const toBytes = (hex: string): Uint8Array => {
 
 /* -----------------[ Lovelace ]----------------- */
 
-export const fromLovelace = (lovelace: number) => lovelace / 1_000_000;
+export const fromLovelace = (lovelace: number | bigint) => {
+  if (typeof lovelace === "bigint") {
+    return lovelace / 1_000_000n;
+  }
+  return lovelace / 1_000_000;
+};
 
 export const toLovelace = (ada: number) => ada * 1_000_000;
 

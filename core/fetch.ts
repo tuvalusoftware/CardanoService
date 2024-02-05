@@ -6,7 +6,7 @@ import { FetchOptions, FetchResult } from "./type";
 import { fromUnit } from "lucid-cardano";
 import axios from "axios";
 
-const fuixlabsProvider = {
+export const fuixlabsProvider = {
   fetchAssetMetadata: async (unit: string) => {
     const { policyId, assetName } = fromUnit(unit);
     try {
@@ -21,6 +21,20 @@ const fuixlabsProvider = {
       return metadata;
     } catch (error) {
       return {};
+    }
+  },
+  getLovelace: async (address: string) => {
+    try {
+      const { data } = await axios.post(
+        `https://preprod.koios.rest/api/v0/address_info`,
+        {
+          _addresses: [address],
+        }
+      );
+      const info = data.find((d: any) => d.address === address);
+      return BigInt(info?.balance || 0);
+    } catch (error) {
+      return 0n;
     }
   },
 };

@@ -9,10 +9,12 @@
     "merge-address": "bun run ./scripts/mergeAddresses.ts",
     "publisher": "bun run ./scripts/publisher.ts",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "health-check": "bun run ./scripts/autoHealthCheck.ts"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "croner": "^8.0.0"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -21,6 +23,7 @@
     "@ethersproject/keccak256": "^5.7.0",
     "@meshsdk/core": "^1.5.11-beta.5",
     "@pm2/io": "^5.0.2",
+    "@sendgrid/mail": "^8.1.0",
     "@types/amqplib": "^0.10.3",
     "@types/cookie-parser": "^1.4.5",
     "@types/express": "^4.17.20",

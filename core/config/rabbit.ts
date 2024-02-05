@@ -371,7 +371,7 @@ channel?.[CardanoService].consume(queue?.[CardanoService], async (msg) => {
       }
       log.info("✅ Message processed", request?.id?.toString());
       await deleteCacheValue({
-        key: `retryCount:${request?.id?.toString()}`
+        key: `retryCount:${request?.id?.toString()}`,
       });
     } catch (error: any) {
       log.error("🚨 Error processing message", request?.id);

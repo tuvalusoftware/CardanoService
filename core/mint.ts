@@ -164,7 +164,11 @@ export const mint = async ({
     tx.setTimeToExpire(TIME_TO_EXPIRE);
 
     const requiredSigners: string[] = [holderAddress];
-    for (const w of wallets) {
+
+    const numWallets = wallets.length;
+
+    for (let i = 0; i < numWallets; ++i) {
+      const w = wallets[i];
       requiredSigners.push(w.getPaymentAddress());
     }
     tx.setRequiredSigners(requiredSigners);
@@ -173,7 +177,8 @@ export const mint = async ({
     let signedTx: string = await holder.signTx(unsignedTx, true);
     signedTx = await wallet.signTx(signedTx, true);
 
-    for (const w of wallets) {
+    for (let i = 0; i < numWallets; i++) {
+      const w = wallets[i];
       signedTx = await w.signTx(signedTx, true);
     }
 
@@ -265,7 +270,11 @@ export const burn = async ({
   tx.setTimeToExpire(TIME_TO_EXPIRE);
 
   const requiredSigners: string[] = [holderAddress];
-  for (const w of wallets) {
+
+  const numWallets = wallets.length;
+
+  for (let i = 0; i < numWallets; ++i) {
+    const w = wallets[i];
     requiredSigners.push(w.getPaymentAddress());
   }
   tx.setRequiredSigners(requiredSigners);
@@ -274,7 +283,8 @@ export const burn = async ({
   let signedTx: string = await holder.signTx(unsignedTx, true);
   signedTx = await wallet.signTx(signedTx, true);
 
-  for (const w of wallets) {
+  for (let i = 0; i < numWallets; i++) {
+    const w = wallets[i];
     signedTx = await w.signTx(signedTx, true);
   }
 
