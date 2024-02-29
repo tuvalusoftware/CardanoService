@@ -122,7 +122,10 @@ export const mint = async ({
           queue: getOrDefault(options?.replyTo, ResolverService),
         });
 
-        const buff: Buffer = Buffer.from(JSON.stringify(parseJson(cached)));
+        const buff: Buffer = Buffer.from(JSON.stringify({
+          ...parseJson(cached),
+          id: options?.id,
+        }));
 
         sender.sendToQueue(queue!, buff, {
           persistent: true,

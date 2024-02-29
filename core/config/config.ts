@@ -15,7 +15,7 @@ export const BASE_PORT: number = Number(process.env?.BASE_PORT) || 3050;
 export const MAX_PORT: number = Number(process.env?.MAX_PORT) || 3050;
 
 export const NETWORK_ID: number = Number(process.env?.NETWORK_ID ?? 0); // 0 for testnet, 1 for mainnet
-export const NETWORK_NAME: string = process.env?.NETWORD_NAME ?? "preprod";
+export const NETWORK_NAME: string = process.env?.NETWORK_NAME ?? "preprod";
 
 export const REDIS_PASSWORD: string = process.env?.REDIS_PASSWORD ?? "";
 export const REDIS_PORT: number = Number(process.env?.REDIS_PORT ?? 6379);
